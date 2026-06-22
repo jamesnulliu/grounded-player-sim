@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+build/
+dist/
+.eggs/
+
+# Virtualenvs
+.venv/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Checkpoints / data / engines (never commit large artifacts)
+checkpoints/
+data/
+*.pgn
+*.sgf
+*.bin
+*.nnue
+engines/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
