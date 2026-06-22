@@ -10,8 +10,18 @@ trajectory, is injected into the policy, and is validated against the
 player's *future* behavior. Demonstrated on chess and Go, which share an
 engine-graded decision interface (Stockfish / KataGo).
 
-See `documents/proposal_v2.md` for the full research proposal and
-`documents/design.md` for how the code maps onto it.
+**Positioning.** The contribution is the *conjunction* — per-individual +
+temporally-evolving + a behavioral state (tilt/fatigue/time-pressure) that
+drives moves & timing + validated on the person's *future* games + chess
+**and** Go. No single axis is claimed as novel: "evolving latent in an LLM,"
+"natural-language latent," and "future temporal-split validation" are each
+already owned by a 2026 competitor (LATTE / HumanLM). See `documents/design.md`
+§8 for the head-to-head differentiation vs. Allie, HumanLM, and LATTE.
+
+See `documents/proposal_v2.md` for the full research proposal,
+`documents/design.md` for how the code maps onto it (and the key decisions),
+`documents/training.md` for the GPU/data wiring, and **`TODO.md`** for the
+prioritized work plan (code to write + experiments to run).
 
 ## Architecture at a glance
 

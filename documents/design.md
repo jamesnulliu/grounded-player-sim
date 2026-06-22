@@ -124,3 +124,102 @@ implementation choices keep the experiment from being circular:
   is a documented GPU stub |
 | Lichess PGN + Stockfish, SGF + KataGo ingestion | not yet (next on GPU/data
   host) |
+
+## 8. Positioning vs. the three closest competitors (deep-read June 2026)
+
+The novelty claim must survive a prior-art challenge. We deep-read the three
+nearest papers (full PDFs). Each owns ONE of our pillars; none own the
+intersection. The contribution is the **conjunction**, never a single axis.
+
+* **Allie** (arXiv:2410.03893, ICLR 2025) — 355M from-scratch transformer
+  over UCI tokens, conditioned ONLY on an Elo scalar (two interpolated soft
+  tokens). No individual identity, no evolving state, **random** (not
+  temporal) split, think-time is **Elo-aggregate** (Pearson r=0.70).
+* **HumanLM** (arXiv:2603.03303, Stanford) — one shared LLM, RL-trained
+  (GRPO) to emit **natural-language** latent states; individual = a **static
+  text profile** from the earliest 20 responses; state inferred **once per
+  context** (not evolving); **text** domains only — no games/moves/timing.
+* **LATTE** (arXiv:2605.26612) — evolving per-user **preference** state
+  (text-embedding residual), GRU over per-session states, injected as a
+  **single soft token** into a **frozen** LLM, future temporal split. **Text
+  reviews** only; no psychological state, no games.
+
+**SHARED territory — must NOT be claimed as novel (desk-reject risk):**
+"evolving latent into an LLM" (=LATTE), "natural-language latent state"
+(=HumanLM's headline), "future temporal-split validation" (=both),
+"trainable/RL latent" (=both).
+
+**AIRTIGHT differentiators — lead with the conjunction:**
+1. Per-**specific-individual**, not Elo-band (Allie has no individual repr).
+2. A **behavioral/psychological** state (tilt/fatigue/time-pressure) that
+   drives **moves + timing** (LATTE=preference-only; HumanLM=text-only).
+3. Per-individual move+timing on **verifiable game actions**, not
+   judge-scored text alignment.
+4. **Go** — completely empty: no LLM models any individual Go player/rank or
+   Go timing.
+
+One-sentence framing (paper): *Prior work conditions an LLM game agent on a
+skill scalar (Allie), or models an evolving preference/psychological state in
+text (LATTE / HumanLM). We learn a per-individual, temporally-evolving
+behavioral state that conditions an LLM to reproduce a specific person's
+move-and-timing decisions, validated on that individual's future games,
+across two engine-graded domains (chess + Go).*
+
+Caution: HumanLM / LATTE / ChessMimic are all 2026 preprints (weeks old);
+"first to" is fragile. Anchor on the conjunction + Go + game-action axes,
+which hold even if another preprint lands. See `priorart.md` for the full
+comparison table.
+
+## 9. Decision: verbal-vs-hidden is a HEADLINE, not a side experiment
+
+HumanLM is text-latent only; LATTE is vector-latent only. **Nobody compares
+the two channels head-to-head as interchangeable ways to inject the same
+per-individual state.** Our `InjectionKind` split already supports both, so
+this comparison is nearly free and is genuinely unclaimed — promote it to a
+first-class research question (the new RQ6), not an ablation footnote.
+
+## 10. Decision: population generation is a DEMONSTRATION, not a 2nd pillar
+
+The author proposed generating human-like behavior by (a) modifying
+profile/history and (b) adding noise to the trained injector, for *user
+simulation*. Resolved as follows:
+
+* These are **two different axes**, not two ways to do one thing: a
+  **control** axis (who is this player? — set by conditioning) and a
+  **stochastic** axis (natural variation — set by sampling). Keep them
+  distinct.
+* **Drop "edit history arbitrarily."** `z_t` is causally downstream of
+  history, so editing history steers the latent indirectly through a learned
+  map and can produce globally **incoherent** players. Instead, **intervene
+  directly on the structured latent dimensions** (we already have anchored
+  time-pressure / post-loss / fatigue dims + the `OracleInjector` clamp).
+* **Isotropic noise will not work** — a discriminatively-trained latent has
+  no valid neighborhood, so Gaussian noise pushes **off-manifold** (degraded
+  play, not a different human). Valid sampling instead: a **variational /
+  KL-regularized** latent (sample the prior), **fit + sample the empirical
+  per-individual latent distribution** over the real population, or
+  **interpolate** between real players' latents. Also disambiguate noise on
+  the latent *output* (per-step jitter) vs. on injector *weights*
+  (systematic, "different coherent player").
+* **Validation flips from pointwise to distributional.** Invented players
+  have no ground truth, so this can only be validated at the
+  population/distributional level (KL/JS/Wasserstein on behavioral stats +
+  **precision/recall for generative models**: coverage of real human
+  diversity without implausible outliers / an off-manifold realism rate).
+  This is strictly weaker ground than the future-behavior test — state it
+  explicitly.
+* **Fidelity and diversity trade off.** Pillar-1 wants pinpoint, low-variance
+  replication; this wants diverse plausible non-existent humans. Keep the
+  experiments separate so the diversity objective never contaminates the
+  fidelity eval.
+* **Why it is worth doing:** done right it attacks the field's named-but-
+  unsolved problem — LLM simulators collapsing to a *"positive average
+  person"* with lost long-tail/individual variance. A calibrated, diverse,
+  heterogeneity-recovering population is a contribution to *that*.
+* **Build/scope decision:** build it as a **downstream demonstration**
+  ("what faithful per-individual modeling unlocks"), but **instrument it with
+  the full distributional + precision/recall eval**. The demo framing and the
+  pillar framing share the same code and experiments; only the abstract-level
+  emphasis differs, and that is a one-paragraph call made **last**, once the
+  numbers show whether the result is strong (promote to pillar) or merely
+  suggestive (keep as demo).
