@@ -40,7 +40,12 @@ def _cmd_phase0(args: argparse.Namespace) -> int:
         )
         print(res.summary())
         # The load-bearing Phase-0 claim is that knowing the dynamic state
-        # helps (oracle > static); the untrained heuristic is informational.
+        # helps (oracle > static). The history vs. heuristic column is the
+        # Milestone-A control (E-A1): does *accumulating* the same features
+        # into an evolving latent beat consuming them memorylessly? It is
+        # reported, not asserted -- the untrained heuristic is not expected
+        # to win it; the trained injector must (E-C2, GPU). See
+        # documents/milestone_a.md.
         ok = ok and res.oracle_helps
     if not ok:
         print(
@@ -51,16 +56,19 @@ def _cmd_phase0(args: argparse.Namespace) -> int:
 
 
 def _cmd_info(args: argparse.Namespace) -> int:
+    import os
+
     print(f"grounded-player-sim {__version__}")
     print(f"python: {sys.version.split()[0]}")
     for name, mod in [
         ("numpy", "numpy"),
         ("torch", "torch"),
         ("sglang", "sglang"),
+        ("slime", "slime"),
+        ("wandb", "wandb"),
         ("openai", "openai"),
         ("anthropic", "anthropic"),
         ("python-chess", "chess"),
-        ("slime", "slime"),
     ]:
         try:
             __import__(mod)
@@ -68,6 +76,15 @@ def _cmd_info(args: argparse.Namespace) -> int:
         except ImportError:
             status = "not installed"
         print(f"  {name:14s} {status}")
+
+    # Backend + tracking policy at a glance (see gps.backends / gps.tracking).
+    print("policy:")
+    print("  LLM inference -> sglang ; LLM training -> slime+sglang")
+    key_set = bool(os.environ.get("WANDB_API_KEY", "").strip())
+    print(
+        f"  WANDB_API_KEY  {'set' if key_set else 'NOT set'} "
+        f"(required for training runs)"
+    )
     return 0
 
 

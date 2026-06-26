@@ -4,6 +4,50 @@ This device has no GPU; this file records how the GPU/network-bound pieces
 are intended to be wired so they can be finished on the training host without
 re-deriving the design.
 
+## Standing rules (enforced in code)
+
+Three rules every run obeys. They are checked by code, not just documented,
+so a misconfigured run fails fast (often on a laptop, before any GPU time).
+
+1. **Every run writes to the result store.** One layout for all runs:
+   `runs/<experiment>/<run_id>/` with `run.json` (id, git sha, host, status,
+   W&B url), `config.json`, `env.json`, `metrics.json` (final headline
+   numbers), `metrics.jsonl` (append-only stream), and `artifacts/`
+   (checkpoints/plots). Single source of truth: `gps.results.ResultStore`.
+   `runs/` is git-ignored. See `gps/results.py` for the full format.
+
+2. **Every *training* run logs to Weights & Biases — mandatory, no opt-out.**
+   `gps.tracking.require_wandb` reads `WANDB_API_KEY` from the environment and
+   **raises `TrackingError` if it is missing/blank**, aborting the run before
+   any work. Set it on the host:
+
+   ```bash
+   export WANDB_API_KEY=<your-key>     # from https://wandb.ai/authorize
+   # optional overrides:
+   export WANDB_PROJECT=grounded-player-sim
+   export WANDB_ENTITY=<team-or-user>
+   ```
+
+   `wandb` is in the `train` extra. The W&B run id/url is written back into
+   the local `run.json`, so a result dir always points at its W&B run.
+
+3. **LLM training uses slime; LLM inference uses sglang** (`gps.backends`).
+   - Serving an open-weight model for logprob scoring / rollouts → `sglang`
+     (`SGLangBackbone`). A *closed* API model (`APIBackbone`) is the RQ4
+     baseline, not a served model, and is exempt.
+   - RL / post-training of a served LLM → `slime` (`SlimeRLTrainer`), which
+     pairs its training backend with the sglang rollout engine. SFT of the
+     injector on top of a *frozen* LLM still serves its rollouts via sglang.
+   - The **board-native CNN control is exempt** — it is plain torch, no LLM,
+     so neither slime nor sglang is required (this is the cheap Milestone-A
+     control; see `milestone_a.md`).
+
+   `Trainer.begin_run` applies all three at the top of `fit`: it validates the
+   backend pairing, requires the W&B key, creates the run dir, and starts the
+   tracked W&B run. Concrete trainers stream metrics via `wandb_run.log(...)`,
+   write headline numbers via `wandb_run.summary(...)`, and end with
+   `wandb_run.finish(...)` + `handle.finalize(...)`.
+
 ## Environment
 
 ```bash

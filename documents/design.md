@@ -125,50 +125,104 @@ implementation choices keep the experiment from being circular:
 | Lichess PGN + Stockfish, SGF + KataGo ingestion | not yet (next on GPU/data
   host) |
 
-## 8. Positioning vs. the three closest competitors (deep-read June 2026)
+## 8. Positioning vs. the closest competitors (deep-read June 2026; sweep updated 2026-06-25)
 
-The novelty claim must survive a prior-art challenge. We deep-read the three
-nearest papers (full PDFs). Each owns ONE of our pillars; none own the
-intersection. The contribution is the **conjunction**, never a single axis.
+The novelty claim must survive a prior-art challenge. Each nearest paper owns
+ONE of our pillars; none own the intersection. The contribution is the
+**conjunction**, never a single axis. **A 6-month sweep (2026-06-25) changed
+the picture:** the *static* per-individual and the move+timing-in-chess axes
+have since been filled in by new 2026 work — so the conjunction's load is now
+carried by the **evolving psychological state + engine oracle +
+future-per-individual split** axes. Lead with those, not with "per-individual."
 
-* **Allie** (arXiv:2410.03893, ICLR 2025) — 355M from-scratch transformer
-  over UCI tokens, conditioned ONLY on an Elo scalar (two interpolated soft
-  tokens). No individual identity, no evolving state, **random** (not
-  temporal) split, think-time is **Elo-aggregate** (Pearson r=0.70).
-* **HumanLM** (arXiv:2603.03303, Stanford) — one shared LLM, RL-trained
-  (GRPO) to emit **natural-language** latent states; individual = a **static
-  text profile** from the earliest 20 responses; state inferred **once per
-  context** (not evolving); **text** domains only — no games/moves/timing.
+### Chess move / timing competitors (the static axes, now occupied)
+
+* **ChessMimic** (arXiv:2606.04473, Jun 2026) — *the sharpest competitor.*
+  Three encoder-only transformers (move / **clock** / outcome), **one per
+  100-Elo band**; **beats Maia-2** on moves, per-move think-time at **Pearson
+  r=0.41**, outcome AUC 0.78, code+weights released. But: **cohort, not
+  individual**; **static** (no evolving state); **no engine-oracle**
+  conditioning; **no future-per-individual split**; no psychological state. It
+  owns "move+timing in chess" — we own "*whose* move+timing, and *why it
+  drifts*." Its r=0.41 clock is the concrete number our per-individual timing
+  must beat (see TODO E-C6).
+* **Toward Modeling Player-Specific Chess Behaviors** (arXiv:2605.11893,
+  May 2026) — adapts Maia-2 to **individual champions** + MCTS, with a
+  style-eval over board-transition distributions. Per-individual but
+  **static**, **move-only**, no timing, no future split.
+* **Mixture of Masters** (arXiv:2602.04447, Feb 2026) — sparse chess LM with
+  **player routing** to emulate specific GMs. Per-individual, **static**,
+  move-only.
+* **BGU "Blunder prediction in chess"** (Springer Applied Intelligence 2026) —
+  per-individual latent **"blunder profile"** (DeepFM collaborative embedding)
+  that **beats explicit Elo** at move-quality (0.801 AUC; tactical vs
+  strategic). Partly pre-empts our RQ2 "latent beats Elo," but the profile is
+  **static**, no timing, no future split, no tilt dynamics. It is our strongest
+  **B2/B7** baseline, not a scoop — cite it as such.
+* **Allie** (arXiv:2410.03893, ICLR 2025) — 355M transformer over UCI tokens,
+  conditioned ONLY on an Elo scalar. No individual identity, no evolving state,
+  **random** split, think-time **Elo-aggregate** (Pearson r=0.70).
+* **Maia-3 / "Chessformer"** (ICLR 2026) — current SOTA move baseline
+  (rating-conditioned encoder-only transformer; supersedes Maia-2). Use as
+  *the* population baseline B1; Maia-2 references elsewhere in the docs are now
+  stale and should be updated.
+
+### LLM evolving-state competitors (the dynamic axis, but not in games)
+
+* **HumanLM** (arXiv:2603.03303, Stanford) — one shared LLM, RL-trained to emit
+  **natural-language** psychological latent states (stance/emotion); individual
+  = a **static text profile**, state inferred **once per context** (not
+  evolving); **text** domains only — no games/moves/timing/oracle.
 * **LATTE** (arXiv:2605.26612) — evolving per-user **preference** state
-  (text-embedding residual), GRU over per-session states, injected as a
-  **single soft token** into a **frozen** LLM, future temporal split. **Text
-  reviews** only; no psychological state, no games.
+  (peer-anchored residual), sequence-forecast over sessions, injected as a
+  **single soft token** into a **frozen** LLM, **future temporal split**.
+  **Text reviews** only; no psychological state, no games, no oracle.
+
+### Comparison table (axes × who covers them)
+
+| Paper | Per-indiv | Evolving | Psych state | Move | Timing | Board game | Future split | Oracle |
+|---|---|---|---|---|---|---|---|---|
+| ChessMimic | ✗ (Elo band) | ✗ | ✗ | ✓ | ✓ (r=.41) | ✓ | ✗ | ✗ |
+| Player-Specific | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ~ |
+| Mixture of Masters | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ |
+| BGU blunder | ✓ | ✗ | ✗ | quality | ✗ | ✓ | ✗ | ✗ |
+| Allie | ✗ (Elo) | ✗ | ✗ | ✓ | ~ (agg) | ✓ | ✗ | ~ |
+| LATTE | ✓ | ✓ | ✗ (pref) | ✗ | ✗ | ✗ (text) | ✓ | ✗ |
+| HumanLM | ~ (context) | ✗ | ✓ (text) | ✗ | ✗ | ✗ (text) | ✗ | ✗ |
+| **Ours** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓ (+Go)** | **✓** | **✓** |
 
 **SHARED territory — must NOT be claimed as novel (desk-reject risk):**
 "evolving latent into an LLM" (=LATTE), "natural-language latent state"
-(=HumanLM's headline), "future temporal-split validation" (=both),
-"trainable/RL latent" (=both).
+(=HumanLM), "future temporal-split validation" (=LATTE), "trainable/RL latent"
+(=both), **"per-individual chess move prediction"** (=Player-Specific / Mixture
+of Masters), **"move+timing in chess"** (=ChessMimic), **"per-individual latent
+beats Elo at move-quality"** (=BGU blunder). The last three are NEW as of the
+2026-06-25 sweep — **per-individual alone is no longer a differentiator.**
 
 **AIRTIGHT differentiators — lead with the conjunction:**
-1. Per-**specific-individual**, not Elo-band (Allie has no individual repr).
-2. A **behavioral/psychological** state (tilt/fatigue/time-pressure) that
-   drives **moves + timing** (LATTE=preference-only; HumanLM=text-only).
-3. Per-individual move+timing on **verifiable game actions**, not
-   judge-scored text alignment.
-4. **Go** — completely empty: no LLM models any individual Go player/rank or
-   Go timing.
+1. A **temporally-evolving psychological** state (tilt/fatigue/time-pressure)
+   driving **moves + timing** — every chess competitor above is *static*; the
+   evolving-psych axis is the one none of them touch.
+2. **Engine-oracle-graded deviation** conditioning — we model `P(deviation |
+   z_t, oracle)`, not raw moves; no chess competitor conditions on the oracle.
+3. **Strict future-per-individual split** — LATTE does this in text; no chess
+   competitor does. It is what separates a dynamic model from a memorized habit.
+4. **Go** — completely empty: no model has any individual Go player/timing.
 
-One-sentence framing (paper): *Prior work conditions an LLM game agent on a
-skill scalar (Allie), or models an evolving preference/psychological state in
-text (LATTE / HumanLM). We learn a per-individual, temporally-evolving
-behavioral state that conditions an LLM to reproduce a specific person's
-move-and-timing decisions, validated on that individual's future games,
-across two engine-graded domains (chess + Go).*
+One-sentence framing (paper): *ChessMimic predicts a 100-Elo band's average
+move and clock; LATTE / HumanLM model an evolving preference/psychological
+state in text. We learn a **specific person's** temporally-evolving
+**behavioral** state (tilt/fatigue/time-pressure) that conditions a policy to
+reproduce **their** move-and-timing **deviations from an engine oracle**,
+validated on **their future games**, across two engine-graded domains
+(chess + Go).*
 
-Caution: HumanLM / LATTE / ChessMimic are all 2026 preprints (weeks old);
-"first to" is fragile. Anchor on the conjunction + Go + game-action axes,
-which hold even if another preprint lands. See `priorart.md` for the full
-comparison table.
+Caution: ChessMimic / HumanLM / LATTE / Player-Specific / Mixture-of-Masters
+are all 2026 preprints (weeks-to-months old); "first to" on any single axis is
+fragile and several single axes are already lost. Anchor ONLY on the
+conjunction + evolving-psych-state + oracle + future-split + Go, which hold
+even if another preprint lands. (This section IS the prior-art comparison;
+there is no separate `priorart.md`.)
 
 ## 9. Decision: verbal-vs-hidden is a HEADLINE, not a side experiment
 
@@ -223,3 +277,73 @@ simulation*. Resolved as follows:
   emphasis differs, and that is a one-paragraph call made **last**, once the
   numbers show whether the result is strong (promote to pillar) or merely
   suggestive (keep as demo).
+
+## 11. Decision: chess is primary; generality goes to an oracle-preserving
+## non-game domain, never an oracle-less one (June 2026)
+
+We pressure-tested "is chess/Go the right dataset, or should we pivot?" The
+answer: **keep chess as the primary domain, do not pivot.** The reasoning,
+recorded so it is not relitigated:
+
+* **The engine oracle is the moat, not a convenience.** The entire
+  contribution is "reproduce a player's *deviation from optimal*, conditioned
+  on their evolving state." That target only has meaning where "optimal" is
+  measurable *per decision*. Stockfish/KataGo give that for free at
+  human-identity granularity. Remove the oracle and (a) RQ2 degrades from "the
+  latent predicts a measured centipawn swing" to "the latent correlates with a
+  hand-built proxy," (b) the suboptimality-matching metrics
+  (`P(blunder | low time)`) vanish, and (c) we lose the one axis that
+  separates us from every LLM-simulation paper that can only do distribution
+  matching. **The oracle is the differentiation from LATTE / HumanLM /
+  Agent4Rec.**
+
+* **Six properties any replacement/added domain must satisfy** (chess has all
+  six; this is the rubric, not a vibe):
+  1. stable per-individual identity at volume,
+  2. multi-session / longitudinal history (so the *future-behavior* split
+     RQ3 — our decisive test — is even definable),
+  3. per-decision discrete action (we model `P(a_t | state, z_t)`),
+  4. **a per-decision quality oracle** (the rare one),
+  5. a timing signal (our cleanest behavioral fingerprint, the Allie axis),
+  6. genuine within-session non-stationarity (tilt/fatigue/pressure must
+     actually exist in the data).
+
+* **Generality: add a non-game oracle domain, don't replace Go with an
+  oracle-less one.** "Two board games" is weak generality evidence (proposal
+  §2). The fix that *keeps the moat* is a non-game domain that still has an
+  oracle:
+  - **Preferred — knowledge tracing / intelligent tutoring** (EdNet,
+    ASSISTments): massive per-student longitudinal data; IRT gives a per-item
+    difficulty+correctness oracle; engagement/fatigue/"gaming-the-system"
+    dynamics are real and studied; per-item timing exists. Bonus: the
+    entrenched BKT/DKT literature is a ready-made set of *static* baselines to
+    beat.
+  - **Alternative — competitive programming** (Codeforces): contest sessions,
+    per-submission verdict + problem-rating oracle, submission timestamps,
+    plausible tilt/fatigue. Caveat: the action (code) is unstructured, so model
+    verdict / difficulty-choice / timing rather than a move distribution.
+  - A **game + ITS** pairing is materially stronger generality than chess+Go
+    (a game *and* a non-game, both oracle-graded) and is the upgrade most
+    likely to help a main-track case.
+
+* **Explicitly rejected: recommendation / dialogue / social-media
+  simulation.** They have identity and longitudinality but **no per-decision
+  oracle** — pivoting there deletes our differentiation and lands us in the
+  exact crowded pool (LATTE/HumanLM/Agent4Rec) we are differentiating from.
+
+* **On "use a strong model to learn the user profile."** Two distinct ideas,
+  both demoted from the thesis: (a) an LLM that *summarizes a trajectory into
+  a profile* is our **persona-prompting baseline** (B5/B6) and the **verbal
+  injection channel** — and an LLM RL-trained to emit a NL latent state from
+  history is *literally HumanLM's headline*, so it must never be our core; (b)
+  an LLM *as the backbone policy* is fine (the design.md §2 branch) but both
+  its flavors (in-context trace, per-player fine-tune) are **static**. The
+  thing that is ours is the delta on top of any backbone: a state that
+  **evolves**, is validated on **future** games, and is graded against an
+  **oracle**.
+
+* **Ordering (load-bearing):** chess headline first (Milestone A → E-C1/C2/C3).
+  Only *after* the core mechanism is shown to work on chess do we spend effort
+  on generality (Go, or better, a non-game oracle domain) and the population
+  demo. Generality/breadth is polish on a proven mechanism, never a substitute
+  for proving it.

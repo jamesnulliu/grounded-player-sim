@@ -48,7 +48,9 @@ The contribution is domain-independent, but it must first be demonstrated where 
 
 **Explicit scope decision.** We drop the imperfect-information setting from the original poker proposal. Perfect-information board games are where clean longitudinal data and an engine oracle co-exist; that combination is worth more to this specific contribution than partial observability. Imperfect-information generalization is named as future work, not promised.
 
-**Honest limitation, stated up front.** Chess and Go are both board games. Demonstrating a framework on two similar domains is weaker generality evidence than a game + a non-game domain. We therefore (a) design the framework with a game-agnostic core so a third domain (e.g., longitudinal learning traces, forecasting belief-updates) can be added, and (b) list that cross-modality test as future work.
+**Honest limitation, stated up front.** Chess and Go are both board games. Demonstrating a framework on two similar domains is weaker generality evidence than a game + a non-game domain. We therefore (a) design the framework with a game-agnostic core so a third domain can be added, and (b) list that cross-modality test as future work.
+
+**Decision on the cross-modality domain (June 2026).** When we add a non-game domain, it must *preserve the engine oracle* — the per-decision normative reference is what makes the entire "reproduce deviation from optimal, conditioned on evolving state" target well-posed and is our differentiation from the LLM-simulation literature (LATTE / HumanLM / Agent4Rec all model behavior *without* an oracle). The strongest oracle-preserving non-game candidates are **knowledge tracing / intelligent tutoring** (EdNet / ASSISTments: per-student longitudinal traces, an Item-Response-Theory difficulty+correctness oracle, real engagement/fatigue dynamics, per-item timing) and **competitive programming** (Codeforces: contest *sessions*, per-submission verdict + problem-rating oracle, submission timing). We explicitly **do not** pivot to recommendation / dialogue / social-media simulation: those have identity and longitudinality but **no per-decision oracle**, which both deletes our differentiation and drops us into the crowded pool we are differentiating from. See `design.md` §11 for the full decision and the six properties any replacement domain must satisfy.
 
 ---
 
@@ -336,5 +338,7 @@ The following were checked during the investigation; confirm IDs/venues at draft
 - OpenSpiel (synthetic-player phase); python-chess (`%clk` parsing, `GameNode.clock()`).
 - Lichess open database (CC0); KGS/OGS records; GoGoD professional collection.
 
-**Future-work generality domains (non-game):**
-- Duolingo Half-Life Regression traces; Good Judgment Project forecasting data (CC0).
+**Future-work generality domains (non-game, oracle-preserving — see design.md §11):**
+- *Preferred:* Knowledge tracing / intelligent tutoring — EdNet (Choi et al., 2020), ASSISTments — IRT difficulty+correctness oracle, per-student longitudinal traces, timing. Competitive programming — Codeforces submissions (verdict + problem-rating oracle, contest sessions, timing).
+- *Weaker (shallow behavior / slow timescale):* Duolingo Half-Life Regression traces; Good Judgment Project forecasting data (CC0).
+- *Rejected (no per-decision oracle):* recommendation / dialogue / social-media simulation — deletes the differentiation from the LLM-simulation literature.

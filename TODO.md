@@ -18,16 +18,22 @@ novel (see design.md §8 for what is shared territory).
 > "Isn't the dynamic latent just an expressive history-conditioned policy?"
 > This is the #1 desk-reject risk. Must be answerable before any real run.
 
+> Full runbook + resources: **`documents/milestone_a.md`**.
+
 ### Code
-- [ ] **New baseline: history-conditioned, no-latent policy.**
+- [x] **New baseline: history-conditioned, no-latent policy.**
   `src/gps/policy/history_conditioned.py` — a `PolicyBackbone` that takes the
-  *same* engineered history features (recent results, clock, engine swings)
-  the injector sees, but with **no structured/evolving latent** (just feeds
-  features to the head). This is the "latent inductive bias removed, capacity
-  held equal" control. Register in `gps/policy/__init__.py`.
+  *same* engineered history features (via the shared
+  `gps.latent.structured.history_features`) the injector sees, but with **no
+  structured/evolving latent** (feeds features to the head). The
+  capacity-matched GPU control; `feature_vector`/`param_report` done +
+  CPU-tested, `predict` is a documented torch stub.
+- [x] **CPU memoryless control: `HistoryConditionedInjector`** (in
+  `gps/latent/structured.py`) — same `history_features`, no accumulation —
+  wired as the Phase-0 `history` arm so E-A1's direction is exercisable today.
 - [ ] **New module `src/gps/baselines/` (the proposal's B1–B8).** One thin
   factory per baseline so experiments name them uniformly:
-  - [ ] B1 population / no-personalization (no-latent backbone, no per-player signal)
+  - [ ] B1 population / no-personalization (no-latent backbone, no per-player signal) — use **Maia-3 / "Chessformer"** (ICLR 2026, current SOTA) as the move baseline, not the stale Maia-2
   - [ ] B2 static individual (per-player embedding, NO dynamic state)
   - [ ] B3 static-skill state-space (skill drifts across games, fixed within) — the "is it just rating drift?" foil
   - [ ] B4 aggregate timing (Allie-style: Elo-conditioned think-time, not per-individual)
@@ -35,6 +41,9 @@ novel (see design.md §8 for what is shared territory).
   - [ ] B6 LLM persona + last-K-games
   - [ ] B7 static-covariate tilt (recent win-ratio as a fixed covariate; the mostly-null aggregate foil)
   - [ ] B8 = our proposed dynamic latent-state model
+  - [ ] B9 ChessMimic-style cohort move+timing (per-100-Elo-band transformer;
+    the sharpest move+timing-in-chess competitor — static, no oracle, no future
+    split) → the head-to-head for E-C6 and a strong static foil for E-C1
 - [ ] **Trainable neural injector** (the real `f_phi`, replacing the
   parameter-free `StructuredInjector` for training).
   `src/gps/latent/neural.py` — a recurrent/state-space latent implementing
@@ -42,11 +51,16 @@ novel (see design.md §8 for what is shared territory).
   no-op guard. Keep `produces` honoring both `VERBAL` and `HIDDEN`.
 
 ### Experiments
-- [ ] **E-A1 (Phase 0, extended):** add the history-conditioned baseline as a
-  fourth arm in `experiments/phase0.py`. Claim to verify: the dynamic latent
-  beats history-conditioned-no-latent at **equal capacity/inputs**. If it
-  does *not*, the structured latent does not earn its keep — surface that
-  honestly (it reshapes the paper).
+- [~] **E-A1 (Phase 0, extended):** the history-conditioned baseline is now a
+  fourth arm in `experiments/phase0.py` (`history`), and
+  `Phase0Result.dynamic_beats_history` reports the direction. **CPU status:**
+  the *untrained* EMA heuristic does **not** beat the memoryless control on
+  the current near-instantaneous mechanisms — expected, and exactly why the
+  *trained* injector must earn it (see `milestone_a.md` §3). Remaining: (a) a
+  **hysteretic** synthetic mechanism a memoryless model provably cannot
+  reconstruct, (b) the *trained* neural injector beating `history` on it at
+  **equal capacity** (needs Milestone B). If trained-D still ties B, the
+  structured latent does not earn its keep — surface honestly (reshapes paper).
 
 ---
 
@@ -108,11 +122,23 @@ novel (see design.md §8 for what is shared territory).
 - [ ] **E-C5 (RQ4):** B8 vs. LLM persona prompt (B5/B6) — move + timing
   distribution match with the engine-graded yardstick.
 - [ ] **E-C6 (timing):** per-individual think-time NLL + per-player Spearman
-  vs. Allie-style aggregate (B4). Differentiator vs. Allie.
+  vs. Allie-style aggregate (B4) **and vs. ChessMimic's per-move clock model
+  (Pearson r=0.41 — the concrete number to beat; B9)**. Differentiator: our
+  timing is conditioned on the *evolving* state and is *per-individual*, not
+  Elo-band-aggregate.
 
 ---
 
-## Milestone D — Go, the empty-frontier novelty cover (P1)
+## Milestone D — Generality: Go and/or an oracle-preserving non-game domain (P1)
+
+> Decision (design.md §11): chess is primary and proven *first*. Generality is
+> polish on a proven mechanism — do **not** start this before the chess
+> headline (E-C1/C2/C3) lands. Go gives empty-frontier novelty cover but is
+> still a board game; a **non-game oracle domain** (knowledge tracing — EdNet /
+> ASSISTments; or competitive programming — Codeforces) gives *real*
+> cross-modal generality and is the stronger main-track upgrade. Whatever is
+> added must keep the per-decision oracle (the moat); never pivot to an
+> oracle-less domain (rec/dialogue/social).
 
 ### Code
 - [ ] **`src/gps/games/go.py`:** concrete `Game` for Go (SGF positions, GTP
@@ -122,11 +148,20 @@ novel (see design.md §8 for what is shared territory).
   before committing scope** (proposal Risk 1).
 - [ ] **`src/gps/games/oracles/katago.py`:** `EngineOracle` wrapping KataGo →
   per-move points-lost (winrate/score drop). Record visit count.
+- [ ] **OR (stronger generality) non-game oracle domain.** Port the
+  `DecisionPoint` / `EngineReference` interface to **knowledge tracing**
+  (EdNet/ASSISTments: `state`=student+item context, `legal_actions`=response
+  options, `EngineReference`=IRT difficulty/correct-prob oracle, `TimeSignal`
+  =response time, `recent_outcomes`=prior items) or **Codeforces** (verdict +
+  problem-rating oracle). This tests the "game-agnostic core" claim for real —
+  the cheapest first step is just writing the interface adapter and seeing how
+  much of `gps/interface.py` survives unchanged.
 
 ### Experiments
-- [ ] **E-D1 (RQ5):** the *same* framework, only the game-encoder + oracle
-  swapped, reproduces the chess pattern in Go. Establishes the contribution
-  is the dynamic-state mechanism, not a chess artifact.
+- [ ] **E-D1 (RQ5):** the *same* framework, only the encoder + oracle swapped,
+  reproduces the chess pattern in a second domain (Go, or — preferred for
+  cross-modal generality — a non-game oracle domain). Establishes the
+  contribution is the dynamic-state mechanism, not a chess artifact.
 - [ ] **E-D2:** Go-specific dynamics — lean on within-game byo-yomi time
   pressure where cross-game session data is thinner.
 - [ ] **E-D3 (RQ5 stretch, OPTIONAL):** cross-game latent correlation for
@@ -194,9 +229,15 @@ novel (see design.md §8 for what is shared territory).
   stdlib-only pattern where possible; mark GPU paths to fail with an
   informative error, as the backbones already do).
 - [ ] **`ruff format . && ruff check .`** (line-length 79) before each commit.
-- [ ] **Verify 2026 preprint metadata** (HumanLM 2603.03303, LATTE
-  2605.26612, ChessMimic 2606.04473) on live arXiv before citing; read
-  HumanLM + LATTE experimental sections in full.
+- [x] **Verify 2026 preprint metadata** — done 2026-06-25 (/research sweep).
+  All resolve: HumanLM 2603.03303 (real, Stanford), LATTE 2605.26612 (real),
+  **ChessMimic 2606.04473 (real — the earlier "verify it exists / likely drop"
+  was wrong; it just hadn't propagated to general web search. It is now the
+  primary chess competitor).** New competitors found and folded into
+  design.md §8: Player-Specific Behaviors (2605.11893), Mixture of Masters
+  (2602.04447), Maia-3 / Chessformer (ICLR 2026), BGU "Blunder prediction in
+  chess" (Springer 2026), DASKT (2405.16799). **Still to do:** read ChessMimic
+  + HumanLM + LATTE experimental sections in full before drafting related work.
 - [ ] **Related-work section** writeup: the comparison table + the
   one-sentence framing from design.md §8. Lead with the conjunction; never a
   single shared axis.
@@ -216,6 +257,8 @@ novel (see design.md §8 for what is shared territory).
    **dynamic > static individual on the future-behavior split**, and
    **dynamic > history-conditioned at equal capacity**.
 4. Milestone E (verbal-vs-hidden, RQ6) — cheap, unclaimed, differentiating.
-5. Milestone D (Go, RQ5) — generality + the empty-frontier novelty.
+5. Milestone D (generality, RQ5) — only after the chess headline lands. Go for
+   empty-frontier novelty cover, or a non-game oracle domain (knowledge
+   tracing / Codeforces) for stronger cross-modal generality (design.md §11).
 6. Milestone F (population demo) — only if A–E land; decide demo-vs-pillar
    on the numbers.

@@ -19,9 +19,11 @@ env/
 .coverage
 htmlcov/
 
-# Checkpoints / data / engines (never commit large artifacts)
+# Checkpoints / data / engines / run outputs (never commit large artifacts)
 checkpoints/
 data/
+runs/
+wandb/
 *.pgn
 *.sgf
 *.bin

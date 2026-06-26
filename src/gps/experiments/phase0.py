@@ -1,16 +1,24 @@
 """Phase-0 experiment: do dynamics matter, and are they recoverable?
 
 Runs entirely on CPU with the mock backbone, so the central claims are
-exercisable today (proposal section 5, Phase 0). Three arms over the *same*
+exercisable today (proposal section 5, Phase 0). All arms run over the *same*
 synthetic trajectory (deterministic given the seed), so differences are due
-only to the latent:
+only to the injector:
 
-* ``static``   -- no latent (the no-personalization / static-individual foil).
-* ``heuristic``-- the hand-specified :class:`StructuredInjector`. It has no
-  trained parameters, so it is NOT guaranteed to beat ``static`` -- closing
-  that gap is exactly what the *trained* injector must earn. We report it,
-  we do not assert it.
-* ``oracle``   -- the :class:`OracleInjector`, which reads the true injected
+* ``static``    -- no latent (the no-personalization / static-individual
+  foil).
+* ``history``   -- the :class:`HistoryConditionedInjector`: the *same*
+  engineered history features as ``heuristic``, but **memoryless** (no
+  evolving latent). This is the Milestone-A control that answers the #1
+  desk-reject objection: "isn't the dynamic latent just an expressive
+  history-conditioned policy?" The load-bearing comparison is
+  ``heuristic`` vs. ``history`` at equal inputs (E-A1).
+* ``heuristic`` -- the hand-specified :class:`StructuredInjector`, which
+  *accumulates* those same features into an evolving ``z_t``. It has no
+  trained parameters, so it is NOT guaranteed to beat ``static`` or
+  ``history`` -- closing that gap is exactly what the *trained* injector must
+  earn. We report it, we do not assert it.
+* ``oracle``    -- the :class:`OracleInjector`, which reads the true injected
   degradation. By construction it should beat ``static`` wherever the
   mechanism fires; this is the non-circular check that (a) dynamics carry
   predictive signal and (b) the eval can detect it (P0.2), and it
@@ -18,6 +26,13 @@ only to the latent:
 
 Plus the state-recovery probe (P0.1): can a linear probe recover the true
 degradation from the heuristic latent's snapshots?
+
+Caveat (recorded so it is not over-read): the CPU ``history`` vs.
+``heuristic`` contrast is *parameter-free* -- both share the mock backbone,
+so it isolates "accumulated vs. instantaneous features" but NOT capacity. The
+capacity-matched version of this comparison (E-C2) trains
+:class:`~gps.policy.history_conditioned.HistoryConditionedBackbone` against
+the neural injector on GPU; see ``documents/milestone_a.md``.
 """
 
 from __future__ import annotations
@@ -27,7 +42,11 @@ from dataclasses import dataclass
 from gps.eval.metrics import MoveMetrics, move_metrics
 from gps.eval.probes import StateRecoveryResult, state_recovery_probe
 from gps.latent.base import InjectionKind, LatentStateInjector
-from gps.latent.structured import OracleInjector, StructuredInjector
+from gps.latent.structured import (
+    HistoryConditionedInjector,
+    OracleInjector,
+    StructuredInjector,
+)
 from gps.policy.mock_backbone import MockBackbone
 from gps.simulator import Simulator
 from gps.synthetic.players import SyntheticPlayer
@@ -40,6 +59,7 @@ class Phase0Result:
 
     player_kind: str
     static: MoveMetrics
+    history: MoveMetrics
     heuristic: MoveMetrics
     oracle: MoveMetrics
     recovery: StateRecoveryResult
@@ -55,12 +75,24 @@ class Phase0Result:
         """Reported, not asserted: untrained heuristic vs. static."""
         return self.heuristic.nll < self.static.nll
 
+    @property
+    def dynamic_beats_history(self) -> bool:
+        """The decisive Milestone-A direction: does *accumulating* the same
+        features into an evolving latent beat consuming them memorylessly?
+
+        Reported, not asserted for the untrained heuristic -- the trained
+        injector is what must win this at equal capacity (E-C2). A False here
+        for the heuristic is informative, not a failure.
+        """
+        return self.heuristic.nll < self.history.nll
+
     def summary(self) -> str:
         return (
             f"[{self.player_kind}] "
             f"static NLL={self.static.nll:.4f} | "
+            f"history NLL={self.history.nll:.4f} | "
             f"heuristic NLL={self.heuristic.nll:.4f} "
-            f"(helps: {self.heuristic_helps}) | "
+            f"(>history: {self.dynamic_beats_history}) | "
             f"oracle NLL={self.oracle.nll:.4f} "
             f"(helps: {self.oracle_helps}) | "
             f"recovery R^2={self.recovery.r2:.3f} | "
@@ -108,9 +140,16 @@ def run_phase0(
     seed: int = 0,
     injector_kind: InjectionKind = InjectionKind.HIDDEN,
 ) -> Phase0Result:
-    """Run the three-arm Phase-0 comparison for one mechanism."""
+    """Run the four-arm Phase-0 comparison for one mechanism."""
     static_res, static_obs, true_degr = _run_arm(
         player_kind, n_games, seed, None, injector_kind
+    )
+    hist_res, hist_obs, _ = _run_arm(
+        player_kind,
+        n_games,
+        seed,
+        HistoryConditionedInjector(kind=injector_kind),
+        injector_kind,
     )
     heur_res, heur_obs, _ = _run_arm(
         player_kind,
@@ -138,6 +177,7 @@ def run_phase0(
     return Phase0Result(
         player_kind=player_kind,
         static=move_metrics(static_res, static_obs),
+        history=move_metrics(hist_res, hist_obs),
         heuristic=move_metrics(heur_res, heur_obs),
         oracle=move_metrics(orac_res, orac_obs),
         recovery=recovery,

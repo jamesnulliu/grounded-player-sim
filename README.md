@@ -20,8 +20,10 @@ already owned by a 2026 competitor (LATTE / HumanLM). See `documents/design.md`
 
 See `documents/proposal_v2.md` for the full research proposal,
 `documents/design.md` for how the code maps onto it (and the key decisions),
-`documents/training.md` for the GPU/data wiring, and **`TODO.md`** for the
-prioritized work plan (code to write + experiments to run).
+`documents/training.md` for the GPU/data wiring,
+`documents/milestone_a.md` for the runbook + resources for the make-or-break
+"is the latent just history-conditioning?" experiment, and **`TODO.md`** for
+the prioritized work plan (code to write + experiments to run).
 
 ## Architecture at a glance
 
@@ -78,6 +80,20 @@ Example Phase-0 output (three arms over the same synthetic trajectory):
   the trained injector must earn). `recovery R^2` — a linear probe
   recovering the injected mechanism from the latent (**P0.1 / RQ2**).
 
+## Standing rules for runs
+
+Enforced in code (`documents/training.md` has the detail):
+
+* **Results** — every run writes `runs/<experiment>/<run_id>/` with
+  `run.json` / `config.json` / `env.json` / `metrics.json` /
+  `metrics.jsonl` / `artifacts/` (`gps.results`).
+* **Tracking** — every *training* run must log to Weights & Biases;
+  `WANDB_API_KEY` is read from the environment and a missing key aborts the
+  run (`gps.tracking`). No opt-out.
+* **Backends** — LLM inference uses **sglang**, LLM training uses **slime**
+  (+ sglang rollouts); the board-native CNN control is plain-torch exempt
+  (`gps.backends`).
+
 ## GPU / API install
 
 ```bash
@@ -107,8 +123,11 @@ pytest                          # 34 CPU tests, no GPU needed
 | `src/gps/simulator.py` | composes injector + backbone over a trajectory |
 | `src/gps/synthetic/` | Phase-0 players with known dynamics + toy game |
 | `src/gps/eval/` | metrics, state-recovery probes, temporal splits |
-| `src/gps/train/` | SFT + slime-RL trainers |
+| `src/gps/train/` | SFT + slime-RL trainers (enforce the standing rules) |
 | `src/gps/data/` | Lichess/SGF ingestion + session segmentation |
+| `src/gps/results.py` | result-store rule: `runs/<exp>/<run_id>/` + JSON format |
+| `src/gps/tracking.py` | mandatory W&B (reads `WANDB_API_KEY`, errors if unset) |
+| `src/gps/backends.py` | backend policy: sglang (LLM inference) / slime (LLM train) |
 | `src/gps/experiments/` | runnable experiments (Phase 0 today) |
 | `documents/` | proposal, design notes, training notes |
 | `tests/` | CPU test suite |

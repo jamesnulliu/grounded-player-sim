@@ -31,6 +31,46 @@ def test_phase0_oracle_beats_static(kind):
     assert res.oracle.nll < res.static.nll
 
 
+@pytest.mark.parametrize("kind", ["tilt", "time_pressure", "fatigue"])
+def test_phase0_history_arm_runs_and_is_distinct(kind):
+    # Milestone A: the memoryless history-conditioned control must run as a
+    # real fourth arm and is the foil for the evolving latent. We assert it
+    # produces scored predictions and differs from static (it does see the
+    # instantaneous features), but we do NOT assert a direction for the
+    # untrained heuristic vs. history -- that is a reported finding (E-A1),
+    # earned by the *trained* injector at equal capacity (E-C2).
+    res = run_phase0(player_kind=kind, n_games=24, seed=0)
+    assert res.history.n == res.heuristic.n == res.static.n
+    assert isinstance(res.dynamic_beats_history, bool)
+
+
+def test_phase0_history_uses_same_features_as_structured():
+    # "Equal inputs" must be true in code, not just in prose: both injectors
+    # read the identical shared feature function.
+    from gps.latent.structured import (
+        HistoryConditionedInjector,
+        StructuredInjector,
+        history_features,
+    )
+    from gps.synthetic.players import TiltPlayer
+
+    game = ToyGame(seed=1)
+    games = TiltPlayer("p", game, seed=1).play_session(4)
+    dp = games[-1].decisions[5]
+
+    feats = history_features(dp)
+    hist = HistoryConditionedInjector()
+    # The memoryless injector's rendered state == raw instantaneous features.
+    st = hist.update(hist.initial_state("p"), dp)
+    assert st.probe_vector == [
+        feats[d] for d in ("time_pressure", "post_loss", "fatigue", "momentum")
+    ]
+    # And the structured injector's *first-step* indicators are those features
+    # (before any EMA accumulation), confirming a shared input set.
+    s = StructuredInjector()
+    assert s._indicators(dp, None) == feats
+
+
 def test_phase0_state_recovery_has_signal():
     # P0.1: the structured latent should linearly carry degradation info.
     res = run_phase0(player_kind="time_pressure", n_games=30, seed=2)

@@ -31,13 +31,19 @@ class SFTTrainer(Trainer):
                 "on a GPU host: pip install '.[train]'"
             ) from e
 
+        # Enforce the three project rules (result store + mandatory W&B +
+        # backend policy) and open a tracked run before any training work.
+        # This is what raises if WANDB_API_KEY is unset, or if a served-LLM
+        # backbone is used without slime+sglang.
+        handle, wandb_run = self.begin_run(dataset)
+
         # The loop below is the intended orchestration. It runs only once the
         # injector/backbone expose differentiable forward passes (the neural
         # injector variants + an open-weight backbone). The structured
         # reference injector has no parameters, so SFT over it is a no-op and
         # we surface that explicitly rather than silently "succeeding".
         if not list(self._trainable_parameters(torch)):
-            return {
+            summary = {
                 "status": "no-op",
                 "reason": (
                     "no trainable parameters; the structured reference "
@@ -46,8 +52,16 @@ class SFTTrainer(Trainer):
                 ),
                 "n_trajectories": len(dataset),
             }
+            wandb_run.summary(summary)
+            wandb_run.finish(status="completed")
+            handle.finalize(status="completed", note="no-op (parameter-free)")
+            return summary
 
-        # TODO(gpu): real loop --
+        # TODO(gpu): real loop -- stream per-epoch metrics with
+        #   wandb_run.log({"loss": float(loss), "move_nll": ...}, step=epoch)
+        # and the final headline numbers with wandb_run.summary({...}); end
+        # with wandb_run.finish() + handle.finalize(). Checkpoints go to
+        # handle.artifact_path("injector.pt").
         #   opt = torch.optim.AdamW(params, lr=self.config.lr)
         #   for epoch in range(self.config.epochs):
         #     for batch in self._batches(dataset):

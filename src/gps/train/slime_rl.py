@@ -38,9 +38,17 @@ class SlimeRLTrainer(Trainer):
         self.reward_fn = reward_fn or behavior_match_reward
 
     def fit(self, dataset: TrajectoryDataset) -> dict:
+        # Enforce result store + mandatory W&B + backend policy first. For a
+        # served-LLM backbone this also asserts slime+sglang are present; the
+        # explicit slime import below keeps the message specific to the RL
+        # path even when the backbone is non-LLM (e.g. board-native RL).
+        handle, wandb_run = self.begin_run(dataset)
+
         try:
             import slime  # noqa: F401
         except ImportError as e:  # pragma: no cover - env-dependent
+            wandb_run.finish(status="failed")
+            handle.finalize(status="failed", error="slime not installed")
             raise ImportError(
                 "slime is required for SlimeRLTrainer; install it from "
                 "source on the GPU host (see documents/training.md)."

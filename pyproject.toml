@@ -41,6 +41,8 @@ api = [
 # Training the latent injector (and optionally the backbone).
 train = [
     "torch>=2.3",
+    # Mandatory experiment tracking for every training run (gps.tracking).
+    "wandb>=0.17",
     # slime is installed from source on the GPU host; pin there.
     # "slime",
 ]

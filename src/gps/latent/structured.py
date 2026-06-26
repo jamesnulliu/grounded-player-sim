@@ -40,6 +40,49 @@ from gps.latent.base import (
 DIMENSIONS = ("time_pressure", "post_loss", "fatigue", "momentum")
 
 
+def history_features(dp: DecisionPoint) -> dict[str, float]:
+    """Engineered, *instantaneous* history features for one decision point.
+
+    This is the single source of truth for "what the model is allowed to see
+    about how the session has gone so far." Both the evolving
+    :class:`StructuredInjector` (which smooths/accumulates these across the
+    trajectory) and the memoryless :class:`HistoryConditionedInjector` (which
+    consumes them raw) read *exactly* this function -- so the Milestone-A
+    "equal inputs" contrast is true by construction, not by promise.
+
+    Returns one value per anchored dimension (``DIMENSIONS`` order): the first
+    three in ``[0, 1]`` (severity), ``momentum`` signed in ``[-1, 1]``.
+    """
+    ts = dp.time_signal
+    stream = dp.recent_outcomes
+
+    # Time pressure: 1 when out of time, 0 when comfortable.
+    tp = 0.0
+    if ts.time_remaining is not None:
+        tp = max(0.0, min(1.0, 1.0 - ts.time_remaining / 30.0))
+
+    # Post-loss: 1 right after a loss, decaying with games since.
+    pl = 0.0
+    for i, o in enumerate(reversed(stream.recent)):
+        if o.won is False:
+            pl = max(0.0, 1.0 - i / 3.0)
+            break
+
+    # Fatigue: ramps with session position.
+    fat = max(0.0, min(1.0, stream.session_position / 20.0))
+
+    # Momentum: signed recent win rate centred at 0.
+    wr = stream.recent_win_rate(k=5)
+    mom = 0.0 if wr is None else (wr - 0.5) * 2.0
+
+    return {
+        "time_pressure": tp,
+        "post_loss": pl,
+        "fatigue": fat,
+        "momentum": mom,
+    }
+
+
 @dataclass
 class _Z:
     """Payload for the structured latent: one float per anchored dimension."""
@@ -110,35 +153,13 @@ class StructuredInjector(LatentStateInjector):
     def _indicators(
         self, dp: DecisionPoint, observed: Observation | None
     ) -> dict[str, float]:
-        """Engineered indicators in [0,1] (or signed for momentum)."""
-        ts = dp.time_signal
-        stream = dp.recent_outcomes
+        """Engineered indicators in [0,1] (or signed for momentum).
 
-        # Time pressure: 1 when out of time, 0 when comfortable.
-        tp = 0.0
-        if ts.time_remaining is not None:
-            tp = max(0.0, min(1.0, 1.0 - ts.time_remaining / 30.0))
-
-        # Post-loss: 1 right after a loss, decaying with games since.
-        pl = 0.0
-        for i, o in enumerate(reversed(stream.recent)):
-            if o.won is False:
-                pl = max(0.0, 1.0 - i / 3.0)
-                break
-
-        # Fatigue: ramps with session position.
-        fat = max(0.0, min(1.0, stream.session_position / 20.0))
-
-        # Momentum: signed recent win rate centred at 0.
-        wr = stream.recent_win_rate(k=5)
-        mom = 0.0 if wr is None else (wr - 0.5) * 2.0
-
-        return {
-            "time_pressure": tp,
-            "post_loss": pl,
-            "fatigue": fat,
-            "momentum": mom,
-        }
+        Delegates to the shared :func:`history_features` so the evolving
+        injector and the memoryless history-conditioned control read the
+        identical feature set (Milestone A "equal inputs").
+        """
+        return history_features(dp)
 
     def _verbalize(self, z: _Z) -> str:
         """Render the latent as a compact natural-language scouting note.
@@ -162,6 +183,67 @@ class StructuredInjector(LatentStateInjector):
         if not parts:
             parts.append("composed, near baseline form")
         return "Current player state: " + "; ".join(parts) + "."
+
+
+class HistoryConditionedInjector(LatentStateInjector):
+    """Memoryless control: same inputs as :class:`StructuredInjector`, no
+    evolving latent (Milestone A, the #1 desk-reject defense).
+
+    This is the "latent inductive bias removed, inputs held equal" baseline.
+    At each decision it injects the *raw instantaneous* engineered history
+    features (:func:`history_features`) -- the very same features the
+    structured injector smooths into ``z_t`` -- but it does **not** carry or
+    update any state across the trajectory. ``update`` is a no-op; ``render``
+    recomputes the features from scratch every step.
+
+    The contrast is therefore exactly one bit: presence vs. absence of an
+    *evolving* latent over identical inputs. If this control matches the
+    structured/neural injector, the evolving latent does not earn its keep --
+    and that reshapes the paper (TODO.md E-A1). It shares :class:`_Z` and the
+    verbal renderer with :class:`StructuredInjector`, so any gap is the latent
+    mechanism, never a rendering or vocabulary difference.
+
+    Note this is the CPU, parameter-free control. The capacity-matched
+    *trained* control (a no-latent head fed the same features through a
+    backbone) is
+    :class:`~gps.policy.history_conditioned.HistoryConditionedBackbone`, run
+    on GPU; this injector is its zero-parameter analogue for Phase 0.
+    """
+
+    def __init__(self, kind: InjectionKind = InjectionKind.VERBAL) -> None:
+        self.kind = kind
+        self.produces = (kind,)
+        # Reuse the structured injector's renderer so verbal/hidden output is
+        # byte-identical given the same feature vector.
+        self._renderer = StructuredInjector(kind=kind)
+
+    def initial_state(self, player_id: str) -> LatentState:
+        z = _Z(values={d: 0.0 for d in DIMENSIONS})
+        return LatentState(
+            payload=z,
+            probe_vector=z.as_vector(),
+            meta={"player_id": player_id},
+        )
+
+    def render(self, state: LatentState, dp: DecisionPoint) -> Injection:
+        # Raw instantaneous features -- no accumulation, no memory.
+        z = _Z(values=history_features(dp))
+        return self._renderer.render(
+            LatentState(payload=z, probe_vector=z.as_vector()), dp
+        )
+
+    def update(
+        self,
+        state: LatentState,
+        dp: DecisionPoint,
+        observed: Observation | None = None,
+    ) -> LatentState:
+        # Memoryless: the probe vector reflects only the current step's
+        # features, never an accumulated trajectory.
+        z = _Z(values=history_features(dp))
+        return LatentState(
+            payload=z, probe_vector=z.as_vector(), meta=state.meta
+        )
 
 
 class OracleInjector(LatentStateInjector):
