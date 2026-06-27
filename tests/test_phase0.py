@@ -13,8 +13,10 @@ from gps.latent.base import InjectionKind
 from gps.synthetic.players import TiltPlayer
 from gps.synthetic.toy_game import ToyGame
 
+MECHANISMS = ["tilt", "time_pressure", "fatigue", "hysteresis"]
 
-@pytest.mark.parametrize("kind", ["tilt", "time_pressure", "fatigue"])
+
+@pytest.mark.parametrize("kind", MECHANISMS)
 def test_phase0_mechanism_actually_fires(kind):
     # Guard against the degenerate case (a player who never triggers the
     # mechanism), which would make every downstream claim vacuous.
@@ -22,7 +24,7 @@ def test_phase0_mechanism_actually_fires(kind):
     assert res.mechanism_fired_frac > 0.1
 
 
-@pytest.mark.parametrize("kind", ["tilt", "time_pressure", "fatigue"])
+@pytest.mark.parametrize("kind", MECHANISMS)
 def test_phase0_oracle_beats_static(kind):
     # P0.2: a model that *knows* the true dynamic state must beat the static
     # one wherever the mechanism fires. This is the non-circular check that
@@ -31,7 +33,7 @@ def test_phase0_oracle_beats_static(kind):
     assert res.oracle.nll < res.static.nll
 
 
-@pytest.mark.parametrize("kind", ["tilt", "time_pressure", "fatigue"])
+@pytest.mark.parametrize("kind", MECHANISMS)
 def test_phase0_history_arm_runs_and_is_distinct(kind):
     # Milestone A: the memoryless history-conditioned control must run as a
     # real fourth arm and is the foil for the evolving latent. We assert it
@@ -69,6 +71,62 @@ def test_phase0_history_uses_same_features_as_structured():
     # (before any EMA accumulation), confirming a shared input set.
     s = StructuredInjector()
     assert s._indicators(dp, None) == feats
+
+
+def test_hysteresis_is_not_reconstructable_from_history_features():
+    # The load-bearing property of the Milestone-A mechanism: the hidden
+    # leaky-loss accumulator is NOT a function of the shared history_features.
+    # We build two outcome streams with *identical* history_features (same
+    # capped recency-of-last-loss, same 5-game win rate, same session position,
+    # same clock) but different deeper/older loss histories, and show the
+    # player's degradation (beta) differs. A memoryless reader of the features
+    # therefore cannot distinguish these states; an accumulator can. If this
+    # ever fails, the mechanism has become memoryless and E-A1 is vacuous.
+    from gps.interface import (
+        DecisionPoint,
+        Game,
+        Outcome,
+        OutcomeStream,
+        TimeSignal,
+    )
+    from gps.latent.structured import history_features
+    from gps.synthetic.players import HysteresisTiltPlayer
+    from gps.synthetic.toy_game import ToyGame
+
+    def W():
+        return Outcome(won=True)
+
+    def L():
+        return Outcome(won=False)
+
+    # Both share the last 5 games [W, W, W, W, L]: last loss 0 games ago and a
+    # 0.8 win rate over the window. They differ only *before* the window.
+    tail = [W(), W(), W(), W(), L()]
+    stream_a = OutcomeStream(recent=[W()] * 5 + tail, session_position=10)
+    stream_b = OutcomeStream(recent=[L()] * 5 + tail, session_position=10)
+
+    def make_dp(stream):
+        return DecisionPoint(
+            game=Game.CHESS,
+            player_id="p",
+            state="toy:ply=0",
+            legal_actions=("a", "b"),
+            engine_reference=None,
+            time_signal=TimeSignal(time_remaining=60.0, move_number=0),
+            recent_outcomes=stream,
+        )
+
+    # Equal inputs the control is allowed to see ...
+    assert history_features(make_dp(stream_a)) == history_features(
+        make_dp(stream_b)
+    )
+
+    # ... but the hidden accumulator (hence beta / true degradation) differs.
+    player = HysteresisTiltPlayer("p", ToyGame(seed=0), base_beta=4.0)
+    beta_a = player.beta_at(0, 60.0, stream_a)
+    beta_b = player.beta_at(0, 60.0, stream_b)
+    assert abs(beta_a - beta_b) > 0.1  # the loss-heavy history tilts harder
+    assert beta_b < beta_a
 
 
 def test_phase0_state_recovery_has_signal():

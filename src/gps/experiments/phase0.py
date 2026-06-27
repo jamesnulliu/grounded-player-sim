@@ -188,6 +188,7 @@ def run_phase0(
 def _make_player(kind: str, game: ToyGame, seed: int) -> SyntheticPlayer:
     from gps.synthetic.players import (
         FatiguePlayer,
+        HysteresisTiltPlayer,
         TiltPlayer,
         TimePressurePlayer,
     )
@@ -201,4 +202,9 @@ def _make_player(kind: str, game: ToyGame, seed: int) -> SyntheticPlayer:
         return TimePressurePlayer(pid, game, seed=seed, base_beta=4.0)
     if kind == "fatigue":
         return FatiguePlayer(pid, game, seed=seed, base_beta=4.0)
+    if kind == "hysteresis":
+        # The Milestone-A mechanism: a hidden leaky integral of losses that
+        # history_features cannot reconstruct (see the class docstring and
+        # documents/milestone_a.md section 6).
+        return HysteresisTiltPlayer(pid, game, seed=seed, base_beta=4.0)
     raise ValueError(f"unknown player kind: {kind}")

@@ -288,3 +288,61 @@ class FatiguePlayer(SyntheticPlayer):
             over = stream.session_position - self.onset
             beta -= self.fatigue_drop * min(1.0, over / 5.0)
         return max(0.5, beta)
+
+
+@dataclass
+class HysteresisTiltPlayer(SyntheticPlayer):
+    """Tilt whose depth is a *hidden leaky integral* of the loss history.
+
+    Milestone A (``documents/milestone_a.md`` section 6) asks for a mechanism a
+    memoryless policy "provably cannot reconstruct" from the engineered history
+    features -- without it, the memoryless control is a strong baseline *by
+    construction* and the evolving latent can never earn a win. The other three
+    players fail that bar: :class:`TiltPlayer`'s drop is a function of
+    games-since-last-loss (mirrored by ``history_features``'s ``post_loss``),
+    :class:`TimePressurePlayer`'s of the current clock (``time_pressure``), and
+    :class:`FatiguePlayer`'s of the session index (``fatigue``). Each is a
+    near-instantaneous function of the current :class:`DecisionPoint`, so a
+    memoryless reader captures it.
+
+    This player instead carries a hidden accumulator advanced game to game::
+
+        h_g    = rho * h_{g-1} + (1 - rho) * loss_indicator(g-1)
+        beta_g = base_beta - tilt_scale * h_g
+
+    ``h_g`` is a geometrically-weighted integral of the *entire ordered*
+    outcome stream with decay ``rho``. The shared ``history_features`` exposes
+    only a 5-game *unordered* win rate (``momentum``) and a 3-game-capped
+    recency-of-last-loss (``post_loss``); neither recovers ``h_g`` -- two
+    sessions with identical features can carry different ``h_g`` because losses
+    *outside* the 5-game window, and the *ordering* within it, move the
+    accumulator but not the features. A memoryless reader of those features
+    therefore has irreducible error here, whereas an evolving latent that
+    integrates the stream with the right time constant does not.
+
+    Note the *untrained* EMA of
+    :class:`~gps.latent.structured.StructuredInjector` integrates with a fixed,
+    hand-set ``alpha`` (the wrong time constant), so it is still not guaranteed
+    to beat the control even here -- recovering ``rho`` is exactly the gain a
+    *trained* injector must earn (E-A1).
+    """
+
+    rho: float = 0.7
+    tilt_scale: float = 4.0
+
+    def __init__(self, player_id: str, game, **kw) -> None:
+        self.rho = kw.pop("rho", 0.7)
+        self.tilt_scale = kw.pop("tilt_scale", 4.0)
+        super().__init__(player_id, game, **kw)
+
+    def beta_at(self, ply, time_remaining, stream) -> float:
+        # Integrate the full ordered session history with geometric decay.
+        # Constant within a game (h depends on completed games only), so the
+        # degradation is a game-level state that evolves across the session --
+        # which is what carries the cross-game hysteresis.
+        h = 0.0
+        for o in stream.recent:  # oldest -> newest
+            loss = 1.0 if o.won is False else 0.0
+            h = self.rho * h + (1.0 - self.rho) * loss
+        beta = self.base_beta - self.tilt_scale * h
+        return max(0.5, beta)

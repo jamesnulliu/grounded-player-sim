@@ -76,15 +76,25 @@ guards this.)
 src/gps/latent/structured.py
   history_features(dp)            # single source of truth for "what history is visible"
   StructuredInjector              # EMA -> evolving z_t (the latent arm, untrained reference)
-  HistoryConditionedInjector      # NEW: same features, memoryless (CPU control, arm B)
+  HistoryConditionedInjector      # same features, memoryless (CPU control, arm B)
   OracleInjector                  # reads true degradation (upper bound, P0.2)
 
+src/gps/latent/neural.py
+  NeuralInjector                  # arm D, TRAINABLE: GRU over the same features,
+                                  #   real parameters(), both channels (torch, lazy)
+
+src/gps/synthetic/players.py
+  HysteresisTiltPlayer            # hidden leaky-loss integral -- the mechanism a
+                                  #   memoryless reader of history_features CANNOT
+                                  #   reconstruct (so the D-vs-B test is non-vacuous)
+
 src/gps/policy/history_conditioned.py
-  HistoryConditionedBackbone      # NEW: no-latent head fed raw history features
-                                  #      (capacity-matched GPU control; predict() is a stub)
+  HistoryConditionedBackbone      # no-latent head fed raw history features
+                                  #   (capacity-matched GPU control; predict() is a stub)
 
 src/gps/experiments/phase0.py
-  run_phase0(...)                 # NOW 4 arms: static | history | heuristic | oracle
+  run_phase0(...)                 # 4 arms: static | history | heuristic | oracle,
+                                  #   over tilt | time_pressure | fatigue | hysteresis
   Phase0Result.dynamic_beats_history   # the E-A1 direction, reported not asserted
 ```
 
@@ -139,23 +149,43 @@ memoryless control on real chess, that is the reshape-the-paper finding.
 
 Ordered; each step is small and unblocks the next.
 
-1. **Neural injector** — `src/gps/latent/neural.py` (TODO Milestone A). A
-   recurrent/state-space `LatentStateInjector` with real `parameters()` so
-   `SFTTrainer` stops hitting its no-op guard. Must honor both `VERBAL` and
-   `HIDDEN` `produces`. This is arm D's trainable form.
-2. **SFT loop** — `src/gps/train/sft.py` (TODO Milestone B). The tensor loop
-   is sketched in-source; bind it to the neural injector + a differentiable
-   backbone. Loss = move-NLL + λ·timing-NLL, teacher-forcing `z_t` along each
-   trajectory.
+1. ~~**Neural injector** — `src/gps/latent/neural.py`~~ **DONE.**
+   `NeuralInjector`: a GRU recurrence over the shared `history_features` with
+   real `parameters()` (the `SFTTrainer` no-op guard is now cleared), honoring
+   both `VERBAL` and `HIDDEN` from one learned state. Arm D's trainable form;
+   CPU-built and unit-tested. What remains to *use* it is steps 2–3 below.
+2. ~~**SFT loop** — `src/gps/train/sft.py`~~ **DONE.** Real loop bound to the
+   neural injector + a differentiable head (`gps/policy/diff_policy.py`,
+   `DiffMovePolicy`). Loss = move-NLL + λ·timing-NLL, teacher-forcing `z_t`;
+   tracked to W&B; strict-temporal-split eval (`EvalSpec`).
 3. **`HistoryConditionedBackbone.predict`** — `src/gps/policy/history_conditioned.py`.
    The feature contract (`feature_vector`, `param_report`) and the wiring are
    done and CPU-tested; finish the torch forward (trunk + feature-fusion MLP +
    move/timing heads). **Size the fusion MLP to match the latent injector's
-   added parameter budget** and assert it via `param_report()`.
-4. **E-A1 (extended Phase 0, GPU):** smoke-train the neural injector on
-   Phase-0 synthetic data; confirm trained-D > B where the memoryless model
-   provably cannot reconstruct the state (use a *delayed* / *hysteretic*
-   synthetic mechanism — see §6 — not just the near-instantaneous ones).
+   added parameter budget** and assert it via `param_report()`. *(Deferred for
+   the chess number; E-A1 below uses the `persist=False` twin instead, which is
+   exactly capacity-matched.)*
+4. ~~**E-A1 (extended Phase 0, GPU)**~~ **DONE — positive & hardened.**
+   `gps train-ea1` (`experiments/ea1.py`) trains arm D (`persist=True`) vs the
+   memoryless twin arm B (`persist=False`) on the hysteretic
+   `HysteresisTiltPlayer`. Hardened verdict (the §5 decision rule, applied):
+   - **Significance — pooled bootstrap over 240 distinct players (5 data
+     seeds × 48), equal capacity (1159 params each):** mean D−B = **−0.0060**,
+     95% CI **[−0.0081, −0.0040]**, P(D−B<0) = **1.000**, D wins **69%** of
+     players. **Significant.** 5/5 seeds negative; 4/5 individually significant.
+   - **Capacity robustness (§6):** still significant when B is given 3× D's
+     params (−0.0053, CI [−0.0085, −0.0021]); only when B gets **12× D's
+     params** does the gap shrink to marginal (−0.0025, CI [−0.0054, +0.0004])
+     while D *still* wins 65% of players. A memoryless control needs an order
+     of magnitude more capacity merely to approach parity — not an artifact.
+   - **Caveat:** per-run GPU nondeterminism (cudnn) makes single-seed CIs vary
+     run-to-run (same seed=1 gave −0.0016 ns once and −0.0091 sig another);
+     the pooled-over-players number is the trustworthy one.
+   - **Magnitude:** small (~0.4% relative on a ~1.49-nat move-NLL), expected
+     on synthetic data where the memoryless control is strong by construction.
+   Gate cleared (significant, capacity-robust). The §5 "concentrated in
+   high-dynamics moments" sub-clause is not yet measured — better tested on the
+   richer dynamics of real chess (E-C2) than on this near-saturated toy.
 5. **E-C2 (the real test, chess):** trained-D vs. history-conditioned-backbone
    on Lichess, strict temporal split, equal capacity. This is the number that
    goes in the paper.
@@ -271,10 +301,26 @@ of Milestone A.
   stub.
 - [x] Phase-0 wired to 4 arms; `dynamic_beats_history` reported (not asserted);
   CLI + tests updated; `ruff` + `pytest` green.
-- [ ] Neural injector (`gps/latent/neural.py`) with real `parameters()`.
-- [ ] SFT tensor loop (`gps/train/sft.py`).
-- [ ] `HistoryConditionedBackbone.predict` torch forward + capacity match.
-- [ ] A *hysteretic* synthetic mechanism for a fair E-A1.
-- [ ] E-A1 (trained D > B on Phase-0, GPU).
+- [x] Neural injector (`gps/latent/neural.py`) with real `parameters()` —
+  `NeuralInjector` (GRU over the shared features, both channels, differentiable,
+  CPU-tested in `tests/test_neural_injector.py`).
+- [x] SFT tensor loop (`gps/train/sft.py`) — real loop + `DiffMovePolicy`
+  differentiable head; tracked, checkpointed, temporal-split eval.
+- [ ] `HistoryConditionedBackbone.predict` torch forward + capacity match
+  (board-native trunk). *Note:* E-A1 below sidesteps this with the
+  `persist=False` twin, an exactly-capacity-matched control; the board-native
+  version is still needed for the chess number (E-C2).
+- [x] A *hysteretic* synthetic mechanism for a fair E-A1 —
+  `HysteresisTiltPlayer` (hidden leaky-loss integral; the non-reconstructability
+  guard test is green).
+- [x] E-A1 (trained D > B on Phase-0, GPU) — **positive & hardened:** pooled
+  bootstrap over **240 players** (5 seeds × 48), equal capacity, mean
+  D−B = **−0.0060**, 95% CI **[−0.0081, −0.0040]**, P(D−B<0) = **1.000**, D wins
+  **69%**. Significant; survives B at 3× params, marginal only at 12× B params
+  (D still wins 65%). Small (~0.4% rel.) but capacity-robust. (`gps train-ea1`
+  / `--capacity-sweep`; RTX 4060, tracked to W&B.)
+- [x] Per-player bootstrap CI over players (§5 significance tool) —
+  `gps.eval.bootstrap.bootstrap_ci`, wired into `EA1Result`; capacity sweep
+  (`run_ea1_capacity_sweep`) for the §6 not-an-artifact check.
 - [ ] E-C2 (trained D vs. B on Lichess, equal capacity, temporal split).
 - [ ] Pre-registered decision rule (§5) recorded before looking at E-C2.

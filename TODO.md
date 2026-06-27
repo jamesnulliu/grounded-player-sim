@@ -44,33 +44,63 @@ novel (see design.md §8 for what is shared territory).
   - [ ] B9 ChessMimic-style cohort move+timing (per-100-Elo-band transformer;
     the sharpest move+timing-in-chess competitor — static, no oracle, no future
     split) → the head-to-head for E-C6 and a strong static foil for E-C1
-- [ ] **Trainable neural injector** (the real `f_phi`, replacing the
+- [x] **Trainable neural injector** (the real `f_phi`, replacing the
   parameter-free `StructuredInjector` for training).
-  `src/gps/latent/neural.py` — a recurrent/state-space latent implementing
-  `LatentStateInjector` with `parameters()` so `SFTTrainer` stops hitting its
-  no-op guard. Keep `produces` honoring both `VERBAL` and `HIDDEN`.
+  `src/gps/latent/neural.py` — `NeuralInjector`: a GRU recurrence over the
+  shared `history_features` with real torch `parameters()` (so `SFTTrainer`
+  no longer hits its no-op guard — guarded by
+  `tests/test_neural_injector.py::test_neural_injector_unblocks_sft_guard`).
+  One learned state reads out to the anchored `DIMENSIONS` and renders to
+  **both** `VERBAL` and `HIDDEN` (channel-only contrast for RQ6). Lazy torch,
+  CPU-importable; `param_report()` for the equal-capacity claim. Differentiable
+  end-to-end. The training path (`latent_trajectory` + `persist` flag) and the
+  real SFT loop are now wired (E-A1 below). The capacity-matched
+  `HistoryConditionedBackbone` (board-native trunk) is still a stub — E-A1
+  currently uses the `persist=False` twin as the equal-capacity control.
 
 ### Experiments
-- [~] **E-A1 (Phase 0, extended):** the history-conditioned baseline is now a
-  fourth arm in `experiments/phase0.py` (`history`), and
-  `Phase0Result.dynamic_beats_history` reports the direction. **CPU status:**
-  the *untrained* EMA heuristic does **not** beat the memoryless control on
-  the current near-instantaneous mechanisms — expected, and exactly why the
-  *trained* injector must earn it (see `milestone_a.md` §3). Remaining: (a) a
-  **hysteretic** synthetic mechanism a memoryless model provably cannot
-  reconstruct, (b) the *trained* neural injector beating `history` on it at
-  **equal capacity** (needs Milestone B). If trained-D still ties B, the
-  structured latent does not earn its keep — surface honestly (reshapes paper).
+- [x] **E-A1 (Phase 0, extended) — first positive signal.** Two stages:
+  - **CPU (untrained):** the history-conditioned baseline is a fourth arm in
+    `experiments/phase0.py` (`history`); the *untrained* EMA heuristic does
+    **not** beat it (`>history` False on all mechanisms incl. hysteresis,
+    1.354 vs 1.350) — expected, the fixed EMA uses the wrong time constant.
+  - **GPU (trained), the real test:** `experiments/ea1.py` (`gps train-ea1`)
+    trains arm **D** (`NeuralInjector(persist=True)`) vs arm **B**
+    (`persist=False`, the memoryless twin at *exactly* equal capacity — 1159
+    params each) by SFT, on a **strict temporal split** (earlier games train,
+    move-NLL scored on held-out later games), on the `HysteresisTiltPlayer`.
+  - **Hardened verdict (the §5 decision rule, applied):** per-player bootstrap
+    pooled over **240 distinct players** (5 seeds × 48), equal capacity →
+    **mean D−B = −0.0060, 95% CI [−0.0081, −0.0040], P(D−B<0) = 1.000, D wins
+    69%**. Significant (5/5 seeds negative, 4/5 individually sig). **Capacity
+    (§6):** still significant at 3× B params; only at **12× B params** does it
+    go marginal (−0.0025, CI just includes 0) while D still wins 65% — a
+    memoryless control needs ~10× the capacity merely to approach parity.
+    Magnitude small (~0.4% rel.) but capacity-robust; gate cleared. *Caveat:*
+    per-run GPU nondeterminism (cudnn) makes single-seed CIs wobble, so the
+    pooled-over-players number is the trustworthy one. Tooling:
+    `gps.eval.bootstrap`, `run_ea1_capacity_sweep`, `--capacity-sweep`.
+  - Remaining (defer to chess, where dynamics are richer than this near-
+    saturated toy): the §5 concentration-in-high-dynamics-moments check, then
+    E-C2 on real chess.
+- `(a)` the **hysteretic** mechanism: done — `HysteresisTiltPlayer` (hidden
+  leaky-loss integral; `test_hysteresis_is_not_reconstructable_from_history_features`
+  proves the state is *not* a function of `history_features`).
 
 ---
 
 ## Milestone B — Make training real (P0)
 
 ### Code
-- [ ] **`src/gps/train/sft.py`:** implement the tensor loop (currently a
-  documented stub with a no-op guard). Teacher-force the latent along each
-  trajectory; loss = move-NLL + λ·timing-NLL. Needs the neural injector
-  (Milestone A) + a differentiable backbone.
+- [x] **`src/gps/train/sft.py`:** real tensor loop done. Teacher-forces the
+  latent along each trajectory; loss = move-NLL + λ·timing-NLL; AdamW; grad
+  clip; per-epoch metrics streamed to W&B + `metrics.jsonl`; checkpoint saved;
+  strict-temporal-split eval (`EvalSpec`). Generic over
+  `injector.latent_trajectory` + `backbone.encode_batch/trajectory_loss`, so a
+  board-native/LLM backbone drops in unchanged. Differentiable backbone for
+  Phase-0/E-A1: `src/gps/policy/diff_policy.py` (`DiffMovePolicy`). Runs on the
+  RTX 4060 (CUDA) or CPU. **Still TODO:** minibatching (currently full-batch —
+  fine for Phase-0, needed for chess) and the `HIDDEN`-soft-prompt LLM path.
 - [ ] **`src/gps/policy/sglang_backbone.py`:** finish `_engine()` (launch
   sglang Engine, logprobs on) and `predict()` (constrained decoding over
   `dp.legal_actions`, read move logprobs → `MoveDistribution`; derive timing).

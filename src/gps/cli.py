@@ -21,7 +21,7 @@ def _cmd_phase0(args: argparse.Namespace) -> int:
     from gps.experiments.phase0 import run_phase0
 
     kinds = (
-        ["tilt", "time_pressure", "fatigue"]
+        ["tilt", "time_pressure", "fatigue", "hysteresis"]
         if args.player == "all"
         else [args.player]
     )
@@ -52,6 +52,37 @@ def _cmd_phase0(args: argparse.Namespace) -> int:
             "\nNote: oracle did not beat static on every mechanism; "
             "inspect per-mechanism output above."
         )
+    return 0
+
+
+def _cmd_train_ea1(args: argparse.Namespace) -> int:
+    from gps.experiments.ea1 import run_ea1, run_ea1_capacity_sweep
+
+    common = dict(
+        n_players=args.players,
+        n_games=args.games,
+        latent_dim=args.latent_dim,
+        epochs=args.epochs,
+        lr=args.lr,
+        seed=args.seed,
+        bootstrap_n=args.bootstrap_n,
+    )
+    if args.capacity_sweep:
+        print("=== E-A1 capacity sweep (B at 1x/2x/4x D width) ===")
+        for mult, res in run_ea1_capacity_sweep(
+            latent_dim=args.latent_dim,
+            n_players=args.players,
+            n_games=args.games,
+            epochs=args.epochs,
+            lr=args.lr,
+            seed=args.seed,
+            bootstrap_n=args.bootstrap_n,
+        ).items():
+            print(f"\n--- B width = {mult}x D ---")
+            print(res.summary())
+        return 0
+    res = run_ea1(b_latent_dim=args.b_latent_dim, **common)
+    print(res.summary())
     return 0
 
 
@@ -99,7 +130,7 @@ def main(argv: list[str] | None = None) -> int:
     p0.add_argument(
         "--player",
         default="all",
-        choices=["all", "tilt", "time_pressure", "fatigue"],
+        choices=["all", "tilt", "time_pressure", "fatigue", "hysteresis"],
     )
     p0.add_argument("--games", type=int, default=24)
     p0.add_argument("--seed", type=int, default=0)
@@ -107,6 +138,30 @@ def main(argv: list[str] | None = None) -> int:
         "--injection", default="hidden", choices=["hidden", "verbal"]
     )
     p0.set_defaults(func=_cmd_phase0)
+
+    ea1 = sub.add_parser(
+        "train-ea1",
+        help="train arm D vs B (Milestone A); needs WANDB_API_KEY",
+    )
+    ea1.add_argument("--players", type=int, default=32)
+    ea1.add_argument("--games", type=int, default=20)
+    ea1.add_argument("--latent-dim", type=int, default=16)
+    ea1.add_argument("--epochs", type=int, default=400)
+    ea1.add_argument("--lr", type=float, default=1e-2)
+    ea1.add_argument("--seed", type=int, default=0)
+    ea1.add_argument("--bootstrap-n", type=int, default=2000)
+    ea1.add_argument(
+        "--b-latent-dim",
+        type=int,
+        default=None,
+        help="give arm B a different width (capacity check); default=D",
+    )
+    ea1.add_argument(
+        "--capacity-sweep",
+        action="store_true",
+        help="run B at 1x/2x/4x D width instead of a single run",
+    )
+    ea1.set_defaults(func=_cmd_train_ea1)
 
     info = sub.add_parser("info", help="print environment + backend status")
     info.set_defaults(func=_cmd_info)
