@@ -19,11 +19,13 @@ env/
 .coverage
 htmlcov/
 
-# Checkpoints / data / engines / run outputs (never commit large artifacts)
-checkpoints/
-data/
-runs/
-wandb/
+# Checkpoints / data / engines / run outputs (never commit large artifacts).
+# Anchored to repo root so they do not shadow source packages like
+# src/gps/data/ (the ingestion code, which MUST be committed).
+/checkpoints/
+/data/
+/runs/
+/wandb/
 *.pgn
 *.sgf
 *.bin
