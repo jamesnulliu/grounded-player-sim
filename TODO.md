@@ -125,16 +125,41 @@ novel (see design.md §8 for what is shared territory).
 ## Milestone C — Chess data pipeline (P0, gates all real results)
 
 ### Code
-- [ ] **`src/gps/data/lichess.py`:** parse Lichess PGN + `[%clk]` (python-chess
+- [x] **`src/gps/data/lichess.py`:** parse Lichess PGN + `[%clk]` (python-chess
   `GameNode.clock()`), emit `train.base.Trajectory` per player. Exclude bot
-  accounts. Focus blitz/rapid for within-session density.
+  accounts. Focus blitz/rapid for within-session density. **Landed + validated
+  on real data (2026-06-28):** ran the *real* `open_pgn`/`iter_game_records`
+  over 60k games of the 2017-04 archive (streamed from a 120MB HTTP-range
+  prefix) — parses clean (99.4% clocked, 100% UTC, 0 bots, no large-`--long`
+  zstd bug), `bucket→stats→select→build_trajectory` all run, a sample player
+  rendered 186 games → 5,582 DecisionPoints. Two data facts folded in below
+  (parser throughput; 1s-quantized, zero-inflated clocks).
 - [ ] **`src/gps/games/chess.py`:** concrete `Game` — board encoding (FEN for
   LLM backbone, tensor for board-native), `legal_moves` (UCI), `apply_move`.
-- [ ] **`src/gps/games/oracles/stockfish.py`:** `EngineOracle` wrapping
+  *Note: logged trajectories already carry `fen_before` + `legal_actions`, so
+  next-move-NLL scoring (E-C1/2) does not strictly need this; it is the
+  board-native tensor-encoding path that does.*
+- [~] **`src/gps/games/oracles/stockfish.py`:** `EngineOracle` wrapping
   Stockfish (or the published Lichess eval set) → per-move centipawn loss.
   **Record depth** (centipawn-loss is settings-dependent — must report it).
-- [ ] **Player selection util:** filter players by volume AND multi-game
-  session count (need within-session dynamics).
+  *Both oracle sketches landed* (`StockfishOracle` with precise `move_loss`;
+  `LichessEvalOracle.from_subset` + `eval_set_coverage`). **Not yet exercised
+  on real data:** no Stockfish binary on PATH, and the coverage call needs the
+  multi-GB `lichess_db_eval.jsonl.zst`. Deferred — only gates E-C4/5/6, not the
+  E-C1/2/3 next-move-NLL headline.
+- [~] **Player selection util:** filter players by volume AND multi-game
+  session count (need within-session dynamics). *`select_players` (volume +
+  session gates) landed in `lichess.py` and validated — even a 60k-game prefix
+  yields 13 players at ≥50 games/≥3 sessions, so a full month is not data-
+  limited.* **Still TODO:** filter to a single time-control class before timing
+  analysis (the corpus mixes bullet→blitz→rapid; one outlier think-time = 4430s).
+- [ ] **Production ingest driver (`gps ingest` CLI).** Turn the validated layer
+  into the actual E-C dataset. **2-pass:** a cheap stats pass to select the
+  cohort, then `bucket_by_player(players=cohort)` + `build_dataset` to assemble
+  and **persist** trajectories (so experiments don't re-parse). **Parallelize
+  the parse:** at ~119 games/s a full month (~11M games) is ~26h single-threaded
+  — shard across the 12 cores (python-chess legal-move gen is the bottleneck,
+  not zstd/IO). Today the CLI only exposes `phase0`/`train-ea1`/`info`.
 - [ ] **`src/gps/data/sessions.py`:** already done — but **sweep the gap
   threshold as an ablation** (it is an unlabeled construct, see design.md §6).
 
@@ -155,7 +180,10 @@ novel (see design.md §8 for what is shared territory).
   vs. Allie-style aggregate (B4) **and vs. ChessMimic's per-move clock model
   (Pearson r=0.41 — the concrete number to beat; B9)**. Differentiator: our
   timing is conditioned on the *evolving* state and is *per-individual*, not
-  Elo-band-aggregate.
+  Elo-band-aggregate. **Data fact (validated 2026-06-28):** Lichess `[%clk]` is
+  quantized to whole seconds → think-time is integer-valued and **zero-inflated**
+  (~14% of moves are exactly 0s — bullet premoves; median 2s). Model it as a
+  discrete / zero-inflated distribution, **not** a continuous Gaussian.
 
 ---
 
