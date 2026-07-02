@@ -1,0 +1,159 @@
+REAL KT (ASSISTments 2009, preprocessed; 3114 students, 149 skills, 278k responses).
+Non-synthetic RQ5 + Milestone-F. item feature = per-skill empirical difficulty. Correctness
+channel only (no response time in this dataset). Cohort: 150 students, >=50 resp, capped 200.
+
+RQ5 (generality) — evolving latent vs memoryless on REAL student RESPONSE prediction:
+  D=0.5240 B=0.5302  D-B=-0.0063  95% CI [-0.0123,+0.0006]  D wins 65%  P(D-B<0)=0.97
+  => the evolving latent captures real learning dynamics a memoryless twin misses (marginal @150 students).
+
+Milestone-F (population) on REAL KT:
+  observed acc spread 0.180, model 0.097 | W1 model 0.066 vs avg-person 0.136 | JS 0.178 vs 0.585
+  precision/recall model 0.93/0.71 vs avg-person 1.00/0.00 | corr(pred,obs)=0.923
+  => per-student latent RECOVERS the real accuracy distribution, beats "positive average person".
+
+--- FIRM-UP: 300 students, >=50 resp, capped 200 (41120 responses) ---
+RQ5 (generality) — evolving latent vs memoryless on REAL student RESPONSE prediction:
+  D=0.5347 B=0.5445  D-B=-0.0098  95% CI [-0.0157,-0.0042]  D wins 60%  P(D-B<0)=1.00
+  => CLEARLY SIGNIFICANT with more data (the 150-student P=0.97 was marginal; 300 -> CI excludes 0).
+Milestone-F (population) on REAL KT:
+  W1 model 0.0669 vs avg-person 0.1595 (2.4x closer) | JS model 0.158 vs 0.674
+  precision/recall model 0.89/0.76 vs avg-person 1.00/0.00 | corr(pred,obs)=0.947
+  => RECOVERS heterogeneity; average-person = high precision, ~0 recall (the average trap).
+
+--- COHORT SENSITIVITY (RQ5 response channel, seed 0, future/temporal split) ---
+Does the "D beats memoryless" result hold across cohort definitions? Vary
+n_students x min_resp. D-B mean | 95% CI | D-win% | P(D-B<0):
+  n=150 min30 (17235 resp): -0.0051 [-0.0105,+0.0004]  56%  P=0.96
+  n=150 min50 (21952 resp): -0.0063 [-0.0123,+0.0006]  65%  P=0.97
+  n=300 min30 (33328 resp): -0.0057 [-0.0106,-0.0012]  59%  P=0.99
+  n=300 min50 (41120 resp): -0.0060 [-0.0115,-0.0008]  59%  P=0.99
+  n=500 min50 (70154 resp): -0.0095 [-0.0124,-0.0067]  67%  P=1.00
+  => ROBUST: D-B negative in ALL 5 configs, P>=0.96 everywhere; significant
+     (CI excludes 0) for n>=300; strongest at n=500. Significance strengthens
+     monotonically with cohort size = the signature of a real effect.
+     Sweep: scratchpad/real_kt_sensitivity.py.
+
+--- Milestone-F (population) on the SAME n=500 cohort (unifies RQ5+F) ---
+  observed acc spread 0.190, model 0.095 | W1 model 0.0736 vs avg-person 0.1468 (2.0x closer)
+  JS model 0.166 vs 0.607 | precision/recall model 0.86/0.75 vs avg-person 1.00/0.00 | corr(pred,obs)=0.957
+  => on the SAME 500 students: D beats memoryless on responses (RQ5) AND recovers the
+     accuracy distribution (F). Builder scratchpad/real_kt_f500.py.
+
+--- 3-SEED confirmation of the n=500 RQ5 headline (seed-stability) ---
+  seed 0: D-B=-0.0095 [-0.0124,-0.0067]  67%  P=1.00
+  seed 1: D-B=-0.0116 [-0.0146,-0.0087]  73%  P=1.00
+  seed 2: D-B=-0.0090 [-0.0122,-0.0059]  64%  P=1.00
+  => SEED-STABLE: D-B in [-0.0116,-0.0090] (mean ~-0.010), P=1.00 in EVERY seed,
+     all 3 CIs exclude 0, D wins 64-73%. As rigorous as the chess Tier-1 (multi-seed).
+     Builder scratchpad/real_kt_multiseed.py.
+
+--- TEMPORAL-SHUFFLE negative control (what drives the edge) n=500 seed0 ---
+  REAL ORDER: D=0.5489 B=0.5584 | D-B=-0.0095 [-0.0124,-0.0067] 67% P=1.00
+  SHUFFLED:   D=0.5674 B=0.5825 | D-B=-0.0151 [-0.0189,-0.0113] 70% P=1.00
+  => The edge does NOT collapse under per-student order shuffling (undiminished,
+     if anything larger). Both arms lose absolute accuracy, but D's edge over the
+     memoryless twin PERSISTS. Interpretation: the correctness-channel edge is
+     ORDER-INVARIANT -> online per-student ability individualization (B resets each
+     step, can't accumulate), NOT exploitation of response ORDER (learning-curve
+     dynamics). Scope real-KT as individualization. Builder scratchpad/real_kt_shuffle.py.
+
+--- SAME shuffle on SYNTHETIC KT (timing channel; tilt is order-dependent) ---
+  REAL ORDER: TIMING D-B=-0.0654 [-0.0681,-0.0630] P=1.00 (reproduces known synth result)
+  SHUFFLED:   TIMING D-B=-0.0635 [-0.0653,-0.0618] P=1.00
+  => ALSO undiminished. WHY (equal-inputs design): memoryless B already gets the
+     hand-crafted instantaneous history_features (post_loss, momentum, time_pressure,
+     fatigue), so B can already read the tilt per-step. D's MARGINAL edge is the learned
+     per-student accumulation/calibration on top = individualization = order-invariant
+     (same capability as Milestone-F heterogeneity recovery).
+  => CONSEQUENCE: the chess-timing = STATE-DYNAMICS claim rests on the CONCENTRATION
+     analysis (edge 2-8x under time-pressure; uniform individualization wouldn't concentrate),
+     NOT on shuffling. Faithful chess shuffle = game-level reconstruction = future work.
+     Builder scratchpad/synth_kt_shuffle.py.
+
+============================================================
+CROSS-DATASET REPLICATION — ASSISTments 2017 (2nd real KT dataset)
+============================================================
+Same pipeline/cohort as the assist09 headline: 500 students >=50 resp, 94440 responses,
+correctness channel, future/temporal split. theophilee repo, same format as assist09.
+Builder scratchpad/assist17_rq5.py.
+
+RQ5 (response channel, 3 seeds, n=500):
+  seed 0: D-B=-0.0145 [-0.0173,-0.0118]  65%  P=1.00
+  seed 1: D-B=-0.0128 [-0.0157,-0.0101]  65%  P=1.00
+  seed 2: D-B=-0.0143 [-0.0169,-0.0115]  69%  P=1.00
+  => REPLICATES (even stronger than assist09 -0.010): D-B ~-0.014, all seeds P=1.00, CIs exclude 0.
+
+Milestone-F (population, seed 0):
+  observed spread 0.147, model 0.109 | W1 model 0.0322 vs avg-person 0.1185 (3.7x closer)
+  JS model 0.083 vs 0.653 | precision/recall model 0.73/0.90 vs avg-person 1.00/0.00 | corr(pred,obs)=0.924
+  => REPLICATES: recovers heterogeneity, beats average-person (3.7x closer W1 than assist09's 2.0x).
+
+CONCLUSION: RQ5 + F are NOT ASSISTments-2009-specific -> cross-dataset generality on real KT.
+
+============================================================
+CROSS-PLATFORM REPLICATION — bridge_algebra06 (KDD Cup 2010, Cognitive Tutor)
+============================================================
+DIFFERENT PLATFORM from ASSISTments (Carnegie Learning Cognitive Tutor / Bridge-to-Algebra).
+1.8M rows, 1113 students >=50 resp; same pipeline (500 students, 3 seeds), same 5-col format.
+Builder scratchpad/assist17_rq5.py on bridge06.csv.
+
+RQ5 (response channel, 3 seeds, n=500):
+  seed 0: D-B=-0.0045 [-0.0062,-0.0028]  57%  P=1.00
+  seed 1: D-B=-0.0041 [-0.0056,-0.0026]  59%  P=1.00
+  seed 2: D-B=-0.0037 [-0.0053,-0.0022]  56%  P=1.00
+  => REPLICATES cross-PLATFORM: smaller effect (-0.004; high-accuracy dataset NLL~0.39,
+     less room) but ALL 3 seeds P=1.00, CIs exclude 0.
+
+Milestone-F (population, seed 0):
+  observed spread 0.096, model 0.025 (under-disperses) | W1 model 0.063 vs avg-person 0.078 (1.2x)
+  corr(pred,obs)=0.981 (excellent rank recovery) | precision/recall model 0.28/0.49 vs avg 0.00/0.00
+  => recovers heterogeneity (beats avg-person) but compresses the spread.
+
+OVERALL: RQ5 holds across 2 PLATFORMS, 3 DATASETS (ASSISTments 2009/2017 + KDD Cup Bridge06),
+P=1.00 in all. Effect size varies with dataset difficulty; direction + significance robust.
+
+============================================================
+CROSS-SUBJECT-DOMAIN REPLICATION — spanish (LANGUAGE learning)
+============================================================
+DIFFERENT SUBJECT DOMAIN (language, not math). 579k rows, 182 students; 150-student
+cohort, 3 seeds; same pipeline/format. Builder assist17_rq5.py on spanish.csv.
+
+RQ5 (response channel, 3 seeds, n=150):
+  seed 0: D-B=-0.0313 [-0.0408,-0.0207]  79%  P=1.00
+  seed 1: D-B=-0.0329 [-0.0428,-0.0224]  77%  P=1.00
+  seed 2: D-B=-0.0327 [-0.0406,-0.0246]  81%  P=1.00
+  => REPLICATES cross-SUBJECT: LARGEST effect yet (-0.032; language has rich per-student
+     variation), all 3 seeds P=1.00, D wins 77-81%.
+
+Milestone-F (population, seed 0):
+  observed spread 0.258, model 0.197 | W1 model 0.068 vs avg-person 0.224 (3.3x closer)
+  corr(pred,obs)=0.957 | precision/recall model 0.57/0.73 vs avg 1.00/0.00
+  => recovers heterogeneity strongly.
+
+OVERALL (all real KT): effect holds across 4 DATASETS, 2 PLATFORMS (ASSISTments,
+Cognitive Tutor), 2 SUBJECT DOMAINS (math, language). P=1.00 every seed of every
+dataset. Effect size varies with domain (language -0.032 largest, high-accuracy
+bridge06 -0.004 smallest); direction + significance invariant.
+
+============================================================
+HELD-OUT TEST — statics (college ENGINEERING) : validates heterogeneity-scaling
+============================================================
+3rd subject domain (engineering). 189k rows, 266 students; n=200, 3 seeds. NOT used to
+form the heterogeneity-scaling hypothesis -> genuine out-of-sample test.
+
+RQ5 (response, 3 seeds, n=200):
+  seed 0: D-B=-0.0050 [-0.0094,-0.0006]  54%  P=0.99
+  seed 1: D-B=-0.0094 [-0.0128,-0.0064]  66%  P=1.00
+  seed 2: D-B=-0.0099 [-0.0136,-0.0062]  62%  P=1.00
+  => REPLICATES (all seeds negative, CIs exclude 0; mean -0.0081).
+Milestone-F: observed spread 0.142, W1 model 0.063 vs avg-person 0.114 (1.8x), corr 0.984.
+
+HETEROGENEITY-SCALING (|D-B| vs observed accuracy spread), NOW n=5:
+  bridge06 0.096->0.0041 | statics 0.142->0.0081 | assist17 0.147->0.0139
+  assist09 0.190->0.0100 | spanish 0.258->0.0323
+  Pearson=0.905  Spearman=0.900   (was n=4: 0.90/0.80)
+  => held-out statics FITS the line -> synthesis VALIDATED OUT-OF-SAMPLE.
+     The latent's edge scales with population heterogeneity; links RQ5<->F.
+
+REAL-KT TOTALS: 5 datasets, 2 platforms (ASSISTments, Cognitive Tutor),
+3 subject domains (math, language, engineering). RQ5 significant in ALL.

@@ -68,10 +68,19 @@ def test_api_messages_carry_profile():
     assert "e2e4" in msgs[1]["content"]
 
 
-def test_sglang_predict_raises_informative_without_gpu():
+def test_sglang_backbone_interface_and_missing_engine():
+    import importlib.util
+
     bb = SGLangBackbone()
-    with pytest.raises((ImportError, NotImplementedError)):
-        bb.predict(_dp())
+    assert bb.accepts == (InjectionKind.VERBAL,)  # hidden off by default
+    assert hasattr(bb, "move_logprobs") and hasattr(bb, "predict")
+    # With no serving engine installed, the path raises an *informative*
+    # ImportError -- not a crash. (When sglang IS present we do not launch a
+    # multi-GB engine inside a unit test; that path is exercised by the
+    # frozen-LLM experiment on the GPU host.)
+    if importlib.util.find_spec("sglang") is None:
+        with pytest.raises(ImportError):
+            bb.predict(_dp())
 
 
 def test_api_default_accepts_verbal_only():

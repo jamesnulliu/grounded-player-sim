@@ -84,11 +84,17 @@ class NeuralInjector(LatentStateInjector):
         latent_dim: int = 8,
         seed: int = 0,
         persist: bool = True,
+        readout: bool = False,
     ) -> None:
         self.kind = kind
         self.latent_dim = latent_dim
         self.seed = seed
         self.persist = persist
+        # When True, ``latent_trajectory`` emits the anchored readout (the few
+        # interpretable DIMENSIONS) instead of the full hidden state -- the
+        # *verbal* channel proxy (the text encodes exactly those dims), vs the
+        # full *hidden* vector (RQ6). The output width is then len(DIMENSIONS).
+        self.readout = readout
         self.produces = (kind,)
         self.input_dim = len(DIMENSIONS)
         # Reuse the structured injector purely as the verbal renderer, so a
@@ -150,7 +156,7 @@ class NeuralInjector(LatentStateInjector):
         self._build().to(device)
         return self
 
-    def latent_trajectory(self, feats_seq):
+    def latent_trajectory(self, feats_seq, player_ids=None):
         """Differentiable recurrence over a whole trajectory (training path).
 
         ``feats_seq`` is a ``[T, B, input_dim]`` tensor of per-step
@@ -159,6 +165,11 @@ class NeuralInjector(LatentStateInjector):
         consumes during SFT. This is the *training* counterpart of the
         :meth:`render`/:meth:`update` inference path (which detaches to a list
         for the Simulator); both run the same GRU cell.
+
+        ``player_ids`` is accepted (and ignored) so this injector is
+        interchangeable with per-player baselines like
+        :class:`~gps.latent.static_individual.StaticIndividualInjector`, which
+        key on identity instead of the history features.
 
         When :attr:`persist` is ``False`` the hidden state is reset to zero
         before each step, so the output depends only on the current features --
@@ -179,7 +190,10 @@ class NeuralInjector(LatentStateInjector):
             outs.append(h)
         import torch
 
-        return torch.stack(outs, dim=0)
+        stacked = torch.stack(outs, dim=0)
+        # Verbal-channel proxy: deliver only the interpretable anchored dims
+        # (what the text carries), not the full hidden vector (RQ6).
+        return net.anchored(stacked) if self.readout else stacked
 
     # --- helpers --------------------------------------------------------
     def _features_tensor(self, dp: DecisionPoint):

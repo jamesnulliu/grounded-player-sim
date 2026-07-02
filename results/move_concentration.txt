@@ -1,0 +1,8 @@
+Move-channel concentration (channel="move") is a clean NULL — flat everywhere,
+contrasting with timing (which concentrates sharply under time pressure).
+2019-07 by post_loss:      -0.0004 / -0.0001 / -0.0008
+2017-04 by post_loss:      +0.0032 / +0.0024 / +0.0043  (D marginally worse)
+2019-07 by time_pressure:  -0.0003 / -0.0003 / -0.0008
+2017-04 by time_pressure:  +0.0022 / +0.0046 / +0.0030
+=> the evolving state is legible in HOW LONG a person thinks, not WHICH move
+   they pick. Asymmetry is real -> lead with timing.

@@ -47,40 +47,91 @@ class SGLangBackbone(PolicyBackbone):
         self.enable_hidden = enable_hidden
         self.engine_kwargs = engine_kwargs or {}
         self._eng = None  # lazily launched
+        self._tok = None
         if not enable_hidden:
             self.accepts = (InjectionKind.VERBAL,)
 
     def _engine(self):
-        """Launch (once) and return the sglang engine."""
+        """Launch (once) and return the sglang engine + tokenizer.
+
+        NOTE: sglang spawns subprocesses that re-exec the *main* script, so the
+        process that launches the engine must be a real ``.py`` file, not a
+        ``-c``/stdin heredoc (the child fails with ``FileNotFoundError:
+        '<stdin>'``).
+        """
         if self._eng is None:
             try:
-                import sglang as sgl  # noqa: F401  (lazy, GPU-only)
+                import sglang as sgl
+                from transformers import AutoTokenizer
             except ImportError as e:  # pragma: no cover - env-dependent
                 raise ImportError(
-                    "sglang is required for SGLangBackbone; install the "
-                    "'serve' extra on a GPU host: pip install '.[serve]'"
+                    "sglang + transformers are required for SGLangBackbone; "
+                    "install the 'serve' extra on a GPU host: "
+                    "pip install '.[serve]'"
                 ) from e
-            # TODO(gpu): launch sgl.Engine(model_path=self.model_path, ...)
-            # with logprob return enabled and a constrained-decoding grammar
-            # restricting output to dp.legal_actions.
-            raise NotImplementedError(
-                "sglang engine launch is wired on the GPU host; the "
-                "interface is final, the body is a documented stub."
+            kw = dict(
+                model_path=self.model_path,
+                dtype="bfloat16",
+                mem_fraction_static=0.7,
+                disable_cuda_graph=True,
+                log_level="error",
             )
+            kw.update(self.engine_kwargs)
+            self._eng = sgl.Engine(**kw)
+            self._tok = AutoTokenizer.from_pretrained(self.model_path)
         return self._eng
+
+    def _n_tokens(self, text: str) -> int:
+        return len(self._tok(text, add_special_tokens=False)["input_ids"])
+
+    def move_logprobs(
+        self, dp: DecisionPoint, injection: Injection | None = None
+    ) -> dict[str, float]:
+        """Per-legal-move total token log-prob under the LLM (un-normalised).
+
+        Scores each legal move as a continuation of the prompt and sums its
+        token log-probs (read from sglang ``input_token_logprobs``). The base
+        prompt is identical across a position's moves, so its token length
+        marks where the move tokens begin.
+        """
+        eng = self._engine()
+        base = self.build_prompt(dp, injection) + "\nMove: "
+        base_len = self._n_tokens(base)
+        prompts = [base + m for m in dp.legal_actions]
+        outs = eng.generate(
+            prompts,
+            sampling_params={"max_new_tokens": 0, "temperature": 0.0},
+            return_logprob=True,
+            logprob_start_len=0,
+        )
+        scores: dict[str, float] = {}
+        for move, out in zip(dp.legal_actions, outs):
+            itl = out["meta_info"]["input_token_logprobs"]
+            move_lps = [lp for lp, _, _ in itl[base_len:] if lp is not None]
+            scores[move] = float(sum(move_lps))
+        return scores
 
     def predict(
         self, dp: DecisionPoint, injection: Injection | None = None
     ) -> Prediction:
-        # On GPU this will:
-        #   1. Build the prompt from dp.state (FEN/SGF + move list + context).
-        #   2. Splice injection.text (VERBAL) or attach injection.vector as a
-        #      prefix embedding (HIDDEN).
-        #   3. Score each legal move's token(s) -> logprobs -> MoveDistribution
-        #      normalised over dp.legal_actions.
-        #   4. Read/derive think-time -> TimingPrediction.
-        self._engine()  # raises the informative NotImplementedError for now
-        raise NotImplementedError
+        """Move distribution = softmax over legal-move log-probs.
+
+        (Timing from an LLM needs a structured field / timing head; left as a
+        flat default here -- the move distribution is what E-C2/RQ6 score.)
+        """
+        import math
+
+        from gps.prediction import MoveDistribution, TimingPrediction
+
+        scores = self.move_logprobs(dp, injection)
+        mx = max(scores.values())
+        exp = {m: math.exp(s - mx) for m, s in scores.items()}
+        z = sum(exp.values()) or 1.0
+        probs = {m: v / z for m, v in exp.items()}
+        return Prediction(
+            moves=MoveDistribution(probs=probs),
+            timing=TimingPrediction(mu=0.0, sigma=1.0),
+        )
 
     def build_prompt(
         self, dp: DecisionPoint, injection: Injection | None
@@ -109,8 +160,12 @@ class SGLangBackbone(PolicyBackbone):
 
     def close(self) -> None:
         if self._eng is not None:
-            # TODO(gpu): shut down the served engine.
+            try:
+                self._eng.shutdown()
+            except Exception:  # noqa: BLE001 - best-effort teardown
+                pass
             self._eng = None
+            self._tok = None
 
     @property
     def name(self) -> str:

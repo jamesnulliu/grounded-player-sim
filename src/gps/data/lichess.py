@@ -150,6 +150,42 @@ def parse_time_control(tc: str | None) -> tuple[float | None, float | None]:
         return None, None
 
 
+#: Upper bounds (exclusive, seconds of *estimated* game duration) for each
+#: Lichess speed class, in order. Estimate = base + 40*increment, matching
+#: Lichess's own ``Speed`` classification. Anything at/above the last bound is
+#: "classical"; a clockless game ("-") is "correspondence".
+_SPEED_BOUNDS: tuple[tuple[float, str], ...] = (
+    (30.0, "ultrabullet"),
+    (180.0, "bullet"),
+    (480.0, "blitz"),
+    (1500.0, "rapid"),
+)
+
+#: Speed classes that pack many decisions into a sitting -- the within-session
+#: density the dynamics model needs (design.md focuses E-C here).
+DENSE_SPEEDS = ("bullet", "blitz", "rapid")
+
+
+def speed_class(time_control: str | None) -> str:
+    """Classify a ``TimeControl`` header into a Lichess speed class.
+
+    Returns one of ``ultrabullet`` / ``bullet`` / ``blitz`` / ``rapid`` /
+    ``classical`` / ``correspondence``. The corpus mixes all of these in one
+    chronological stream; timing analysis (E-C6) must be done **within** a
+    single class because think-time scales with the base clock (TODO note in
+    Milestone C: "one outlier think-time = 4430s" came from a rapid/classical
+    game contaminating a blitz cohort).
+    """
+    base, inc = parse_time_control(time_control)
+    if base is None:
+        return "correspondence"
+    estimate = base + 40.0 * (inc or 0.0)
+    for bound, name in _SPEED_BOUNDS:
+        if estimate < bound:
+            return name
+    return "classical"
+
+
 # --------------------------------------------------------------------------- #
 # The parser (the only python-chess / zstandard dependent code)
 # --------------------------------------------------------------------------- #
@@ -285,6 +321,189 @@ def iter_game_records(
 
 
 # --------------------------------------------------------------------------- #
+# Cheap header-only pass (cohort selection without full move parsing)
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True)
+class GameSummary:
+    """Header-only view of a game -- enough to *select* a cohort, not build it.
+
+    Deliberately structurally compatible with :class:`GameRecord` for the two
+    functions cohort selection needs (:func:`bucket_by_player`,
+    :func:`player_stats`): same name/bot/elo/time-control/``utc_start`` fields
+    and a ``duration_seconds()``. Movetext is never parsed, so there is no
+    real duration -- it returns ``0.0`` and session segmentation falls back to
+    start-to-start spacing (the conservative behaviour documented in
+    :mod:`gps.data.sessions`). That is fine for *picking* players; the precise
+    clock-derived durations are recovered in the full pass-2 build.
+    """
+
+    white: str
+    black: str
+    white_elo: int | None = None
+    black_elo: int | None = None
+    white_is_bot: bool = False
+    black_is_bot: bool = False
+    time_control: str | None = None
+    utc_start: float | None = None
+
+    def duration_seconds(self) -> float:
+        return 0.0
+
+
+def iter_game_summaries(
+    stream, *, max_games: int | None = None
+) -> Iterator[GameSummary]:
+    """Parse a PGN stream into :class:`GameSummary`s (headers only, fast).
+
+    Uses ``chess.pgn.read_headers``, which scans past each game's movetext
+    without building a board or generating legal moves -- the cheap pass-1
+    that picks the cohort before pass-2 pays the full parse cost on just those
+    players.
+    """
+    try:
+        import chess.pgn
+    except ImportError as e:  # pragma: no cover - env-dependent
+        raise ImportError(
+            "python-chess is required to parse PGN; install the 'chess' "
+            "extra (pip install python-chess)."
+        ) from e
+
+    count = 0
+    while True:
+        if max_games is not None and count >= max_games:
+            return
+        headers = chess.pgn.read_headers(stream)
+        if headers is None:
+            return
+        yield GameSummary(
+            white=headers.get("White", "?"),
+            black=headers.get("Black", "?"),
+            white_elo=_to_int(headers.get("WhiteElo")),
+            black_elo=_to_int(headers.get("BlackElo")),
+            white_is_bot=headers.get("WhiteTitle") == "BOT",
+            black_is_bot=headers.get("BlackTitle") == "BOT",
+            time_control=headers.get("TimeControl"),
+            utc_start=_parse_utc(headers),
+        )
+        count += 1
+
+
+# --------------------------------------------------------------------------- #
+# Sharded full parse (parallelize the pass-2 bottleneck across cores)
+# --------------------------------------------------------------------------- #
+
+
+def split_pgn_games(stream: Iterable[str]) -> Iterator[str]:
+    """Split a PGN text stream into one string per game (cheap, no chess).
+
+    A Lichess game is a block of ``[Tag "..."]`` headers (always led by
+    ``[Event ...]``) then movetext. Games are delimited by the next
+    ``[Event ...]`` at line start; movetext never starts a line that way (clock
+    /eval annotations live mid-line inside ``{...}``). Splitting text is far
+    cheaper than parsing it, so the producer does this and ships whole-game
+    strings to worker processes that do the expensive ``python-chess`` parse.
+    """
+    buf: list[str] = []
+    for line in stream:
+        if line.startswith("[Event ") and buf:
+            chunk = "".join(buf)
+            if chunk.strip():
+                yield chunk
+            buf = [line]
+        else:
+            buf.append(line)
+    if buf:
+        chunk = "".join(buf)
+        if chunk.strip():
+            yield chunk
+
+
+def _batched(it: Iterator, n: int) -> Iterator[list]:
+    """Yield ``n``-sized lists from ``it`` (itertools.batched is 3.12+)."""
+    import itertools
+
+    while True:
+        batch = list(itertools.islice(it, n))
+        if not batch:
+            return
+        yield batch
+
+
+def _keep_record(
+    rec: GameRecord, players: set[str] | None, speed: str | None
+) -> bool:
+    if speed is not None and speed_class(rec.time_control) != speed:
+        return False
+    if players is not None and not (
+        rec.white in players or rec.black in players
+    ):
+        return False
+    return True
+
+
+def _parse_batch_worker(args) -> list[GameRecord]:
+    """Worker: parse a batch of game-text strings into filtered records.
+
+    Top-level (picklable) for ``multiprocessing``. Filtering to the cohort +
+    speed *inside* the worker keeps the records shipped back to the parent
+    tiny relative to the whole archive.
+    """
+    import io
+
+    texts, players, speed = args
+    out: list[GameRecord] = []
+    for text in texts:
+        for rec in iter_game_records(io.StringIO(text)):
+            if _keep_record(rec, players, speed):
+                out.append(rec)
+    return out
+
+
+def iter_game_records_parallel(
+    path: str,
+    *,
+    players: set[str] | None = None,
+    speed: str | None = None,
+    workers: int = 1,
+    batch_size: int = 512,
+    max_games: int | None = None,
+) -> Iterator[GameRecord]:
+    """Parse an archive into :class:`GameRecord`s, sharded across processes.
+
+    ``workers <= 1`` runs the plain serial parser (also the import-light path
+    used in tests). Otherwise a single producer decompresses + text-splits the
+    archive (cheap) and a pool of ``workers`` does the python-chess parse (the
+    ~119 games/s bottleneck), so a full month drops from ~26h to ~26h/workers.
+    Records are filtered to ``players``/``speed`` before crossing the process
+    boundary. Order is not preserved (downstream bucketing is order-agnostic).
+    """
+    if workers <= 1:
+        with open_pgn(path) as stream:
+            for rec in iter_game_records(stream, max_games=max_games):
+                if _keep_record(rec, players, speed):
+                    yield rec
+        return
+
+    import multiprocessing as mp
+
+    with open_pgn(path) as stream:
+        games: Iterator[str] = split_pgn_games(stream)
+        if max_games is not None:
+            import itertools
+
+            games = itertools.islice(games, max_games)
+        tasks = (
+            (batch, players, speed) for batch in _batched(games, batch_size)
+        )
+        # imap_unordered streams results as workers finish (flat memory).
+        with mp.Pool(workers) as pool:
+            for recs in pool.imap_unordered(_parse_batch_worker, tasks):
+                yield from recs
+
+
+# --------------------------------------------------------------------------- #
 # Bucketing + cohort selection (stdlib)
 # --------------------------------------------------------------------------- #
 
@@ -404,6 +623,7 @@ def build_trajectory(
     gap_threshold_seconds: float = DEFAULT_GAP_THRESHOLD_SECONDS,
     oracle=None,
     game_id: Game = Game.CHESS,
+    max_games: int | None = None,
 ) -> Trajectory:
     """Assemble one player's games into a time-ordered ``Trajectory``.
 
@@ -413,10 +633,17 @@ def build_trajectory(
     (every decision otherwise seeing the final session history). ``oracle``,
     if given, is consulted per decision for the ``engine_reference``; otherwise
     it is left ``None`` and attached later.
+
+    ``max_games`` caps to the player's **earliest** N games (chronological), so
+    one ultra-prolific player cannot dominate a padded training batch (the
+    full-batch trainer pads to the longest trajectory). The temporal split
+    still falls inside those N games.
     """
     ordered = sorted(
         games, key=lambda g: (g.utc_start is None, g.utc_start or 0.0)
     )
+    if max_games is not None:
+        ordered = ordered[:max_games]
     spans = [
         (
             g.utc_start or float(i),
@@ -504,11 +731,14 @@ def build_dataset(
     gap_threshold_seconds: float = DEFAULT_GAP_THRESHOLD_SECONDS,
     oracle=None,
     min_decisions: int = 1,
+    max_games_per_player: int | None = None,
 ) -> TrajectoryDataset:
     """Build a ``TrajectoryDataset`` for ``players`` (default: all buckets).
 
     Players whose assembled trajectory has fewer than ``min_decisions`` moves
-    are dropped (they cannot support a temporal split).
+    are dropped (cannot support a temporal split). ``max_games_per_player``
+    caps each player to their earliest N games (keeps trajectory lengths
+    bounded + comparable for the full-batch trainer).
     """
     names = list(players) if players is not None else list(buckets)
     trajectories = []
@@ -518,6 +748,7 @@ def build_dataset(
             buckets.get(name, []),
             gap_threshold_seconds=gap_threshold_seconds,
             oracle=oracle,
+            max_games=max_games_per_player,
         )
         if len(traj.decisions) >= min_decisions:
             trajectories.append(traj)

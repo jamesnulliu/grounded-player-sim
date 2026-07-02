@@ -1,0 +1,13 @@
+Real-data timing-concentration: held-out (D-B) per-decision timing NLL bucketed
+by anchored behavioural context (2017-04 / 2019-07 blitz, 80 players, mlp).
+More negative = the evolving latent helps MORE.
+
+By time_pressure (low clock = high tp):
+  2017 seed0:  low -0.046  mid -0.029  high -0.108
+  2017 seed1:  low -0.051  mid -0.006  high -0.107
+  2019 seed0:  low -0.026  mid +0.024  high -0.211
+  => the latent's think-time edge is 2-8x larger under time pressure (robust).
+
+By post_loss (2017 seed0):   low -0.063  mid -0.068  high -0.053   (~flat)
+By fatigue   (2017 seed0):   low -0.057  mid -0.092  high -0.034   (non-monotone)
+=> the concentration is specific to TIME PRESSURE, not every dimension.

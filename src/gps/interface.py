@@ -28,10 +28,17 @@ from enum import Enum
 
 
 class Game(str, Enum):
-    """Which game a decision point belongs to."""
+    """Which domain a decision point belongs to.
+
+    Named ``Game`` for historical reasons (chess/Go were first), but the
+    interface is domain-agnostic: a non-game oracle domain such as knowledge
+    tracing reuses the same :class:`DecisionPoint` schema (RQ5, design.md §11),
+    swapping only the encoder + oracle head.
+    """
 
     CHESS = "chess"
     GO = "go"
+    KNOWLEDGE_TRACING = "knowledge_tracing"
 
 
 @dataclass(frozen=True)

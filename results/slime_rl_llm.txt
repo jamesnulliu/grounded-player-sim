@@ -1,0 +1,54 @@
+Trained-LLM via slime RL (Qwen3-1.7B GRPO, 2xA100, real 2017 chess, 30 rollouts, 3 seeds).
+Task: generate a move; reward = match to player's ACTUAL move (dense: 1.0 exact/+0.3 dest/+0.2 origin).
+Held-out move-match, frozen (eval0) vs RL-final (eval29), per seed:
+
+condition   eval0(frozen)   RL-final per seed {1234,7,42}   final mean (sd)
+with-state     ~0.076       0.100, 0.0996, 0.0993           0.0996 (0.0003)
+no-state       ~0.076       0.1052, 0.1107, 0.0869          0.1009 (0.0102)
+with - no (final) = -0.0013  -> NULL (|diff| << no-state sd 0.010), n=3 seeds.
+
+FINDINGS:
+1) POSITIVE: RL via slime IMPROVES the LLM's player-move-match (both conds, ~0.076 -> ~0.10,
+   +0.024..0.030) over the frozen model -> the trained injector LEARNS (the frozen-verbal
+   negative control does not). Full slime RL pipeline for player-mimicry validated.
+2) NULL (3 seeds): verbal player-STATE in the prompt has NO effect on MOVE prediction
+   (with 0.0996 vs no 0.1009, -0.0013 within noise). CONSISTENT with board-native: move
+   choice is stateless (move-concentration flat). Asymmetry (state->timing, not moves)
+   holds in an RL-trained LLM. (2-seed read of "slightly hurts" was an artifact; 3-seed = null.)
+
+--- TIMING-RL (predict think-time; reward=log-bucket closeness; seed 1234) ---
+condition    eval0(frozen)  eval9   eval19(final)
+with-state    0.089         0.469   0.594
+no-state      0.471         0.602   0.627    <- BETTER
+with - no (final) = -0.033. RL WORKS (both learn think-time ~60% bucket-acc, big jump from
+frozen) but verbal STATE does NOT help timing (no-state consistently ahead). Coherent with
+board-native: position-complexity dominates think-time (B4+complexity) + verbal channel is
+lossy (RQ6 hidden>verbal). So the per-individual timing residual needs the HIDDEN latent,
+not a verbal LLM prompt. => Verbal state injection helps NEITHER move NOR timing in the RL LLM.
+(Note: with-state frozen baseline 0.089 is a prompt artifact — frozen model echoes the clock
+number as its answer; RL fixes it. Fair comparison is the RL-final: 0.594 vs 0.627.)
+
+--- LLM SFT (behavior cloning, TRL LoRA, held-out move-NLL) ---
+condition    frozen   SFT
+with-state    4.088    0.2963
+no-state       4.140    0.3015
+with - no = -0.0052 (state slightly helps moves, but tiny + single-seed + frozen baselines
+differ by -0.05 => mostly prompt-baseline). Consistent with move ~stateless. SFT works
+dramatically (4.09->0.30 both) = far denser signal than RL. Next: TIMING SFT (the positive test).
+
+--- SFT ASYMMETRY (held-out completion NLL, single seed 42): state helps TIMING > moves ---
+channel   with-state  no-state   with-no
+timing      0.2494     0.2613    -0.0119  (STATE HELPS timing)
+move(lora)  0.2963     0.3015    -0.0052
+move(full)  0.3076     0.3109    -0.0033
+=> state helps timing ~3.6x more than moves -> the board-native channel asymmetry (state->
+timing not moves) APPEARS in an SFT-trained LLM. Real signal for timing: with-state frozen NLL
+is much WORSE (9.1 vs 6.5, frozen echoes clock number) yet SFT-final is BETTER -> model learns
+to USE the state for think-time. Dense SFT gradient surfaced what sparse RL match-reward could not.
+(Firming up with seeds 1,2.)
+
+--- FULL-PARAM timing SFT confirmation (seed 42) ---
+timing full-param: with-state=0.2506 no-state=0.2619 delta=-0.0113 (≈ LoRA -0.0109)
+=> timing asymmetry holds across LoRA AND full-param. move full-param delta -0.0033.
+FINAL LLM SFT: state helps TIMING (LoRA -0.0109 3seed non-overlapping, full -0.0113)
+>> MOVES (LoRA -0.0030, full -0.0033). Board-native asymmetry reproduced in SFT LLM.

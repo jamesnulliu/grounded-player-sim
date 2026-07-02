@@ -1,0 +1,7 @@
+timing D-B by player RATING (Elo), 480 players across 4 clocked cohorts, pooled seeds+trunks
+(more negative = latent helps that player more)
+  low-Elo (weakest)      Elo [769-1634]  n=160  mean(D-B)=-0.0404
+  mid-Elo                Elo [1635-1892]  n=160  mean(D-B)=-0.0296
+  high-Elo (strongest)   Elo [1893-2516]  n=160  mean(D-B)=-0.0139
+
+  high-Elo minus low-Elo mean(D-B) = +0.0265  95% CI [+0.0154,+0.0376]  P(high<low)=0.00

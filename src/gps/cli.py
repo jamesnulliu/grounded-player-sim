@@ -2,8 +2,11 @@
 
 Subcommands:
 
-* ``gps phase0``  -- run the CPU Phase-0 synthetic experiments (no GPU).
-* ``gps info``    -- print environment + which backends are importable.
+* ``gps phase0``    -- run the CPU Phase-0 synthetic experiments (no GPU).
+* ``gps ingest``    -- parse a Lichess archive into a persisted E-C dataset.
+* ``gps train-ec``  -- E-C2 (dynamic vs memoryless) on a persisted dataset.
+* ``gps kt``        -- RQ5/Milestone-F on knowledge tracing (synth or real).
+* ``gps info``      -- print environment + which backends are importable.
 
 Kept tiny and dependency-free so ``gps phase0`` runs on a bare Python.
 """
@@ -86,6 +89,54 @@ def _cmd_train_ea1(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_train_ec(args: argparse.Namespace) -> int:
+    from gps.data.store import load_dataset
+    from gps.experiments.ec import run_ec
+
+    dataset = load_dataset(args.dataset)
+    if len(dataset) < 2:
+        print(
+            f"E-C needs >=2 players for a bootstrap over players; "
+            f"{args.dataset} has {len(dataset)}."
+        )
+        return 1
+    res = run_ec(
+        dataset,
+        train_frac=args.train_frac,
+        latent_dim=args.latent_dim,
+        hidden_dim=args.hidden_dim,
+        epochs=args.epochs,
+        lr=args.lr,
+        seed=args.seed,
+        b_latent_dim=args.b_latent_dim,
+        bootstrap_n=args.bootstrap_n,
+        batch_size=args.batch_size,
+        split_mode=args.split,
+        control=args.control,
+    )
+    print(res.summary())
+    return 0
+
+
+def _cmd_ingest(args: argparse.Namespace) -> int:
+    from gps.data.ingest import run_ingest
+
+    run_ingest(
+        args.archive,
+        args.out,
+        speed=None if args.speed == "all" else args.speed,
+        min_games=args.min_games,
+        min_sessions=args.min_sessions,
+        max_players=args.max_players,
+        gap_threshold_seconds=args.gap_threshold,
+        workers=args.workers,
+        batch_size=args.batch_size,
+        max_games=args.max_games,
+        max_games_per_player=args.max_games_per_player,
+    )
+    return 0
+
+
 def _cmd_info(args: argparse.Namespace) -> int:
     import os
 
@@ -116,6 +167,51 @@ def _cmd_info(args: argparse.Namespace) -> int:
         f"  WANDB_API_KEY  {'set' if key_set else 'NOT set'} "
         f"(required for training runs)"
     )
+    return 0
+
+
+def _cmd_kt(args: argparse.Namespace) -> int:
+    """RQ5 / Milestone-F on knowledge tracing.
+
+    Synthetic cohort by default; pass ``--data <csv>`` to run on a real
+    preprocessed KT export (``gps.data.kt_csv.load_kt_csv``). Training run, so
+    it needs ``WANDB_API_KEY`` (or ``WANDB_MODE=offline``).
+    """
+    from gps.experiments.kt import build_kt_dataset, run_kt, run_population
+
+    if args.data:
+        from gps.data.kt_csv import load_kt_csv
+
+        ds = load_kt_csv(
+            args.data,
+            n_students=args.n_students,
+            min_responses=args.min_responses,
+        )
+        print(
+            f"real KT ({args.data}): {len(ds.trajectories)} students, "
+            f"{sum(len(t.decisions) for t in ds.trajectories)} responses"
+        )
+    else:
+        ds = build_kt_dataset(n_students=args.n_students, seed=args.seed)
+        print(f"synthetic KT: {len(ds.trajectories)} students")
+
+    r = run_kt(
+        ds,
+        latent_dim=args.latent_dim,
+        hidden_dim=args.hidden_dim,
+        epochs=args.epochs,
+        seed=args.seed,
+    )
+    print(r.summary())
+    if args.population:
+        p = run_population(
+            ds,
+            latent_dim=args.latent_dim,
+            hidden_dim=args.hidden_dim,
+            epochs=args.epochs,
+            seed=args.seed,
+        )
+        print(p.summary())
     return 0
 
 
@@ -162,6 +258,131 @@ def main(argv: list[str] | None = None) -> int:
         help="run B at 1x/2x/4x D width instead of a single run",
     )
     ea1.set_defaults(func=_cmd_train_ea1)
+
+    ec = sub.add_parser(
+        "train-ec",
+        help="E-C2 on a persisted chess dataset (D vs memoryless); needs "
+        "WANDB_API_KEY",
+    )
+    ec.add_argument(
+        "dataset", help="path to a persisted dataset.jsonl(.gz) (gps ingest)"
+    )
+    ec.add_argument("--train-frac", type=float, default=0.7)
+    ec.add_argument(
+        "--split",
+        default="fraction",
+        choices=["fraction", "session"],
+        help="temporal split: move-fraction (E-C2) or later-sessions (E-C3)",
+    )
+    ec.add_argument(
+        "--control",
+        default="memoryless",
+        choices=["memoryless", "static"],
+        help="arm B: memoryless history-conditioned (E-C2/3) or static "
+        "per-player embedding (E-C1)",
+    )
+    ec.add_argument("--latent-dim", type=int, default=16)
+    ec.add_argument("--hidden-dim", type=int, default=64)
+    ec.add_argument("--epochs", type=int, default=300)
+    ec.add_argument("--lr", type=float, default=1e-2)
+    ec.add_argument("--seed", type=int, default=0)
+    ec.add_argument("--bootstrap-n", type=int, default=2000)
+    ec.add_argument(
+        "--batch-size",
+        type=int,
+        default=16,
+        help="players per minibatch (scales large cohorts past full-batch)",
+    )
+    ec.add_argument(
+        "--b-latent-dim",
+        type=int,
+        default=None,
+        help="give arm B a wider latent (capacity check); default=D",
+    )
+    ec.set_defaults(func=_cmd_train_ec)
+
+    ing = sub.add_parser(
+        "ingest",
+        help="parse a Lichess .pgn(.zst) archive into a persisted dataset",
+    )
+    ing.add_argument("archive", help="path to a .pgn or .pgn.zst archive")
+    ing.add_argument(
+        "--out",
+        required=True,
+        help="output directory (dataset.jsonl.gz + manifest.json)",
+    )
+    ing.add_argument(
+        "--speed",
+        default="blitz",
+        choices=[
+            "ultrabullet",
+            "bullet",
+            "blitz",
+            "rapid",
+            "classical",
+            "correspondence",
+            "all",
+        ],
+        help="single time-control class to keep (default blitz; 'all' mixes)",
+    )
+    ing.add_argument("--min-games", type=int, default=50)
+    ing.add_argument("--min-sessions", type=int, default=3)
+    ing.add_argument(
+        "--max-players",
+        type=int,
+        default=None,
+        help="cap the cohort to the top-N players by game count",
+    )
+    ing.add_argument(
+        "--gap-threshold",
+        type=float,
+        default=1800.0,
+        help="session gap threshold in seconds (default 1800 = 30 min)",
+    )
+    ing.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="processes for the pass-2 parse (the bottleneck); 1 = serial",
+    )
+    ing.add_argument("--batch-size", type=int, default=512)
+    ing.add_argument(
+        "--max-games",
+        type=int,
+        default=None,
+        help="cap games read per pass (smoke runs)",
+    )
+    ing.add_argument(
+        "--max-games-per-player",
+        type=int,
+        default=None,
+        help="cap each player to their earliest N games (bounds + equalizes "
+        "trajectory length for the full-batch trainer)",
+    )
+    ing.set_defaults(func=_cmd_ingest)
+
+    kt = sub.add_parser(
+        "kt",
+        help="RQ5/Milestone-F on knowledge tracing (synthetic or real --data);"
+        " needs WANDB_API_KEY or WANDB_MODE=offline",
+    )
+    kt.add_argument(
+        "--data",
+        default=None,
+        help="path to a preprocessed KT CSV (real); omit for synthetic",
+    )
+    kt.add_argument("--n-students", type=int, default=48)
+    kt.add_argument("--min-responses", type=int, default=50)
+    kt.add_argument("--latent-dim", type=int, default=16)
+    kt.add_argument("--hidden-dim", type=int, default=32)
+    kt.add_argument("--epochs", type=int, default=40)
+    kt.add_argument("--seed", type=int, default=0)
+    kt.add_argument(
+        "--population",
+        action="store_true",
+        help="also run the Milestone-F population-heterogeneity eval",
+    )
+    kt.set_defaults(func=_cmd_kt)
 
     info = sub.add_parser("info", help="print environment + backend status")
     info.set_defaults(func=_cmd_info)

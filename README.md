@@ -7,23 +7,59 @@ augmented with a trainable, per-individual dynamic latent state**.
 not enough to reproduce how a specific person plays *right now*. You need a
 learned latent state `z_t` that evolves over the player's own action+timing
 trajectory, is injected into the policy, and is validated against the
-player's *future* behavior. Demonstrated on chess and Go, which share an
-engine-graded decision interface (Stockfish / KataGo).
+player's *future* behavior. Designed around games with an engine-graded
+decision interface (chess / Go via Stockfish / KataGo); **demonstrated on real
+chess** and, for cross-domain generality, on a real non-game oracle domain
+(knowledge tracing). Go shares the interface and is the clearest open
+cross-domain validation (future work).
 
 **Positioning.** The contribution is the *conjunction* — per-individual +
 temporally-evolving + a behavioral state (tilt/fatigue/time-pressure) that
-drives moves & timing + validated on the person's *future* games + chess
-**and** Go. No single axis is claimed as novel: "evolving latent in an LLM,"
+drives moves & timing + validated on the person's *future* games + across
+domains (delivered on real **chess** and a real non-game oracle domain,
+**knowledge tracing**; Go shares the interface and is designed-in future work).
+No single axis is claimed as novel: "evolving latent in an LLM,"
 "natural-language latent," and "future temporal-split validation" are each
 already owned by a 2026 competitor (LATTE / HumanLM). See `documents/design.md`
 §8 for the head-to-head differentiation vs. Allie, HumanLM, and LATTE.
 
-See `documents/proposal_v2.md` for the full research proposal,
-`documents/design.md` for how the code maps onto it (and the key decisions),
-`documents/training.md` for the GPU/data wiring,
-`documents/milestone_a.md` for the runbook + resources for the make-or-break
-"is the latent just history-conditioning?" experiment, and **`TODO.md`** for
-the prioritized work plan (code to write + experiments to run).
+See **`documents/paper_draft.md`** for the landed-results synthesis (abstract +
+contributions + headline table), `documents/results_ec.md` for the detailed
+results + exact reproduction, `documents/proposal_v2.md` for the full research
+proposal, `documents/design.md` for how the code maps onto it (and the key
+decisions + prior-art positioning), `documents/training.md` for the GPU/data
+wiring, `documents/milestone_a.md` for the make-or-break "is the latent just
+history-conditioning?" runbook, and **`TODO.md`** for the work plan.
+
+**Status (landed).** Every research question and both milestones have results
+on **real** data — real Lichess chess **and** real student knowledge tracing
+(ASSISTments 2009) — plus synthetic controls. The evolving latent
+beats a static-individual style (E-C1) and an equal-capacity **memoryless**
+control (E-C2/E-C3, future-sessions split, capacity sweep). The **headline is
+think-time**: at scale (5 seeds × 5 cohorts × 2 backbones on 2×A100) the
+per-individual evolving latent wins on think-time in **all 8 clocked conditions
+across a 6-year era span (2017–2023), P=1.00**, and **adds value over a near-SOTA
+Elo+clock+position-complexity baseline** (Spearman ≈ ChessMimic's 0.41). An
+interpretability story with a clean **channel asymmetry**: the latent **encodes +
+causally uses** the hidden state (E-C4, probe R²=0.93 + clamp dose-response), and
+its think-time edge **concentrates** under time pressure (2–8×) and for weaker
+players (≈3×) — while the **move** edge is a flat near-null (state is legible in
+*when* you act, not *what* you play). Plus **generality** to a non-game domain
+(E-D1/RQ5) — confirmed on **real students across 5 datasets, 2 platforms, and 3
+subject domains** (ASSISTments 2009/2017, KDD-Cup Cognitive Tutor, Spanish, and
+Statics; D beats the memoryless twin, significant every seed) — a **unifying
+scaling law** (the latent's edge **scales with population heterogeneity**,
+Pearson 0.90, out-of-sample validated, tying the KT and chess results together),
+the **hidden > verbal** channel (E-E1/RQ6), and **population heterogeneity
+recovery + generation** beating the "positive average person" (E-F1/E-F2, also on
+real KT: Wasserstein 2× better than average-person). Honest caveat: the headline
+D-vs-B results use small from-scratch
+backbones; the **LLM policy is implemented + run** (`SGLangBackbone`, Qwen3) but
+only as a **negative control** so far — frozen verbal/persona-prompt injection
+does *not* work (no better than irrelevant text), motivating the trained latent;
+a *trained* LLM injector is the #1 open experiment. CLI: `gps ingest`,
+`gps train-ec`, `gps phase0`, `gps kt` (RQ5/F on knowledge tracing, synthetic
+or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
 
 ## Architecture at a glance
 
@@ -128,6 +164,6 @@ pytest                          # 34 CPU tests, no GPU needed
 | `src/gps/results.py` | result-store rule: `runs/<exp>/<run_id>/` + JSON format |
 | `src/gps/tracking.py` | mandatory W&B (reads `WANDB_API_KEY`, errors if unset) |
 | `src/gps/backends.py` | backend policy: sglang (LLM inference) / slime (LLM train) |
-| `src/gps/experiments/` | runnable experiments (Phase 0 today) |
+| `src/gps/experiments/` | runnable experiments (Phase 0, E-A1, E-C, KT) |
 | `documents/` | proposal, design notes, training notes |
 | `tests/` | CPU test suite |
