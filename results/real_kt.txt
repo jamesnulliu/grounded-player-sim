@@ -157,3 +157,22 @@ HETEROGENEITY-SCALING (|D-B| vs observed accuracy spread), NOW n=5:
 
 REAL-KT TOTALS: 5 datasets, 2 platforms (ASSISTments, Cognitive Tutor),
 3 subject domains (math, language, engineering). RQ5 significant in ALL.
+
+============================================================
+SCALING-LAW FIRM-UP — n=5 -> n=8 (added assist12, algebra05=KDD Algebra, assist15)
+============================================================
+All 3 new datasets REPLICATE (P=1.00 every seed):
+  assist12  (500): D-B -0.0087/-0.0110/-0.0068 | spread 0.154 | corr(pred,obs) 0.973
+  algebra05 (500): D-B -0.0095/-0.0102/-0.0103 | spread 0.123 | corr 0.975
+  assist15  (500): D-B -0.0112/-0.0123/-0.0083 | spread 0.158 | corr 0.944
+
+HETEROGENEITY SCALING (|D-B| vs observed accuracy spread), n=8 (sorted by spread):
+  bridge06 0.096->0.0041 | algebra05 0.123->0.0100 | statics 0.142->0.0081 |
+  assist17 0.147->0.0139 | assist12 0.154->0.0088 | assist15 0.158->0.0106 |
+  assist09 0.190->0.0100 | spanish 0.258->0.0323
+  Pearson=0.888  Spearman=0.738   (n=5 was 0.905 / 0.90)
+  => HONEST picture: STRONG LINEAR trend (Pearson 0.89), anchored by the extremes
+     (low-heterogeneity bridge06 = smallest effect; high spanish = largest); the
+     MIDDLE band (spread 0.12-0.19) is a noisy plateau (~0.008-0.014), so rank
+     monotonicity is looser (Spearman 0.74). A real trend, not a tight law.
+     All datasets in W&B project gps-kt-scaling. RQ5 significant in ALL 8.

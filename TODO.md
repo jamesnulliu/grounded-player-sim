@@ -362,13 +362,13 @@ novel (see design.md §8 for what is shared territory).
   0 for n≥300, significance strengthening monotonically with sample size.
   Headline (n=500), **seed-stable across 3 seeds**: D−B=−0.0095/−0.0116/−0.0090
   (mean ≈−0.010), **P=1.00 in every seed**, all CIs exclude 0, D wins 64–73%.
-  **Replication across 5 datasets / 2 platforms / 3 subject domains:**
-  ASSISTments 2017, KDD-Cup Bridge-to-Algebra (a *different platform* — Cognitive
-  Tutor), Spanish vocabulary (language), and Statics (engineering); D−B
-  −0.004…−0.03, **significant every seed** — not dataset/platform/subject-
-  specific. Synthesis: effect size **scales with population heterogeneity**
-  (Pearson 0.905 / Spearman 0.90, n=5, validated out-of-sample on held-out
-  Statics; links RQ5↔F). On
+  **Replication across 8 datasets / multiple platforms / 3 subject domains:**
+  ASSISTments 2009/2012/2015/2017, KDD-Cup Algebra + Bridge-to-Algebra, Spanish
+  (language), and Statics (engineering); D−B −0.004…−0.03, **significant every
+  seed** — not dataset/platform/subject-specific. Synthesis: effect size
+  **scales with population heterogeneity** (Pearson 0.89, n=8; strong linear
+  trend anchored by the extremes, noisier middle band Spearman 0.74; links
+  RQ5↔F). All runs in W&B `gps-kt-scaling`. On
   real students the *discrete-response* channel — weak on synthetic — carries
   genuine signal (real ability/learning/forgetting). Builders
   `scratchpad/real_kt{,_sensitivity,_f500}.py`, raw `results/real_kt.txt`.

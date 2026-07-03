@@ -45,19 +45,24 @@ causally uses** the hidden state (E-C4, probe R²=0.93 + clamp dose-response), a
 its think-time edge **concentrates** under time pressure (2–8×) and for weaker
 players (≈3×) — while the **move** edge is a flat near-null (state is legible in
 *when* you act, not *what* you play). Plus **generality** to a non-game domain
-(E-D1/RQ5) — confirmed on **real students across 5 datasets, 2 platforms, and 3
-subject domains** (ASSISTments 2009/2017, KDD-Cup Cognitive Tutor, Spanish, and
-Statics; D beats the memoryless twin, significant every seed) — a **unifying
-scaling law** (the latent's edge **scales with population heterogeneity**,
-Pearson 0.90, out-of-sample validated, tying the KT and chess results together),
+(E-D1/RQ5) — confirmed on **real students across 8 datasets, multiple platforms,
+and 3 subject domains** (ASSISTments 2009/2012/2015/2017, KDD-Cup Algebra +
+Bridge-to-Algebra, Spanish, and Statics; D beats the memoryless twin, significant
+every seed) — a **unifying scaling law** (the latent's edge **scales with
+population heterogeneity**, Pearson 0.89 across the 8 datasets, tying the KT and
+chess results together),
 the **hidden > verbal** channel (E-E1/RQ6), and **population heterogeneity
 recovery + generation** beating the "positive average person" (E-F1/E-F2, also on
-real KT: Wasserstein 2× better than average-person). Honest caveat: the headline
-D-vs-B results use small from-scratch
-backbones; the **LLM policy is implemented + run** (`SGLangBackbone`, Qwen3) but
-only as a **negative control** so far — frozen verbal/persona-prompt injection
-does *not* work (no better than irrelevant text), motivating the trained latent;
-a *trained* LLM injector is the #1 open experiment. CLI: `gps ingest`,
+real KT: Wasserstein 2× better than average-person). And an **actual LLM policy**
+(Qwen3): frozen verbal/persona-prompt injection is a *negative control* (≈
+irrelevant filler) and RL's sparse reward can't resolve the effect, but a dense
+**behavior-cloning SFT probe reproduces the board-native asymmetry** — state
+helps **think-time ≫ moves** — and this **sharpens across a backbone-scaling
+trend** (0.6B→1.7B→4B→8B: the move channel collapses to a clean null at ≥4B while
+timing stays robust), so the effect is *not* a small-model artifact. Honest
+caveat: the headline D-vs-B results still use small from-scratch backbones (the
+LLM is a *probe*, not the headline); full-param/larger LLM policies are future
+work. CLI: `gps ingest`,
 `gps train-ec`, `gps phase0`, `gps kt` (RQ5/F on knowledge tracing, synthetic
 or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
 

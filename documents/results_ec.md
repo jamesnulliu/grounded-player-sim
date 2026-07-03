@@ -463,28 +463,34 @@ reproduces it on two further real KT datasets:
   seed**, D wins 77–81% — the *largest* effect of all (language has rich
   per-student variation); F Wasserstein **3.3× < average-person** (corr 0.96).
 
-So the real-KT finding holds across **5 datasets, 2 platforms, and 3 subject
-domains (math + language + engineering)**, significant in every seed of every
-dataset; effect size varies with the domain (largest in language, smallest on
-the high-accuracy math set) but the sign and significance never do. Builder
-`scratchpad/assist17_rq5.py`; raw in `results/real_kt.txt`.
+So the real-KT finding holds across **8 datasets, multiple platforms, and 3
+subject domains (math + language + engineering)** — ASSISTments 2009/2012/2015/
+2017, KDD-Cup Algebra and Bridge-to-Algebra, Spanish, and Statics — significant
+in every seed of every dataset; effect size varies with the domain (largest in
+language, smallest on the high-accuracy set) but the sign and significance never
+do. Builder `scratchpad/assist17_rq5.py`; raw in `results/real_kt.txt`; all runs
+in W&B `gps-kt-scaling`.
 
 **What predicts the effect size? Population heterogeneity — a synthesis across
 the four datasets.** The naive guess (harder datasets → bigger effect) is
 *wrong*: Spanish has a *high* accuracy yet the largest effect. What actually
 tracks the latent's advantage is the **per-student accuracy spread** (the same
-heterogeneity Milestone-F measures): |D−B| correlates strongly with observed
-spread, and — crucially — the relationship **validates out-of-sample**. We formed
-the hypothesis on four datasets (Pearson 0.90 / Spearman 0.80), then tested it on
-a *held-out* fifth from a new subject domain (**Statics**, college engineering):
-it fits the line, and the correlation *holds/tightens* at **Pearson 0.905 /
-Spearman 0.90** (n=5): bridge06 (spread 0.10 → −0.004) < Statics (0.14 → −0.008)
-< assist17 (0.15 → −0.014) < assist09 (0.19 → −0.010) < Spanish (0.26 → −0.032).
-This is exactly what the **individualization** account predicts — the more a
-population varies student-to-student, the more an online per-individual latent
-can exploit — so it also **links RQ5 to Milestone-F** (the latent's
-heterogeneity-recovery is *why* it predicts better). The evolving latent earns
-its keep precisely where individuals differ most.
+heterogeneity Milestone-F measures): across **eight** real datasets, |D−B|
+correlates **Pearson 0.89** with observed spread. The relationship is a **strong
+linear trend anchored by the extremes** — the least-heterogeneous population
+(Bridge-to-Algebra, spread 0.10) has the smallest edge (−0.004) and the most
+heterogeneous (Spanish, spread 0.26) the largest (−0.032). We are honest about
+its limits: the **middle band** (six datasets at spread 0.12–0.19) is a noisy
+plateau (all ≈ −0.008 to −0.014), so the *rank* monotonicity is looser
+(**Spearman 0.74** at n=8, down from 0.90 at n=5 — filling in the middle revealed
+the plateau). So it is a real *trend*, not a tight monotone law: the latent's
+edge is clearly larger in high-heterogeneity populations and clearly smaller in
+low ones, with a noisy interior. This is exactly the direction the
+**individualization** account predicts — the more a population varies
+student-to-student, the more an online per-individual latent can exploit — and it
+**links RQ5 to Milestone-F** (the latent's heterogeneity-recovery is *why* it
+predicts better). The evolving latent earns its keep where individuals differ
+most. (All eight datasets logged to W&B `gps-kt-scaling`.)
 
 **One principle unifies the KT and chess results.** "The latent's edge scales
 with behavioral heterogeneity" is not only a KT-across-datasets fact — it is the
@@ -695,6 +701,25 @@ same channel asymmetry as board-native (state → timing ≫ moves), now with a
 positive LLM result. **Full-param SFT confirms it** (timing Δ = −0.0113 ≈ the
 LoRA −0.0109; move Δ = −0.0033) — the asymmetry holds across **LoRA and
 full-param**. Raw: `results/slime_rl_llm.txt`.
+
+**It is not a small-model artifact — a backbone-scaling trend.** We re-ran the
+SFT probe (LoRA, 3 seeds) across **four model sizes** and the asymmetry
+*sharpens* with scale:
+
+| backbone | timing Δ | move Δ |
+|----------|---------:|-------:|
+| Qwen3-0.6B | −0.0107 | −0.0036 |
+| Qwen3-1.7B | −0.0116 | −0.0042 |
+| Qwen3-4B | −0.0114 | **−0.0004** |
+| Qwen3-8B | −0.0136 | **−0.0008** |
+
+The **think-time** help is robust at every scale (−0.011 to −0.014), while the
+already-small **move** effect **collapses to a clean null at ≥4B** (−0.004 → ≈0).
+So bigger backbones make the *when-not-what* asymmetry **cleaner, not weaker** —
+the ratio grows from ≈3× to >10× (denominator-noisy, since the move effect →0).
+This directly answers the "small from-scratch backbone / no-SOTA" concern: the
+effect does not wash out as the policy scales up, it *concentrates on timing*.
+All runs in W&B `gps-llm-sft-scale`; raw in `results/slime_rl_llm.txt`.
 
 **LLM arm, summarised.** Three methods, one consistent story: (i) *frozen*
 verbal/persona-prompt = negative control (a state note ≈ irrelevant filler);

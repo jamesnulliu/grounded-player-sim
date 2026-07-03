@@ -52,3 +52,39 @@ timing full-param: with-state=0.2506 no-state=0.2619 delta=-0.0113 (≈ LoRA -0.
 => timing asymmetry holds across LoRA AND full-param. move full-param delta -0.0033.
 FINAL LLM SFT: state helps TIMING (LoRA -0.0109 3seed non-overlapping, full -0.0113)
 >> MOVES (LoRA -0.0030, full -0.0033). Board-native asymmetry reproduced in SFT LLM.
+
+============================================================
+SCALE-UP: Qwen3-8B SFT (LoRA, 3 seeds) -- does the asymmetry survive a bigger backbone?
+============================================================
+Online W&B project gps-llm-sft-8b. Same chess behavior-cloning datasets; LoRA r=16
+(full-param 8B needs FSDP ~128GB, deferred). Held-out completion NLL, with-state vs no-state.
+
+               TIMING Δ (tw-tn)                 MOVE Δ (w-n)
+  8B (3-seed): -0.0136  (-0.0149/-0.0121/-0.0139)   -0.0008  (-0.0004/-0.0026/+0.0007)
+  1.7B (ref):  -0.0116                               -0.0042
+
+=> The timing>>move asymmetry SHARPENS at 8B: think-time help GROWS (-0.0116 -> -0.0136)
+   while move help COLLAPSES to a clean null (-0.0042 -> -0.0008; seeds straddle zero).
+   The effect is NOT a small-model artifact -- it strengthens at the bigger backbone.
+   Directly addresses the "no-SOTA backbone" critique: state helps WHEN you act
+   (think-time), not WHAT you play (move), and more cleanly so as the model scales.
+
+============================================================
+MODEL-SCALING TREND — asymmetry vs backbone size (0.6B/1.7B/4B/8B, LoRA, 3 seeds)
+============================================================
+Online W&B gps-llm-sft-scale. Held-out completion NLL, with-state vs no-state.
+  model   timingΔ(tw-tn)   moveΔ(w-n)   ratio (denom-noisy at >=4B)
+  0.6B      -0.0107          -0.0036      ~3x
+  1.7B      -0.0116          -0.0042      ~3x
+  4B        -0.0114          -0.0004      >10x (move ~0)
+  8B        -0.0136          -0.0008      >10x (move ~0)
+  (final 24/24, 3 seeds each; 1.7B/8B carried from gps-llm-sft/gps-llm-sft-8b.)
+=> HONEST read: TIMING help is ROBUST at every scale (~-0.011 to -0.014, all 3 seeds). The
+   asymmetry SHARPENS with scale because the MOVE channel COLLAPSES to a clean null at
+   >=4B (-0.0036/-0.0042 at 0.6-1.7B -> -0.0004/-0.0008 at 4-8B, essentially zero). The
+   ratio therefore becomes large (>10x) but denominator-noisy (dividing a ~0 move
+   effect), so we report ">10x" not a precise value. Bigger backbones make the
+   "state helps WHEN not WHAT" asymmetry CLEANER, not weaker -> strong no-SOTA
+   answer (effect doesn't wash out at scale; the near-null move channel becomes a
+   true null). Not primarily timing-growth; it's move-collapse. 30B-A3B available
+   to extend. Scripts trl_sft_scale.py + sft_scale_driver.sh.

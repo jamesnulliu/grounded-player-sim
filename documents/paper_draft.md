@@ -29,12 +29,15 @@ datasets, two platforms, and three subjects) and **generates** a population that
 recovers real heterogeneity a "positive average person" baseline cannot. Across
 both domains one law emerges: the latent's advantage **scales with behavioral
 heterogeneity** — across students, players, and moments alike, it helps most
-precisely where individuals differ most (out-of-sample-validated, correlation
-0.90). In an **actual LLM policy** (Qwen3), a behavior-cloning SFT probe
+precisely where individuals differ most (Pearson 0.89 across eight real
+datasets — a strong trend anchored by the extremes, noisier in the middle). In
+an **actual LLM policy** (Qwen3), a behavior-cloning SFT probe
 reproduces the same asymmetry — the state helps the LLM's think-time prediction,
-not its move choice — while confirming that a *verbal* prompt is a weaker channel
-than the trained *hidden* latent. The contribution is the **conjunction**: no
-single axis is novel alone.
+not its move choice — and it **sharpens across a backbone-scaling trend**
+(0.6B → 8B, the move effect collapsing to a clean null at scale), while
+confirming that a *verbal* prompt
+is a weaker channel than the trained *hidden* latent. The contribution is the
+**conjunction**: no single axis is novel alone.
 
 ## Contributions
 
@@ -57,22 +60,23 @@ single axis is novel alone.
    *what* they play.
 5. A **unifying scaling law**: the latent's advantage grows with **behavioral
    heterogeneity** at three granularities — across *populations* (the KT effect
-   size correlates 0.90 with per-student accuracy spread, out-of-sample
-   validated on a held-out dataset), across *players* (chess timing edge ≈3×
-   larger for the most-variable players), and across *contexts* (2–8× under time
-   pressure). One statement — *personalization pays off in proportion to how much
-   individuals differ* — ties the chess and KT results together and explains why
-   the same latent recovers population heterogeneity (Milestone F).
+   size correlates **Pearson 0.89 across eight real datasets** with per-student
+   accuracy spread — a strong trend anchored by the extremes, noisier in the
+   middle band), across *players* (chess timing edge ≈3× larger for the
+   most-variable players), and across *contexts* (2–8× under time pressure). One
+   statement — *personalization pays off in proportion to how much individuals
+   differ* — ties the chess and KT results together and explains why the same
+   latent recovers population heterogeneity (Milestone F).
 6. **Generality** (RQ5) in a non-game oracle domain (KT) and a **heterogeneity-
    recovery** result (Milestone F) beating the "positive average person" — both
    confirmed on **real data** (ASSISTments 2009): the evolving latent beats the
    memoryless twin on real student responses (500 students, D−B≈−0.010, P=1.00
    in all 3 seeds, D wins 64–73%; robust across a 150–500-student cohort sweep,
-   **and replicated across 5 datasets / 2 platforms / 3 subject domains —
-   ASSISTments 2017, KDD-Cup Bridge-to-Algebra (diff. platform), Spanish
-   vocabulary (language) and Statics (engineering), significant every seed; the
-   effect size **scales with population heterogeneity**, Pearson 0.90 validated
-   out-of-sample**), and — on the same
+   **and replicated across 8 datasets / multiple platforms / 3 subject domains —
+   ASSISTments 2009/2012/2015/2017, KDD-Cup Algebra + Bridge-to-Algebra, Spanish
+   (language) and Statics (engineering), significant every seed; the effect size
+   **scales with population heterogeneity**, Pearson 0.89, n=8**), and — on the
+   same
    500 students — recovers the real accuracy distribution (Wasserstein 2× better
    than average-person, corr 0.96, recall 0.75 vs 0.00).
 7. A study of the same injection in an **actual LLM policy** (Qwen3, 2×A100):
@@ -80,10 +84,16 @@ single axis is novel alone.
    *RL* (GRPO via slime) learns the task but its sparse reward can't resolve the
    state effect; a dense **behavior-cloning SFT** probe, however, reproduces the
    channel asymmetry in the LLM — state helps **think-time** (Δ = −0.011,
-   non-overlapping across seeds, holds LoRA→full-param) ≫ **moves** (−0.003). A
-   practical lesson: for small latent-injection effects, **SFT is a sharper
-   probe than RL**; the *hidden* latent stays the stronger channel than a verbal
-   prompt (RQ6).
+   non-overlapping across seeds, holds LoRA→full-param) ≫ **moves** (−0.004). And
+   the effect is **not a small-model artifact** — a **backbone-scaling trend**
+   (0.6B → 1.7B → 4B → 8B, 3 seeds each) shows the asymmetry *sharpens with
+   scale*: think-time help stays robust (−0.011 to −0.014 throughout) while the
+   already-small **move effect collapses to a clean null at ≥4B** (−0.004 → ≈0:
+   −0.0004 / −0.0008 at 4B / 8B), so the asymmetry ratio grows from ≈3× (0.6–1.7B)
+   to >10× (4–8B, denominator-noisy since the move effect is ~0). Bigger backbones
+   make the "when-not-what" asymmetry *cleaner*, not weaker. A practical lesson:
+   for small latent-injection effects, **SFT is a sharper probe than RL**; the
+   *hidden* latent stays the stronger channel than a verbal prompt (RQ6).
 
 ## Method (one paragraph)
 
@@ -123,13 +133,14 @@ All P below are P(D−B<0); CIs are 95% bootstrap over players.
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
-| RQ5 | **E-D1 replication** (5 datasets, 2 platforms, 3 subjects) | ASSISTments 2017 + Bridge06 (diff. platform) + Spanish (language) + Statics (engineering); D−B −0.004…−0.03, **significant every seed** — not dataset/platform/subject-specific |
-| RQ5↔F | effect size **scales with population heterogeneity** | \|D−B\| vs accuracy-spread **Pearson 0.905 / Spearman 0.90** (n=5), **validated out-of-sample** on held-out Statics — latent helps most where individuals differ most |
+| RQ5 | **E-D1 replication** (8 datasets, multi-platform, 3 subjects) | ASSISTments 09/12/15/17 + KDD Algebra/Bridge + Spanish (language) + Statics (engineering); D−B −0.004…−0.03, **significant every seed** — not dataset/platform/subject-specific |
+| RQ5↔F | effect size **scales with population heterogeneity** | \|D−B\| vs accuracy-spread **Pearson 0.89** (n=8); strong linear trend anchored by the extremes, noisier middle (Spearman 0.74) — latent helps most where individuals differ most |
 | RQ6 | **E-E1** hidden vs verbal channel | hidden richer: −0.069 (synth) / −0.117 (real), P=1.00 |
 | F | **E-F2** population heterogeneity | W1 to observed 4–5× lower than average-person; corr 0.96 |
 | F | **E-F2 real** (ASSISTments 2009, 500 students) | W1 2.0× lower than average-person; corr 0.96; recall 0.75 vs 0.00 |
 | F | **E-F1** generate novel players (sample latents) | precision/recall 0.93/1.00 vs average-person 1.00/0.00 |
-| LLM | **SFT probe** (Qwen3, 2×A100) | state helps timing Δ=−0.011 (3-seed, non-overlap; LoRA=full) ≫ moves −0.003; RL too sparse; frozen = null |
+| LLM | **SFT probe** (Qwen3, 2×A100) | state helps timing Δ=−0.011 (3-seed; LoRA=full) ≫ moves −0.004; RL too sparse; frozen = null |
+| LLM | **backbone-scaling trend** (0.6B→1.7B→4B→8B) | asymmetry **sharpens with scale**: timing robust (−0.011…−0.014), move collapses to clean null at ≥4B (−0.004→≈0); ratio ≈3×→>10× (denom-noisy) — not a small-model artifact |
 
 A recurring, honest signature: **timing is the channel where the evolving state
 robustly helps** (chess and KT alike). The discrete move/response advantage is
@@ -140,9 +151,9 @@ the real move channel as a genuine near-null, not a faint signal to amplify.
 
 And a single principle governs *where* it helps: **the latent's edge scales with
 behavioral heterogeneity**. This shows up at three granularities — across
-*populations* (the KT effect size correlates 0.90 with per-student accuracy
-spread, out-of-sample-validated), across *players* (the chess timing edge is ≈3×
-larger for the weakest, most-variable players), and across *contexts* (2–8×
+*populations* (the KT effect size correlates Pearson 0.89 with per-student
+accuracy spread across 8 real datasets), across *players* (the chess timing edge
+is ≈3× larger for the weakest, most-variable players), and across *contexts* (2–8×
 larger under time pressure). The evolving latent buys the most exactly where
 behaviour is least predictable from the average — which is also why it recovers
 population heterogeneity (Milestone F).
