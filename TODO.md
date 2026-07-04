@@ -527,6 +527,16 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   **Still GPU-host TODO:** (a) the sglang `input_embeds` scoring call; (b) train
   the projector+injector jointly under the LLM SFT objective (extend the TRL SFT
   probe with the hidden prefix, reusing `prepend_prefix`). Then G2/G3 below.
+- [~] **G-code-3: G2/G3 SFT training entry point** (`experiments/llm_hidden.py`).
+  The `none`/`verbal`/`hidden` completion-NLL SFT that ports RQ6 into the LLM.
+  CPU-tested + landed: `build_examples()` (causal per-decision (prompt,
+  completion, latent) assembly from a trajectory — `hidden` carries the full
+  evolving latent, prompt byte-identical to `none`; `verbal` adds the note) and
+  `assemble_completion_step()` (input-embeds + attention mask + the label mask
+  that scores *only* the completion, prefix+prompt ignored). 7 tests in
+  `tests/test_llm_hidden.py` (151 pass). **GPU-host TODO:** flesh out
+  `run_hidden_sft_condition()` (transformers/PEFT load + the fit loop it already
+  sketches) and run the 3 conditions → report `hidden − verbal` (G3).
 
 ### Experiments
 - [ ] **G1 (Maia D-vs-B):** rerun the E-C timing/move D-vs-B with Maia-2 as the
