@@ -27,6 +27,27 @@ same way):
 from __future__ import annotations
 
 
+def prepend_prefix(prefix_rows, token_embeds):
+    """Concatenate soft-prompt rows *before* token embeddings (sequence axis).
+
+    The single op the HIDDEN forward performs: given the projected prefix
+    (``[n_prefix, hidden]`` or ``[B, n_prefix, hidden]``) and the position's
+    token embeddings (``[S, hidden]`` or ``[B, S, hidden]``), return the LLM
+    input embeddings ``[(n_prefix + S), hidden]`` (or batched). The caller must
+    also extend the attention mask / position ids by ``n_prefix`` slots.
+
+    Kept as a named helper so the toy-LM training check and the real GPU path
+    prepend the prefix the *same* way (contract: prefix first, then tokens).
+    """
+    import torch
+
+    if prefix_rows.dim() == 2 and token_embeds.dim() == 3:
+        prefix_rows = prefix_rows.unsqueeze(0).expand(
+            token_embeds.shape[0], -1, -1
+        )
+    return torch.cat([prefix_rows, token_embeds], dim=-2)
+
+
 class HiddenPrefixProjector:
     """Projects a latent ``z_t`` to ``[n_prefix, hidden_size]`` prefix rows.
 

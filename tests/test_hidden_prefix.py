@@ -19,7 +19,10 @@ from gps.interface import (  # noqa: E402
     TimeSignal,
 )
 from gps.latent.base import Injection, InjectionKind  # noqa: E402
-from gps.policy.hidden_prefix import HiddenPrefixProjector  # noqa: E402
+from gps.policy.hidden_prefix import (  # noqa: E402
+    HiddenPrefixProjector,
+    prepend_prefix,
+)
 from gps.policy.sglang_backbone import SGLangBackbone  # noqa: E402
 
 
@@ -126,3 +129,66 @@ def test_hidden_inference_fails_loudly_not_silently():
     inj = Injection(kind=InjectionKind.HIDDEN, vector=[0.0] * 8)
     with pytest.raises((NotImplementedError, ImportError)):
         bb.move_logprobs(_dp(), inj)
+
+
+# --- prefix op + the SFT training mechanism (Phase-0 for G2/G3) --------
+def test_prepend_prefix_shapes():
+    prefix = torch.zeros(2, 8)  # [n_prefix, hidden]
+    single = prepend_prefix(prefix, torch.zeros(5, 8))  # [S, hidden]
+    assert tuple(single.shape) == (7, 8)  # n_prefix + S
+    batch = prepend_prefix(prefix, torch.zeros(3, 5, 8))  # [B, S, hidden]
+    assert tuple(batch.shape) == (3, 7, 8)  # prefix broadcast over the batch
+
+
+def test_hidden_prefix_injects_trainable_signal_on_toy_lm():
+    """Projector alone (LM frozen) steers a causal toy LM's completion loss.
+
+    This is the mechanism G3 exploits -- the hidden prefix carries usable,
+    *trainable* signal into the model -- validated on CPU (a tiny frozen GRU
+    stands in for the LLM) before spending GPU on Qwen3. Freezing the LM and
+    training only the projector isolates the prefix's causal effect: any loss
+    drop is signal delivered purely through the soft prompt.
+    """
+    torch.manual_seed(0)
+    vocab, hidden, n_prefix = 24, 8, 2
+    embed = torch.nn.Embedding(vocab, hidden)
+    gru = torch.nn.GRU(hidden, hidden, batch_first=True)
+    head = torch.nn.Linear(hidden, vocab)
+    frozen = (
+        list(embed.parameters())
+        + list(gru.parameters())
+        + list(head.parameters())
+    )
+    for p in frozen:  # freeze the "LLM" -- only the projector learns
+        p.requires_grad_(False)
+
+    proj = HiddenPrefixProjector(
+        latent_dim=6, hidden_size=hidden, n_prefix=n_prefix, seed=0
+    )
+    z = torch.randn(6)
+    tokens = torch.randint(0, vocab, (1, 7))
+    targets = tokens[:, 1:]  # next-token targets over the completion
+
+    def completion_loss():
+        prefix = proj.project(z)  # [n_prefix, hidden]
+        seq = prepend_prefix(prefix, embed(tokens))  # [1, n_prefix+7, hidden]
+        out, _ = gru(seq)  # causal mixing -> prefix conditions the completion
+        logits = head(out[:, n_prefix:-1, :])  # predict tokens[1:]
+        return torch.nn.functional.cross_entropy(
+            logits.reshape(-1, vocab), targets.reshape(-1)
+        )
+
+    opt = torch.optim.Adam(proj.parameters(), lr=0.05)
+    with torch.no_grad():
+        init = float(completion_loss())
+    for _ in range(150):
+        opt.zero_grad()
+        loss = completion_loss()
+        loss.backward()
+        opt.step()
+    # Read the final loss from the last training step's forward (has grad),
+    # so proj.grad stays populated for the signal-flow assertion below.
+    final = float(loss.detach())
+
+    assert final < init - 1e-2  # the soft prefix measurably steers completion
+    assert all(p.grad is not None for p in proj.parameters())  # signal flows

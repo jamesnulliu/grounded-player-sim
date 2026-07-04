@@ -518,10 +518,15 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   leaves the text byte-identical for HIDDEN (channel-only RQ6 contrast);
   `move_logprobs` routes HIDDEN → `_hidden_move_logprobs`, which builds the real
   prefix then **fails loudly** at the GPU `input_embeds` boundary (never silently
-  drops the latent). 11 CPU tests in `tests/test_hidden_prefix.py` (142 pass).
+  drops the latent). Plus `prepend_prefix()` (the exact prefix-first concat op the
+  real forward uses) and a **Phase-0-style mechanism check**: with a frozen causal
+  toy LM, training *only* the projector measurably steers the completion loss down
+  (isolates the prefix's causal effect) — so the hidden channel carries usable,
+  trainable signal *before* we spend GPU on Qwen3. 13 CPU tests in
+  `tests/test_hidden_prefix.py` (144 pass).
   **Still GPU-host TODO:** (a) the sglang `input_embeds` scoring call; (b) train
   the projector+injector jointly under the LLM SFT objective (extend the TRL SFT
-  probe with the hidden prefix). Then G2/G3 below.
+  probe with the hidden prefix, reusing `prepend_prefix`). Then G2/G3 below.
 
 ### Experiments
 - [ ] **G1 (Maia D-vs-B):** rerun the E-C timing/move D-vs-B with Maia-2 as the
