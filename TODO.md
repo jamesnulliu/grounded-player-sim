@@ -376,8 +376,20 @@ novel (see design.md §8 for what is shared territory).
   distribution too (W1 2.0× < average-person, corr 0.96, recall 0.75 vs 0.00 —
   see Milestone F), so the same 500 students both predict responses (RQ5) and
   recover the population distribution (F).
-- [ ] **E-D2:** Go-specific dynamics — lean on within-game byo-yomi time
-  pressure where cross-game session data is thinner.
+- [~] **E-D2 — ATTEMPTED, no robust effect (honest negative).** Real OGS Go (800
+  games, 586 players, per-move think-times from the game JSON; oracle-free). A
+  naive mixed-cohort within-game run *looked* positive (D−B ≈ −0.002, P=1.00 in
+  2/3), **but a 19×19-only homogeneity control overturns it** (D−B ≈ +0.001, ns,
+  one seed sig. worse) — the apparent effect was a **board-size/speed confound**
+  (latent detecting game regime, not byo-yomi dynamics). The one residual weak
+  9×9 signal (n=209, 2/3 seeds) was **chased to a 2.5× larger 9×9-only cohort
+  (N=519) and COLLAPSES to null** (D−B −0.0015/+0.0011/+0.0001, 1/3 seeds sig, two
+  wrong-sign, mean ≈0) → small-cohort noise. Cross-game framing also null. **No Go
+  claim at any board size** (homogeneity control + power check). Builders
+  `scratchpad/go/*.py` (size filter argv[4], larger `go_big.json`); raw
+  `results/go_timing.txt`. Generality claimed via chess + KT. **Future work:**
+  richer within-game signal (true byo-yomi clock) and/or the Go move channel
+  (needs a Go board backbone).
 - [ ] **E-D3 (RQ5 stretch, OPTIONAL):** cross-game latent correlation for
   players who play both. **Caveat heavily** — no reliable Lichess↔KGS/OGS
   identity map; the chess∩Go high-volume population is tiny. May be cut.

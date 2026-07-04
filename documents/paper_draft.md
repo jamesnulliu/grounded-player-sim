@@ -32,12 +32,16 @@ heterogeneity** — across students, players, and moments alike, it helps most
 precisely where individuals differ most (Pearson 0.89 across eight real
 datasets — a strong trend anchored by the extremes, noisier in the middle). In
 an **actual LLM policy** (Qwen3), a behavior-cloning SFT probe
-reproduces the same asymmetry — the state helps the LLM's think-time prediction,
-not its move choice — and it **sharpens across a backbone-scaling trend**
-(0.6B → 8B, the move effect collapsing to a clean null at scale), while
+reproduces the same asymmetry — the state helps the LLM's think-time prediction
+(Δ ≈ −0.013, **robust across LoRA and full fine-tuning, and across
+0.6B → 8B**) much more than its move choice — while
 confirming that a *verbal* prompt
-is a weaker channel than the trained *hidden* latent. The contribution is the
-**conjunction**: no single axis is novel alone.
+is a weaker channel than the trained *hidden* latent. (The move channel's
+apparent collapse to a clean null at scale is a **LoRA-capacity artifact**:
+full-param fine-tuning at *both* 4B and 8B recovers a stable move benefit, so the
+timing ≫ move asymmetry is robust but *graded*, not a clean null in a
+full-capacity LLM.) The contribution
+is the **conjunction**: no single axis is novel alone.
 
 ## Contributions
 
@@ -86,12 +90,19 @@ is a weaker channel than the trained *hidden* latent. The contribution is the
    channel asymmetry in the LLM — state helps **think-time** (Δ = −0.011,
    non-overlapping across seeds, holds LoRA→full-param) ≫ **moves** (−0.004). And
    the effect is **not a small-model artifact** — a **backbone-scaling trend**
-   (0.6B → 1.7B → 4B → 8B, 3 seeds each) shows the asymmetry *sharpens with
-   scale*: think-time help stays robust (−0.011 to −0.014 throughout) while the
-   already-small **move effect collapses to a clean null at ≥4B** (−0.004 → ≈0:
-   −0.0004 / −0.0008 at 4B / 8B), so the asymmetry ratio grows from ≈3× (0.6–1.7B)
-   to >10× (4–8B, denominator-noisy since the move effect is ~0). Bigger backbones
-   make the "when-not-what" asymmetry *cleaner*, not weaker. A practical lesson:
+   (0.6B → 1.7B → 4B → 8B LoRA, 3 seeds each) keeps the think-time help robust
+   (−0.011 to −0.014 throughout). Under LoRA the already-small move effect drops
+   to ≈0 at ≥4B, but **full-param runs (all weights, 3 seeds each) at both scales
+   where LoRA collapses the move channel — 4B and 8B** — enabled on this old-kernel
+   node by a **single-GPU 8-bit paged optimizer** (no FSDP/NCCL) — show that
+   move-collapse is a **LoRA-capacity artifact**, not a property of scale: full
+   fine-tuning holds **timing Δ = −0.0110 / −0.0128** (4B/8B, ≈ LoRA −0.0114 /
+   −0.0136, robust to adaptation method) *and* **recovers a stable move Δ = −0.0072 /
+   −0.0083** (all 3 seeds < 0 at each scale, vs LoRA's −0.0004 / −0.0008 nulls). So
+   the **timing ≫ move asymmetry is robust but graded** (timing ~1.5× move under full
+   FT), and the clean move-**null** is specific to the low-capacity LoRA probe and the
+   board-native policy — the robust, adaptation-invariant claim is the **think-time**
+   benefit. A practical lesson:
    for small latent-injection effects, **SFT is a sharper probe than RL**; the
    *hidden* latent stays the stronger channel than a verbal prompt (RQ6).
 
@@ -134,13 +145,15 @@ All P below are P(D−B<0); CIs are 95% bootstrap over players.
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
 | RQ5 | **E-D1 replication** (8 datasets, multi-platform, 3 subjects) | ASSISTments 09/12/15/17 + KDD Algebra/Bridge + Spanish (language) + Statics (engineering); D−B −0.004…−0.03, **significant every seed** — not dataset/platform/subject-specific |
+| E-D2 | **Go** timing (real OGS, oracle-free) | **no effect at any board size**: null on 13×13 & 19×19 (well-powered); mixed-cohort "positive" was a board-size confound; the one residual weak 9×9 signal (n=209, 2/3 seeds) **collapses to null on a 2.5× larger 9×9 cohort** (N=519, 1/3 seeds, mean ≈0) — small-cohort noise; Go = future work |
 | RQ5↔F | effect size **scales with population heterogeneity** | \|D−B\| vs accuracy-spread **Pearson 0.89** (n=8); strong linear trend anchored by the extremes, noisier middle (Spearman 0.74) — latent helps most where individuals differ most |
 | RQ6 | **E-E1** hidden vs verbal channel | hidden richer: −0.069 (synth) / −0.117 (real), P=1.00 |
 | F | **E-F2** population heterogeneity | W1 to observed 4–5× lower than average-person; corr 0.96 |
 | F | **E-F2 real** (ASSISTments 2009, 500 students) | W1 2.0× lower than average-person; corr 0.96; recall 0.75 vs 0.00 |
 | F | **E-F1** generate novel players (sample latents) | precision/recall 0.93/1.00 vs average-person 1.00/0.00 |
 | LLM | **SFT probe** (Qwen3, 2×A100) | state helps timing Δ=−0.011 (3-seed; LoRA=full) ≫ moves −0.004; RL too sparse; frozen = null |
-| LLM | **backbone-scaling trend** (0.6B→1.7B→4B→8B) | asymmetry **sharpens with scale**: timing robust (−0.011…−0.014), move collapses to clean null at ≥4B (−0.004→≈0); ratio ≈3×→>10× (denom-noisy) — not a small-model artifact |
+| LLM | **backbone-scaling trend** (0.6B→1.7B→4B→8B, LoRA) | timing robust at every scale (−0.011…−0.014); under LoRA move drops to ≈0 at ≥4B — but this is a LoRA-capacity artifact (see next row), not a small-model artifact |
+| LLM | **full-param 4B & 8B** (all weights, 3 seeds each) | timing Δ=−0.0110/−0.0128 (≈LoRA, adaptation+scale-invariant) **but move Δ=−0.0072/−0.0083 at 4B/8B (not the LoRA nulls −0.0004/−0.0008)** → move-collapse is a **LoRA-capacity artifact at both scales**; timing≫move robust but **graded** (~1.5×); single-GPU 8-bit optim (no FSDP) |
 
 A recurring, honest signature: **timing is the channel where the evolving state
 robustly helps** (chess and KT alike). The discrete move/response advantage is
@@ -237,13 +250,28 @@ population heterogeneity (Milestone F).
   uniform individualization edge would not) and reserve the strongest
   state-*tracking* claim for the synthetic probe/clamp. The headline empirical
   claim (evolving > memoryless on future behavior) is unaffected either way.
-- **The "chess *and* Go" claim is only realized on chess.** The interface,
-  `Game.GO` schema, and KataGo-oracle hooks exist, but no Go cohort has been run
-  end-to-end; every quantitative result is chess (+ KT for generality). Go is the
-  clearest open cross-domain validation, deferred as heavier infra (SGF ingestion
-  + KataGo). We therefore claim generality via **chess + knowledge tracing**
-  (game and non-game, both on real data), and flag Go as future work rather than
-  a delivered result.
+- **Go — attempted, no effect at any board size (honest negative).** We built a
+  real-Go pipeline (OGS: per-move think-times from the game JSON; oracle-free) and
+  ran the timing D-vs-B. A naive mixed-cohort run *looked* positive (D−B ≈ −0.002,
+  P=1.00 in 2/3 seeds) — but a **homogeneity control overturned it**: split by
+  board size, the effect is **absent on 19×19** (592 trajectories, well-powered;
+  D−B ≈ +0.001, ns, one seed significantly *worse*) and **13×13** (null), leaving
+  only a weak, seed-unstable **9×9** signal (n=209, 2/3 seeds P=1.00). So the
+  mixed-cohort "positive" was a **board-size/speed confound** (the latent
+  detecting the game *regime* — fast 9×9 vs slow 19×19 — i.e. per-trajectory
+  think-time *level*). We then **chased that one residual 9×9 signal to a 2.5×
+  larger 9×9-only cohort** (a fresh scan → 1554 games → N=519 trajectories): it
+  **collapses to null** (D−B −0.0015 / +0.0011 / +0.0001, mean ≈ 0, only 1/3 seeds
+  significant, two wrong-signed) — the weak 9×9 effect was **small-cohort noise**,
+  not a real signal. A **cross-game** framing (game W/L → post-loss/momentum) was
+  also null. **We therefore make no Go claim at any board size:** under a
+  homogeneity control *and* a power check, the evolving latent does not beat the
+  memoryless twin on real-Go think-time.
+  Go remains **future work** — likely needing richer within-game signal (the
+  actual byo-yomi clock, not a proxy) and/or the move channel (a Go board
+  backbone). The generality claim rests on **chess + knowledge tracing** (both
+  real). This is the kind of control a reviewer would run; better we ran it, and
+  then powered it up.
 - 2013 archives lack `[%clk]` (move-NLL only); timing uses a 2017 prefix.
 
 ## Positioning (vs 2026 prior art; design.md §8)

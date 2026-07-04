@@ -539,6 +539,50 @@ it intact, while a *within-game* shuffle would violate clock monotonicity — so
 chess shuffle cannot cleanly isolate cross-game dynamics and is not a decisive
 control here. Controls: `scratchpad/{real_kt,synth_kt}_shuffle.py`.
 
+## Go — attempted; no robust effect under controls (E-D2, honest negative)
+
+The thesis promises chess **and** Go, so we built a real-Go pipeline and ran the
+timing D-vs-B — but it does **not** yield a robust effect, and we report that
+honestly. Data: **OGS** (online-go.com) — the game *JSON* carries per-move
+think-times (`moves = [[x, y, time_ms], …]`; the SGF export does not, and the JSON
+needs a browser User-Agent), resolving the plan's flagged "confirm per-move timing
+availability" risk. 800 games, 586 players, 82k moves. Oracle-free (the timing
+head reads only the latent; no KataGo / board encoder needed). Trajectory = one
+player's moves within a game; think-time = the move's OGS time; a byo-yomi
+time-pressure proxy + move progression feed `history_features`; reuse `run_kt`'s
+lognormal timing head; future/temporal split.
+
+**A naive run looked positive — but a homogeneity control overturns it.** On the
+mixed cohort (928 trajectories, all board sizes) the evolving latent *appeared*
+to win: D−B = −0.0037 / −0.0022 / −0.0011, P=1.00 in 2/3. But restricting to
+**19×19-only** games (592 trajectories, well-powered) the effect **vanishes**:
+
+| cohort | D−B (3 seeds) | verdict |
+|--------|--------------|---------|
+| mixed sizes (9/13/19) | −0.0037 / −0.0022 / −0.0011 | looks positive (P=1.00 in 2/3) |
+| **9×9** (n=209, fastest) | +0.0003 / −0.0036 / −0.0041 | *looked* weak (2/3 seeds P=1.00) |
+| **13×13** (n=127) | +0.0005 / +0.0003 / −0.0002 | null |
+| **19×19** (n=592, well-powered) | +0.0029 / +0.0002 / −0.0002 | null (one seed *worse*) |
+| **9×9, 2.5× larger** (N=519) | −0.0015 / +0.0011 / +0.0001 | **null — collapses** (1/3 seeds sig, two wrong-sign) |
+
+So the mixed-cohort effect was mostly a **board-size/speed confound** (the
+evolving latent detecting the game *regime* — fast 9×9 ~1–2 s vs slow 19×19 —
+i.e. per-trajectory think-time *level*). The one residual finding — a **weak,
+seed-unstable 9×9 signal** (n=209, 2/3 seeds) — we chased to a **2.5× larger
+9×9-only cohort** (a fresh OGS scan → 1554 games → N=519 trajectories) to settle
+real-vs-noise. It **collapses to null**: D−B −0.0015 / +0.0011 / +0.0001 (mean
+≈ −0.0001, only 1/3 seeds significant, two *wrong-signed*). The weak 9×9 effect
+does **not** firm up with more power — it was **small-cohort noise**. A
+**cross-game** framing (game W/L → post-loss/momentum) was also null (n=42, ns).
+**We therefore make no Go claim at any board size:** under a homogeneity control
+*and* a power check, the evolving latent does not beat the memoryless twin on
+real-Go think-time. Go is **future work** — a cleaner test needs the true
+byo-yomi clock (not a proxy) and/or the move channel (a Go board backbone).
+Generality is claimed via **chess + knowledge tracing** (both real). Builders
+`scratchpad/go/*.py` (size filter `argv[4]`, larger cohort `go_big.json`); raw
+`results/go_timing.txt`. This is exactly the control a reviewer would run —
+better we ran it, and then powered it up.
+
 ## Population heterogeneity — beating the "positive average person" (E-F2 / F)
 
 The field's named-but-unsolved problem: behaviour models collapse to a
@@ -702,24 +746,43 @@ positive LLM result. **Full-param SFT confirms it** (timing Δ = −0.0113 ≈ t
 LoRA −0.0109; move Δ = −0.0033) — the asymmetry holds across **LoRA and
 full-param**. Raw: `results/slime_rl_llm.txt`.
 
-**It is not a small-model artifact — a backbone-scaling trend.** We re-ran the
-SFT probe (LoRA, 3 seeds) across **four model sizes** and the asymmetry
-*sharpens* with scale:
+**It is not a small-model artifact — a backbone-scaling trend (with an honest
+capacity caveat).** We re-ran the SFT probe (LoRA, 3 seeds) across **four model
+sizes**:
 
-| backbone | timing Δ | move Δ |
+| backbone (LoRA) | timing Δ | move Δ |
 |----------|---------:|-------:|
 | Qwen3-0.6B | −0.0107 | −0.0036 |
 | Qwen3-1.7B | −0.0116 | −0.0042 |
 | Qwen3-4B | −0.0114 | **−0.0004** |
 | Qwen3-8B | −0.0136 | **−0.0008** |
 
-The **think-time** help is robust at every scale (−0.011 to −0.014), while the
-already-small **move** effect **collapses to a clean null at ≥4B** (−0.004 → ≈0).
-So bigger backbones make the *when-not-what* asymmetry **cleaner, not weaker** —
-the ratio grows from ≈3× to >10× (denominator-noisy, since the move effect →0).
-This directly answers the "small from-scratch backbone / no-SOTA" concern: the
-effect does not wash out as the policy scales up, it *concentrates on timing*.
-All runs in W&B `gps-llm-sft-scale`; raw in `results/slime_rl_llm.txt`.
+The **think-time** help is robust at every scale (−0.011 to −0.014). Under **LoRA**
+the already-small **move** effect drops to ≈0 at ≥4B, so the asymmetry ratio grows
+(≈3× → >10×, denominator-noisy). **But we then tested whether that move-collapse is
+real or a capacity artifact by running full-param SFT (all weights, 3 seeds each) at
+the two scales where LoRA collapses the move channel — 4B and 8B** — made feasible on
+this old-kernel node by a **single-GPU paged-8-bit optimizer** (~30 GB at 4B / ~57 GB
+at 8B, no FSDP/NCCL, sidestepping the multi-GPU hang):
+
+| scale | LoRA move Δ | full-param move Δ (3-seed) | full-param timing Δ (3-seed) |
+|-------|---------:|-------:|-------:|
+| Qwen3-4B | **−0.0004** (null) | **−0.0072** (sd .0005, all<0) | −0.0110 (sd .0006) |
+| Qwen3-8B | **−0.0008** (null) | **−0.0083** (sd .0015, all<0) | −0.0128 (sd .0003) |
+
+The **timing benefit is invariant to adaptation method and scale** (full-param
+−0.0110/−0.0128 ≈ LoRA −0.0114/−0.0136 at 4B/8B) — the strong, robust claim. But the
+**move channel does *not* collapse under full fine-tuning**: at *both* scales where
+LoRA drops move to ≈0, full FT recovers a stable **~−0.007/−0.008 move benefit** (all
+3 seeds < 0 at each scale). So the LoRA "clean null at ≥4B" is a **LoRA-capacity
+effect** (a fixed r=16 adapter is a shrinking fraction of a bigger model), **not a
+property of scale**. The **timing ≫ move asymmetry still holds** under full
+fine-tuning (timing ~1.5× move, every seed at both scales) but as a **graded** effect,
+not a clean null. So the honest *when-not-what* story is: the timing benefit is robust
+and does not wash out at scale (answering the "no-SOTA backbone" concern); the clean
+move-**null** is specific to the low-capacity LoRA probe and the board-native policy,
+while a full-capacity LLM shows a small but consistent move benefit too. All runs in
+W&B `gps-llm-sft-scale` / `gps-llm-sft-8b-full`; raw in `results/slime_rl_llm.txt`.
 
 **LLM arm, summarised.** Three methods, one consistent story: (i) *frozen*
 verbal/persona-prompt = negative control (a state note ≈ irrelevant filler);

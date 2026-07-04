@@ -1,0 +1,102 @@
+GO (Milestone-D / E-D2) — FIRST per-individual timing result on real Go.
+Data: OGS (online-go.com) live/rapid/blitz games, per-move think-times from the
+game JSON (moves=[x,y,time_ms]; SGF export lacks per-move clocks). 800 games,
+586 players, 82k moves. Oracle-free (NO KataGo) — the timing head reads only the
+latent, so no Go board encoder is needed for the think-time headline.
+Trajectory = one player's moves within one game (E-D2 within-game byo-yomi
+dynamics). history_features: byo-yomi time-pressure proxy (main-time estimate
+minus cumulative time used) + move progression/fatigue. Reused run_kt (KTBackbone
+lognormal timing head over obs.time_spent = move think-time). Future/temporal
+split (early moves train, late moves held out). Builders scratchpad/go/
+{go_ingest,go_timing}.py.
+
+TIMING D-vs-B (evolving latent vs equal-capacity memoryless twin), 928
+player-game trajectories, 3 seeds:
+  seed 0: D-B=-0.0037 [-0.0053,-0.0021]  P=1.00
+  seed 1: D-B=-0.0022 [-0.0037,-0.0007]  P=1.00
+  seed 2: D-B=-0.0011 [-0.0024,+0.0002]  P=0.95
+  mean D-B ~ -0.0023; ALL 3 seeds negative; P=1.00 in 2/3 (0.95 in 3rd).
+
+=> The evolving per-individual latent beats the memoryless twin at predicting Go
+   THINK-TIME on real games — a genuine, mostly-significant FIRST result on the
+   empty-frontier Go domain (no prior model does per-individual Go timing).
+   Effect is SMALL (NLL ~2.42; within-game byo-yomi/fatigue dynamics are thinner
+   than chess's cross-game tilt/fatigue) and one seed is marginal (P=0.95).
+   HONEST scope: within-game timing only; the MOVE channel (needs a Go board
+   backbone / KataGo) and the CROSS-game per-player framing (game W/L ->
+   post-loss/momentum, like chess; needs multi-game players via the OGS
+   player-games endpoint) are future work. Fulfills the "chess AND Go" thesis
+   at the timing headline.
+
+--- CROSS-GAME framing tested (per-player across games; game W/L -> post-loss/momentum) ---
+OGS player-games endpoint -> 42 players (>=3 games, >=50 moves), 45240 moves, 3 seeds:
+  seed 0: D-B=+0.0071 [-0.0316,+0.0446] P=0.35
+  seed 1: D-B=+0.0138 [-0.0186,+0.0422] P=0.20
+  seed 2: D-B=-0.0030 [-0.0287,+0.0206] P=0.58
+=> NULL (D-B ~+0.006, not significant; small/underpowered cohort n=42, wide CIs).
+   Cross-game post-loss/momentum does NOT drive Go think-time the way it drives
+   chess. CONSISTENT with the plan ("lean on within-game byo-yomi time pressure
+   where cross-game session data is thinner"). CONCLUSION: Go's timing signal is
+   WITHIN-GAME (byo-yomi), not cross-game -- a genuine domain contrast vs chess
+   (where cross-game tilt matters). The WITHIN-game result above (D-B -0.0037/
+   -0.0022/-0.0011, P=1.00 in 2/3) is the Go headline. Builders go_ingest_xgame.py
+   + go_timing_xgame.py.
+
+************************************************************
+CORRECTION — HOMOGENEITY CONTROL OVERTURNS THE GO RESULT
+************************************************************
+Robustness check: re-ran WITHIN-game timing on 19x19-ONLY games (592 trajectories,
+64673 moves; NOT underpowered), 3 seeds:
+  seed 0: D-B=+0.0029 [+0.0009,+0.0049] P=0.00 (D WORSE, significant)
+  seed 1: D-B=+0.0002 [-0.0008,+0.0013] P=0.34
+  seed 2: D-B=-0.0002 [-0.0019,+0.0014] P=0.59
+=> NULL / slightly reversed. The effect VANISHES when board size is held constant.
+
+CONCLUSION (corrected, honest): the earlier MIXED-cohort within-game "positive"
+(D-B -0.0023, P=1.00 in 2/3) was a BOARD-SIZE/SPEED HETEROGENEITY CONFOUND — the
+evolving latent was detecting the game REGIME (fast 9x9 ~1-2s vs slow 19x19),
+i.e. per-trajectory think-time LEVEL, not genuine within-game byo-yomi dynamics.
+On a HOMOGENEOUS 19x19 cohort it is a NULL. The cross-game framing was also null.
+
+=> WE DO NOT CLAIM A GO TIMING RESULT. On real Go, with proper controls, the
+   evolving latent does NOT beat the memoryless twin on think-time. Go is
+   ATTEMPTED but the effect does not survive a homogeneity control. Likely needs
+   richer within-game signal (actual byo-yomi clock state, not a proxy) and/or
+   the move channel (Go board backbone). Honest negative — a reviewer would run
+   exactly this control. Builders scratchpad/go/*.py (size filter argv[4]).
+
+--- PER-BOARD-SIZE breakdown (localizing the effect; 3 seeds each) ---
+  9x9  (209 traj): D-B +0.0003/-0.0036/-0.0041  -> WEAK effect, 2/3 seeds P=1.00 (fastest/blitz)
+  13x13(127 traj): D-B +0.0005/+0.0003/-0.0002  -> NULL
+  19x19(592 traj): D-B +0.0029/+0.0002/-0.0002  -> NULL (well-powered)
+=> The effect is NOT uniformly null: it is LOCALIZED to 9x9 (fastest, most
+   time-pressured games where byo-yomi dynamics are extreme) -- weak + seed-
+   unstable there (2/3 seeds, small n=209) -- and ABSENT on 13x13 and 19x19.
+   The mixed-cohort 'positive' = this weak 9x9 signal + cross-size regime confound.
+   HONEST: NOT a robust Go result. But the effect, where it appears, CONCENTRATES
+   in the highest-time-pressure regime -- qualitatively consistent with the chess
+   time-pressure concentration finding, though far too weak/unstable to headline.
+   A cleaner test needs the true byo-yomi clock + a larger 9x9-blitz cohort.
+
+************************************************************
+DEFINITIVE 9x9 RESOLUTION — the weak 9x9 signal is NOISE
+************************************************************
+The one ambiguous finding above (9x9 n=209: 2/3 seeds P=1.00, mean -0.0025) was
+chased to a LARGER, better-powered 9x9-only cohort to settle real-vs-noise.
+Fresh OGS scan (go_ingest.py range 71000000, 3000 target) -> 1554 games, 1167
+players, 180k moves -> go_big.json. 9x9-only timing, N=519 player-game
+trajectories (2.5x the earlier 209), 17418 moves, 3 seeds:
+  seed 0: D-B=-0.0015 [-0.0025,-0.0005] P=1.00 (sig)
+  seed 1: D-B=+0.0011 [-0.0013,+0.0035] P=0.16 (null, WRONG SIGN)
+  seed 2: D-B=+0.0001 [-0.0025,+0.0027] P=0.47 (null, ~zero)
+=> mean across seeds ~= -0.0001 (~0); only 1/3 seeds significant, two wrong-signed.
+   The weak 9x9 effect DOES NOT firm up with more power -- it COLLAPSES to null.
+   The earlier 2/3-seed 9x9 "signal" was small-cohort (n=209) NOISE.
+
+FINAL GO VERDICT: NO Go timing claim, at ANY board size. Mixed-cohort positive =
+board-size/speed confound (overturned by the 19x19 control); the residual 9x9
+signal = sampling noise (overturned by this 2.5x-larger cohort). Under proper
+controls AND adequate power, the evolving latent does NOT beat the memoryless
+twin on real-Go think-time. A clean, reviewer-proof negative. Go remains future
+work (needs the true byo-yomi clock state + a Go move-channel board backbone).
+Builder scratchpad/go/go_timing.py go_big.json 1200 <seed> 9 ; raw scratchpad/go_big9.log.

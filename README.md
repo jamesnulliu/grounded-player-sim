@@ -10,14 +10,16 @@ trajectory, is injected into the policy, and is validated against the
 player's *future* behavior. Designed around games with an engine-graded
 decision interface (chess / Go via Stockfish / KataGo); **demonstrated on real
 chess** and, for cross-domain generality, on a real non-game oracle domain
-(knowledge tracing). Go shares the interface and is the clearest open
-cross-domain validation (future work).
+(knowledge tracing). Go was attempted on real OGS games but shows **no robust
+timing effect under a board-size control** (an apparent effect was a confound —
+honest negative), so it remains future work.
 
 **Positioning.** The contribution is the *conjunction* — per-individual +
 temporally-evolving + a behavioral state (tilt/fatigue/time-pressure) that
 drives moves & timing + validated on the person's *future* games + across
 domains (delivered on real **chess** and a real non-game oracle domain,
-**knowledge tracing**; Go shares the interface and is designed-in future work).
+**knowledge tracing**; Go was attempted on real OGS games but has no robust
+effect under controls — future work).
 No single axis is claimed as novel: "evolving latent in an LLM,"
 "natural-language latent," and "future temporal-split validation" are each
 already owned by a 2026 competitor (LATTE / HumanLM). See `documents/design.md`
@@ -57,12 +59,17 @@ real KT: Wasserstein 2× better than average-person). And an **actual LLM policy
 (Qwen3): frozen verbal/persona-prompt injection is a *negative control* (≈
 irrelevant filler) and RL's sparse reward can't resolve the effect, but a dense
 **behavior-cloning SFT probe reproduces the board-native asymmetry** — state
-helps **think-time ≫ moves** — and this **sharpens across a backbone-scaling
-trend** (0.6B→1.7B→4B→8B: the move channel collapses to a clean null at ≥4B while
-timing stays robust), so the effect is *not* a small-model artifact. Honest
+helps **think-time ≫ moves**. The **think-time benefit is robust and
+adaptation-invariant**: Δ ≈ −0.013 across 0.6B→8B *and* across LoRA vs **full
+fine-tuning** (full-param −0.0110/−0.0128 at 4B/8B ≈ LoRA −0.0114/−0.0136, 3 seeds
+each), run here via a single-GPU 8-bit paged optimizer (no FSDP). The move
+channel's apparent collapse to a clean null at ≥4B is a **LoRA-capacity artifact** —
+full-param fine-tuning recovers a stable move benefit at *both* 4B (−0.0072) and 8B
+(−0.0083, all seeds), so the timing≫move asymmetry is robust but
+*graded* (~1.5×), not a clean null in a full-capacity LLM. Honest
 caveat: the headline D-vs-B results still use small from-scratch backbones (the
-LLM is a *probe*, not the headline); full-param/larger LLM policies are future
-work. CLI: `gps ingest`,
+LLM is a *probe*, not the headline); larger/instruction-tuned LLM policies remain
+future work. CLI: `gps ingest`,
 `gps train-ec`, `gps phase0`, `gps kt` (RQ5/F on knowledge tracing, synthetic
 or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
 
