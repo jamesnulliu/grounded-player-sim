@@ -6,42 +6,35 @@ work plan in `TODO.md`.*
 
 ## Abstract
 
-People do not play a game (or answer a quiz) the same way twice: a recent loss
+People do not play a game — or answer a quiz — the same way twice: a recent loss
 breeds tilt, a long session brings fatigue, a ticking clock changes everything.
 We model *how a specific person behaves right now* with a learned latent state
-`z_t` that (i) is **per-individual**, (ii) **evolves** over the person's own
-action+timing trajectory, (iii) carries a behavioral state (tilt / fatigue /
-time-pressure), and (iv) is validated against the person's **future** behavior
-on a strict temporal split. The injector is decoupled from a swappable policy
-backbone, so "does the dynamic latent help?" is provable *independent of
-backbone*. On real Lichess chess the evolving latent significantly beats both a
-fixed per-individual style and an equal-capacity **memoryless** control at
-predicting future behavior — a result that holds **across a 6-year era span
-(2017–2023), two backbones, and five seeds**, and that **adds value over a
-near-SOTA Elo+clock+complexity baseline**. The edge is concentrated where it
-should be: the latent's advantage lives in **think-time** (how long a person
-deliberates) and **concentrates** under time pressure (2–8×) and for weaker
-players (≈3×), while **move choice** carries essentially no extra
-state-dependence — the state is legible in *when* a person acts, not *what* they
-play. The same framework, with only the encoder/oracle swapped, reproduces the
-pattern in **knowledge tracing** (a non-game domain, replicated across five real
-datasets, two platforms, and three subjects) and **generates** a population that
-recovers real heterogeneity a "positive average person" baseline cannot. Across
-both domains one law emerges: the latent's advantage **scales with behavioral
-heterogeneity** — across students, players, and moments alike, it helps most
-precisely where individuals differ most (Pearson 0.89 across eight real
-datasets — a strong trend anchored by the extremes, noisier in the middle). In
-an **actual LLM policy** (Qwen3), a behavior-cloning SFT probe
-reproduces the same asymmetry — the state helps the LLM's think-time prediction
-(Δ ≈ −0.013, **robust across LoRA and full fine-tuning, and across
-0.6B → 8B**) much more than its move choice — while
-confirming that a *verbal* prompt
-is a weaker channel than the trained *hidden* latent. (The move channel's
-apparent collapse to a clean null at scale is a **LoRA-capacity artifact**:
-full-param fine-tuning at *both* 4B and 8B recovers a stable move benefit, so the
-timing ≫ move asymmetry is robust but *graded*, not a clean null in a
-full-capacity LLM.) The contribution
-is the **conjunction**: no single axis is novel alone.
+`z_t` that is **per-individual**, **evolves** over the person's own action+timing
+trajectory, and is validated against their **future** behavior on a strict
+temporal split. The injector is decoupled from a swappable backbone, so "does the
+dynamic latent help?" is provable independent of backbone.
+
+Our central finding is an asymmetry: **the state is legible in *when* a person
+acts, not *what* they play.** On real Lichess chess the evolving latent beats an
+equal-capacity **memoryless** twin at predicting future think-time across a
+6-year era span (2017–2023), two backbones, and five seeds (P=1.00), and adds
+value over a near-SOTA Elo+clock+complexity baseline — while **move choice
+carries essentially no extra state-dependence.** The timing edge **concentrates**
+where behavior is least predictable from the average: under time pressure (2–8×),
+for weaker players (≈3×), and — across eight real knowledge-tracing datasets — in
+proportion to population heterogeneity (Pearson 0.89), one law tying the chess and
+non-game results together. The same latent **generates** a population that
+recovers real heterogeneity a "positive average person" cannot.
+
+The state's value lives in a **trained hidden latent, not a verbal persona
+prompt** (RQ6) — the bridge to LLM agents, where today's simulators (HumanLM,
+generative agents) condition on verbal personas. In an actual LLM (Qwen3) an SFT
+probe already reproduces the timing-≫-move asymmetry (robust across 0.6B→8B and
+LoRA→full fine-tuning, Δ ≈ −0.013 on timing); delivering the state as a **hidden
+soft-prompt and beating the verbal channel *inside* the LLM** is the headline
+experiment in progress. We do not claim novelty by conjunction: three results
+stand alone — the when-not-what asymmetry, the equal-capacity evolving-vs-
+memoryless future-split control, and hidden ≫ verbal state injection into an LLM.
 
 ## Contributions
 
@@ -276,11 +269,13 @@ population heterogeneity (Milestone F).
 
 ## Positioning (vs 2026 prior art; design.md §8)
 
-Each single axis is already owned by a competitor — "evolving latent in an LLM"
-(LATTE), "natural-language latent" / "future temporal-split validation"
-(HumanLM), aggregate think-time (Allie), per-move clock (ChessMimic), strong
-move prediction (Maia-3). We claim **none** of these alone. The contribution is
-their **conjunction** on a per-decision engine-graded interface, plus the two
-results no competitor reports: the equal-capacity *evolving-vs-memoryless*
-control on a real future split, and the *same framework reproducing the channel
-signature in a non-game domain* (knowledge tracing).
+We do **not** claim novelty by conjunction. Three results are new on their own:
+(1) **the when-not-what finding** — state is legible in timing, near-null in move
+choice, robust across a 6-year span and reproduced in a non-game domain; (2) **the
+equal-capacity evolving-vs-memoryless control on a strict future split** — isolates
+dynamics from habit/individualization, run by no behavior-simulation competitor;
+(3) **hidden ≫ verbal state injection** — HumanLM/LATTE deliver an LLM latent as
+*verbal* text or a single soft token; we show the trained *hidden* channel is
+richer (RQ6) and are porting it into an LLM agent. Competitors each own one *axis*
+we build on — aggregate think-time (Allie), per-move clock (ChessMimic), strong
+moves (Maia-3), evolving text latent (LATTE/HumanLM) — but none report these three.

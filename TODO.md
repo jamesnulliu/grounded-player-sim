@@ -5,11 +5,16 @@ Work plan for `grounded-player-sim`, ordered by dependency. Grounded in
 positioning (§8 of design.md). Legend: `[ ]` todo, `[~]` partial/stub exists,
 `[x]` done. **P0/P1/P2** = priority (do P0 first).
 
-The north star (from the prior-art deep-read): the contribution is the
-**conjunction** — per-individual + temporally-evolving + behavioral state
-(tilt/fatigue/time-pressure) + drives moves & timing + validated on the
-person's *future* games + chess **and** Go. Never claim a single axis as
-novel (see design.md §8 for what is shared territory).
+The north star (revised 2026-07 — we dropped the "conjunction of non-novel
+axes" framing): **three results that stand on their own** (design.md §8):
+1. **when-not-what** — evolving state is legible in *timing*, near-null in *move
+   choice*; robust across a 6-year span + a non-game domain;
+2. **the equal-capacity evolving-vs-memoryless control on a strict future
+   split** — isolates dynamics from habit/individualization;
+3. **hidden ≫ verbal state injection into an LLM agent** — richer than the verbal
+   persona today's LLM simulators use.
+The per-individual / evolving / oracle / future-split / cross-domain axes are
+*supporting* territory — build on them, never re-claim them as novel.
 
 ---
 
@@ -472,6 +477,61 @@ novel (see design.md §8 for what is shared territory).
 
 ---
 
+## Milestone G — LLM-agent headline + strong backbones (P0, current focus)
+
+> The pivot (2026-07): make the **LLM agent** the headline and put the
+> board-native proof on a **strong backbone**. The board-native D-vs-B results
+> stay as the controlled *mechanism proof*; the LLM is the *deployment*, and the
+> hidden-vs-verbal contrast inside the LLM is the LLM-native contribution.
+> Decide final emphasis on the numbers (design.md §10): run G2/G3 first, and
+> promote the LLM to co-headline **only if hidden > verbal is significant *in the
+> LLM*.** The three novelties this milestone serves (design.md §8): when-not-what,
+> the evolving-vs-memoryless future-split control, and hidden ≫ verbal.
+
+### Resources (all fit on the existing 2×A100; the constraint is dev time)
+- **Maia-2 backbone:** 1 GPU ≥16GB (Maia-2 is tens of M params — an A100 is
+  overkill), <1GB disk for weights, negligible CPU. Cost is *integration*
+  (board-tensor encoding + checkpoint → `PolicyBackbone`), ~days, not compute.
+- **Maia-3 / Chessformer (if weights public):** 1 GPU 24–40GB, a few GB disk.
+- **LLM `HIDDEN` soft-prompt (Qwen3-8B):** 1×A100; *cheaper* than the full-param
+  SFT already run (freeze base or LoRA + train prefix/injector, ~30–40GB). sglang
+  inference ~16–20GB. Qwen3 weights cached (~16GB).
+- Run the Maia track and the LLM track in parallel, one A100 each.
+
+### Code
+- [ ] **G-code-1: Maia-2 backbone** (`src/gps/policy/maia_backbone.py`). Load the
+  pretrained Maia-2 checkpoint, adapt its board encoding, expose it through
+  `PolicyBackbone` (`encode_batch`/`trajectory_loss`/`per_traj_move_nll`) so the
+  *same* D-vs-B injector experiment runs on a strong move model. Kills the "weak
+  from-scratch backbone" objection: show the evolving latent helps **on top of
+  SOTA moves**. (Maia-3/Chessformer as a stretch if weights are released.)
+- [ ] **G-code-2: LLM `HIDDEN` soft-prompt path** (supersedes the Milestone-B
+  `HIDDEN` stub): prefix-embedding injection for `InjectionKind.HIDDEN` in
+  `sglang_backbone.py` (`enable_hidden=True`) + a trained injector. The real LLM
+  test — the frozen-verbal result shows the naive path is insufficient; LATTE
+  proves a soft token into a frozen LLM is feasible.
+
+### Experiments
+- [ ] **G1 (Maia D-vs-B):** rerun the E-C timing/move D-vs-B with Maia-2 as the
+  shared backbone. Expected: the timing win holds (the timing head reads only the
+  latent, so it is *structurally* backbone-invariant); the move ceiling rises —
+  report whether the small move signal survives a strong move model.
+- [ ] **G2 (LLM hidden injection):** SFT the LLM with a trained HIDDEN latent
+  (dense completion-NLL probe). Does the state help think-time in the LLM by more
+  than the verbal channel already does?
+- [ ] **G3 (hidden-vs-verbal IN the LLM) — the LLM-native headline.** Port RQ6 to
+  the LLM: the same trained state delivered as HIDDEN soft-prompt vs VERBAL note,
+  held-out NLL. The direct shot at HumanLM (whose latent is verbal). Only needs to
+  be *directionally significant*, not large, to land.
+- [ ] **G4 (head-to-head vs released SOTA):** benchmark against the *released*
+  weights, not reconstructed proxies — **ChessMimic** (per-100-Elo move+clock
+  transformers, code+weights out), **Allie** (Elo-conditioned think-time),
+  **Maia-3** (moves). Report where the per-individual evolving latent adds value
+  over each. Currently E-C6 compares only to a hand-built Elo+clock+complexity
+  proxy (Spearman 0.41 ≈ ChessMimic) — replace with the real model.
+
+---
+
 ## Cross-cutting / housekeeping (ongoing)
 
 - [ ] **Tests** for every new module (match the existing CPU, no-GPU,
@@ -487,9 +547,10 @@ novel (see design.md §8 for what is shared territory).
   (2602.04447), Maia-3 / Chessformer (ICLR 2026), BGU "Blunder prediction in
   chess" (Springer 2026), DASKT (2405.16799). **Still to do:** read ChessMimic
   + HumanLM + LATTE experimental sections in full before drafting related work.
-- [ ] **Related-work section** writeup: the comparison table + the
-  one-sentence framing from design.md §8. Lead with the conjunction; never a
-  single shared axis.
+- [ ] **Related-work section** writeup: the comparison table + framing from
+  design.md §8. **Lead with the three single-axis novelties** (when-not-what,
+  the evolving-vs-memoryless future-split control, hidden ≫ verbal in an LLM);
+  never re-claim a shared axis, and drop the old "conjunction" framing.
 - [ ] **Decide per-individual *parameter* vs. amortized state** (design-level):
   a free per-user vector is a sharper distinction from LATTE's amortized
   predictor, but conflicts with the 20-game data-efficiency goal. Pick per
@@ -511,3 +572,8 @@ novel (see design.md §8 for what is shared territory).
    tracing / Codeforces) for stronger cross-modal generality (design.md §11).
 6. Milestone F (population demo) — only if A–E land; decide demo-vs-pillar
    on the numbers.
+7. **Milestone G (LLM-agent headline + Maia backbone + head-to-head) — the
+   current active focus.** A strong backbone (Maia-2/3) kills the weak-backbone
+   objection on the board-native proof; the **hidden-vs-verbal-in-the-LLM result
+   (G3)** is what promotes the LLM from a probe to the headline; G4 replaces the
+   reconstructed-proxy baselines with released ChessMimic/Allie/Maia-3 weights.

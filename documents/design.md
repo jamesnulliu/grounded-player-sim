@@ -127,13 +127,23 @@ implementation choices keep the experiment from being circular:
 
 ## 8. Positioning vs. the closest competitors (deep-read June 2026; sweep updated 2026-06-25)
 
-The novelty claim must survive a prior-art challenge. Each nearest paper owns
-ONE of our pillars; none own the intersection. The contribution is the
-**conjunction**, never a single axis. **A 6-month sweep (2026-06-25) changed
-the picture:** the *static* per-individual and the move+timing-in-chess axes
-have since been filled in by new 2026 work — so the conjunction's load is now
-carried by the **evolving psychological state + engine oracle +
-future-per-individual split** axes. Lead with those, not with "per-individual."
+The novelty claim must survive a prior-art challenge. **We no longer claim
+novelty by conjunction** (a weak position for a top venue). Three results stand
+on their own and are what we lead with:
+1. **The when-not-what finding** — the evolving state is legible in *timing*,
+   near-null in *move choice*; robust across a 6-year span and reproduced in a
+   non-game domain. A falsifiable empirical claim no competitor makes.
+2. **The equal-capacity evolving-vs-memoryless control on a strict future
+   split** — isolates *dynamics* from habit and raw individualization. No
+   behavior-simulation paper runs this control; it settles the #1 objection.
+3. **Hidden ≫ verbal state injection into an LLM agent** — HumanLM/LATTE deliver
+   the latent as *verbal* text or a single soft token; we show the trained
+   *hidden* channel is richer (RQ6) and port it into an actual LLM.
+
+The prior-art table below still matters: each competitor owns one *axis* we build
+on (per-individual, move+timing-in-chess, evolving text latent), so we must never
+re-claim those. But the three results above — not their conjunction — are the
+contribution.
 
 ### Chess move / timing competitors (the static axes, now occupied)
 
@@ -199,7 +209,8 @@ of Masters), **"move+timing in chess"** (=ChessMimic), **"per-individual latent
 beats Elo at move-quality"** (=BGU blunder). The last three are NEW as of the
 2026-06-25 sweep — **per-individual alone is no longer a differentiator.**
 
-**AIRTIGHT differentiators — lead with the conjunction:**
+**Supporting axes** (these back the three single-axis novelties above — do not
+lead with them alone; several are now shared territory):
 1. A **temporally-evolving psychological** state (tilt/fatigue/time-pressure)
    driving **moves + timing** — every chess competitor above is *static*; the
    evolving-psych axis is the one none of them touch.
@@ -218,9 +229,10 @@ validated on **their future games**, across two engine-graded domains
 (chess + Go).*
 
 Caution: ChessMimic / HumanLM / LATTE / Player-Specific / Mixture-of-Masters
-are all 2026 preprints (weeks-to-months old); "first to" on any single axis is
-fragile and several single axes are already lost. Anchor ONLY on the
-conjunction + evolving-psych-state + oracle + future-split + Go, which hold
+are all 2026 preprints (weeks-to-months old); "first to" on any single *axis* is
+fragile and several are already lost. Anchor on the **three results** above
+(when-not-what, the evolving-vs-memoryless future-split control, hidden ≫ verbal
+in an LLM), supported by evolving-psych-state + oracle + future-split — these hold
 even if another preprint lands. (This section IS the prior-art comparison;
 there is no separate `priorart.md`.)
 

@@ -3,27 +3,30 @@
 Personalized human game-play simulation built around an **LLM policy
 augmented with a trainable, per-individual dynamic latent state**.
 
-**Thesis.** An LLM conditioned on a static verbal persona/emotion label is
-not enough to reproduce how a specific person plays *right now*. You need a
-learned latent state `z_t` that evolves over the player's own action+timing
-trajectory, is injected into the policy, and is validated against the
-player's *future* behavior. Designed around games with an engine-graded
-decision interface (chess / Go via Stockfish / KataGo); **demonstrated on real
-chess** and, for cross-domain generality, on a real non-game oracle domain
-(knowledge tracing). Go was attempted on real OGS games but shows **no robust
-timing effect under a board-size control** (an apparent effect was a confound —
-honest negative), so it remains future work.
+**Thesis — model *when* a person acts, not only *what* they choose.** A learned
+latent `z_t` that evolves over a player's own action+timing trajectory predicts
+that specific person's **think-time** far better than their **move choice** —
+robustly, concentrating under time pressure and for weaker players, and scaling
+with population heterogeneity. Validated against the player's *future* behavior
+on a strict temporal split, on real Lichess chess and (for cross-domain
+generality) real knowledge tracing. The state's value lives in a *trained
+hidden* latent, not a verbal persona prompt — which is how we carry it into an
+**LLM agent** (the project's headline direction; `TODO.md` Milestone B/G).
 
-**Positioning.** The contribution is the *conjunction* — per-individual +
-temporally-evolving + a behavioral state (tilt/fatigue/time-pressure) that
-drives moves & timing + validated on the person's *future* games + across
-domains (delivered on real **chess** and a real non-game oracle domain,
-**knowledge tracing**; Go was attempted on real OGS games but has no robust
-effect under controls — future work).
-No single axis is claimed as novel: "evolving latent in an LLM,"
-"natural-language latent," and "future temporal-split validation" are each
-already owned by a 2026 competitor (LATTE / HumanLM). See `documents/design.md`
-§8 for the head-to-head differentiation vs. Allie, HumanLM, and LATTE.
+**Three things that are actually new** (this replaces the old "conjunction of
+non-novel axes" framing — see `documents/design.md` §8):
+1. **The when-not-what finding.** Evolving state is legible in *timing*,
+   near-null in *move choice* — robust across a 6-year era span and reproduced
+   in a non-game domain. A new, falsifiable empirical claim.
+2. **The equal-capacity evolving-vs-memoryless control on a strict future
+   split.** Isolates *dynamics* from *habit* and raw *individualization* — the
+   #1 reviewer objection ("isn't this just history-conditioning?"), settled. No
+   behavior-simulation competitor runs this control.
+3. **Hidden ≫ verbal state injection.** Current LLM simulators (HumanLM,
+   generative agents) condition on a *verbal* persona; we show the trained
+   *hidden* latent is the richer channel (RQ6, board-native). Porting this
+   contrast into an actual LLM agent is the headline experiment in progress
+   (Milestone B/G) — the LLM-native version of the result.
 
 See **`documents/paper_draft.md`** for the landed-results synthesis (abstract +
 contributions + headline table), `documents/results_ec.md` for the detailed
@@ -33,45 +36,37 @@ decisions + prior-art positioning), `documents/training.md` for the GPU/data
 wiring, `documents/milestone_a.md` for the make-or-break "is the latent just
 history-conditioning?" runbook, and **`TODO.md`** for the work plan.
 
-**Status (landed).** Every research question and both milestones have results
-on **real** data — real Lichess chess **and** real student knowledge tracing
-(ASSISTments 2009) — plus synthetic controls. The evolving latent
-beats a static-individual style (E-C1) and an equal-capacity **memoryless**
-control (E-C2/E-C3, future-sessions split, capacity sweep). The **headline is
-think-time**: at scale (5 seeds × 5 cohorts × 2 backbones on 2×A100) the
-per-individual evolving latent wins on think-time in **all 8 clocked conditions
-across a 6-year era span (2017–2023), P=1.00**, and **adds value over a near-SOTA
-Elo+clock+position-complexity baseline** (Spearman ≈ ChessMimic's 0.41). An
-interpretability story with a clean **channel asymmetry**: the latent **encodes +
-causally uses** the hidden state (E-C4, probe R²=0.93 + clamp dose-response), and
-its think-time edge **concentrates** under time pressure (2–8×) and for weaker
-players (≈3×) — while the **move** edge is a flat near-null (state is legible in
-*when* you act, not *what* you play). Plus **generality** to a non-game domain
-(E-D1/RQ5) — confirmed on **real students across 8 datasets, multiple platforms,
-and 3 subject domains** (ASSISTments 2009/2012/2015/2017, KDD-Cup Algebra +
-Bridge-to-Algebra, Spanish, and Statics; D beats the memoryless twin, significant
-every seed) — a **unifying scaling law** (the latent's edge **scales with
-population heterogeneity**, Pearson 0.89 across the 8 datasets, tying the KT and
-chess results together),
-the **hidden > verbal** channel (E-E1/RQ6), and **population heterogeneity
-recovery + generation** beating the "positive average person" (E-F1/E-F2, also on
-real KT: Wasserstein 2× better than average-person). And an **actual LLM policy**
-(Qwen3): frozen verbal/persona-prompt injection is a *negative control* (≈
-irrelevant filler) and RL's sparse reward can't resolve the effect, but a dense
-**behavior-cloning SFT probe reproduces the board-native asymmetry** — state
-helps **think-time ≫ moves**. The **think-time benefit is robust and
-adaptation-invariant**: Δ ≈ −0.013 across 0.6B→8B *and* across LoRA vs **full
-fine-tuning** (full-param −0.0110/−0.0128 at 4B/8B ≈ LoRA −0.0114/−0.0136, 3 seeds
-each), run here via a single-GPU 8-bit paged optimizer (no FSDP). The move
-channel's apparent collapse to a clean null at ≥4B is a **LoRA-capacity artifact** —
-full-param fine-tuning recovers a stable move benefit at *both* 4B (−0.0072) and 8B
-(−0.0083, all seeds), so the timing≫move asymmetry is robust but
-*graded* (~1.5×), not a clean null in a full-capacity LLM. Honest
-caveat: the headline D-vs-B results still use small from-scratch backbones (the
-LLM is a *probe*, not the headline); larger/instruction-tuned LLM policies remain
-future work. CLI: `gps ingest`,
-`gps train-ec`, `gps phase0`, `gps kt` (RQ5/F on knowledge tracing, synthetic
-or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
+**Status.** Strong, landed results are **board-native** (small from-scratch
+head; a Maia-2/3 backbone is the next upgrade — `TODO.md` Milestone G):
+
+- **Timing (headline).** The evolving latent beats an equal-capacity memoryless
+  twin on think-time in **all 8 clocked conditions across 2017–2023** (5 seeds ×
+  2 backbones, 2×A100), P=1.00, and **adds value over a near-SOTA
+  Elo+clock+complexity baseline** (Spearman ≈ ChessMimic's 0.41). It also beats a
+  static-individual style (E-C1) and survives a capacity sweep and a
+  future-*sessions* split (E-C2/E-C3).
+- **Move choice is a near-null** on real data (flat by post-loss / time-pressure)
+  — the when-not-what asymmetry.
+- **Mechanism.** On a synthetic player with a *known* hidden state the latent
+  encodes it (probe R²=0.93 vs 0.65) and causally uses it (clamp dose-response);
+  the real timing edge **concentrates** under time pressure (2–8×) and for weaker
+  players (≈3×), and **scales with population heterogeneity** (Pearson 0.89
+  across 8 real KT datasets) — one law across populations, players, and contexts.
+- **Generality.** Reproduced in knowledge tracing on **real students across 8
+  datasets / multiple platforms / 3 subjects**; population-heterogeneity recovery
+  and generation beat the "positive average person" (Wasserstein 2× better). Go:
+  **honest negative** (no robust effect under a board-size control) — future work.
+
+**LLM arm (the direction we're pushing).** Qwen3 via sglang is implemented and
+runs. So far: frozen verbal injection is a *negative control*; RL (slime GRPO)
+learns the task but its sparse reward can't resolve the state effect; a dense
+**SFT probe reproduces the board-native asymmetry** — state helps think-time
+(Δ ≈ −0.011, robust across 0.6B→8B and LoRA→full fine-tuning) more than moves.
+These effects are **small** — the LLM is currently a *probe*, not the headline.
+The **experiment that makes the LLM the headline** is the `HIDDEN` soft-prompt
+path + a trained injector, and the hidden-vs-verbal contrast *inside* the LLM
+(Milestone G). CLI: `gps ingest`, `gps train-ec`, `gps phase0`, `gps kt` (RQ5/F,
+synthetic or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
 
 ## Architecture at a glance
 
