@@ -505,11 +505,23 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   *same* D-vs-B injector experiment runs on a strong move model. Kills the "weak
   from-scratch backbone" objection: show the evolving latent helps **on top of
   SOTA moves**. (Maia-3/Chessformer as a stretch if weights are released.)
-- [ ] **G-code-2: LLM `HIDDEN` soft-prompt path** (supersedes the Milestone-B
+- [~] **G-code-2: LLM `HIDDEN` soft-prompt path** (supersedes the Milestone-B
   `HIDDEN` stub): prefix-embedding injection for `InjectionKind.HIDDEN` in
   `sglang_backbone.py` (`enable_hidden=True`) + a trained injector. The real LLM
   test — the frozen-verbal result shows the naive path is insufficient; LATTE
   proves a soft token into a frozen LLM is feasible.
+  **CPU scaffolding LANDED (2026-07):** `src/gps/policy/hidden_prefix.py`
+  `HiddenPrefixProjector` — the trainable latent→`[n_prefix, hidden_size]`
+  soft-prompt bridge (lazy torch, forked-RNG seed, `parameters()` for joint SFT,
+  mirrors `NeuralInjector`). Wired into `SGLangBackbone` (`latent_dim`/`n_prefix`/
+  `hidden_size` args, `projector()`, `hidden_prefix_embeds()`); `build_prompt`
+  leaves the text byte-identical for HIDDEN (channel-only RQ6 contrast);
+  `move_logprobs` routes HIDDEN → `_hidden_move_logprobs`, which builds the real
+  prefix then **fails loudly** at the GPU `input_embeds` boundary (never silently
+  drops the latent). 11 CPU tests in `tests/test_hidden_prefix.py` (142 pass).
+  **Still GPU-host TODO:** (a) the sglang `input_embeds` scoring call; (b) train
+  the projector+injector jointly under the LLM SFT objective (extend the TRL SFT
+  probe with the hidden prefix). Then G2/G3 below.
 
 ### Experiments
 - [ ] **G1 (Maia D-vs-B):** rerun the E-C timing/move D-vs-B with Maia-2 as the
