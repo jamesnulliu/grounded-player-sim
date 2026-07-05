@@ -487,6 +487,9 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
 > promote the LLM to co-headline **only if hidden > verbal is significant *in the
 > LLM*.** The three novelties this milestone serves (design.md §8): when-not-what,
 > the evolving-vs-memoryless future-split control, and hidden ≫ verbal.
+>
+> **Runbook: `documents/milestone_g.md`** — claims + decision rules, what's
+> landed (CPU-tested), the GPU commands + resources for G1–G4.
 
 ### Resources (all fit on the existing 2×A100; the constraint is dev time)
 - **Maia-2 backbone:** 1 GPU ≥16GB (Maia-2 is tens of M params — an A100 is

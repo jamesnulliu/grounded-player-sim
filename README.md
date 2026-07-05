@@ -34,7 +34,9 @@ results + exact reproduction, `documents/proposal_v2.md` for the full research
 proposal, `documents/design.md` for how the code maps onto it (and the key
 decisions + prior-art positioning), `documents/training.md` for the GPU/data
 wiring, `documents/milestone_a.md` for the make-or-break "is the latent just
-history-conditioning?" runbook, and **`TODO.md`** for the work plan.
+history-conditioning?" runbook, `documents/milestone_g.md` for the **LLM-agent
+headline** runbook (G1–G4, the current focus), and **`TODO.md`** for the work
+plan.
 
 **Status.** Strong, landed results are **board-native** (small from-scratch
 head; a Maia-2/3 backbone is the next upgrade — `TODO.md` Milestone G):
