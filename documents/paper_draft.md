@@ -148,7 +148,8 @@ All P below are P(D−B<0); CIs are 95% bootstrap over players.
 | E-C6 | **timing** vs memoryless (zero-inflated head) | −0.026, P=1.00 (−0.069 log-normal) |
 | E-C6 | **timing** adds value over Elo+clock aggregate | (B4+z)−B4 = −0.043, P=1.00 |
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
-| **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 2 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029**, P=1.00; strongest baseline **Spearman 0.414 / 0.445 ≥ ChessMimic 0.41** (2017/2019) → weak-backbone caveat retired for timing |
+| **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 2 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029**, P=1.00; baseline **Spearman 0.414 / 0.445 ≥ ChessMimic 0.41** (2017/2019) |
+| **G4** | ... and over **Allie**'s (ICLR'25) *actual released think-time* — the airtight test (Spearman **0.62/0.65** ≫ 0.41) | latent still adds in the direct **Allie-vs-Allie+z** test both cohorts (**−0.023 P=1.00 / −0.018 P=0.998**); smaller vs Allie, and **ns on 2019** against the fullest Elo+clock+Allie co-fit (−0.005) — honest → weak-backbone caveat retired vs a released think-time head |
 | G4 | **move** channel vs Maia-2 (does state encode move-deviation?) | latent recovers Maia-deviation at **R²≈0.009** (≈null, vs 0.93 synthetic state) → move near-stateless even vs human-move SOTA |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
@@ -237,17 +238,27 @@ population heterogeneity (Milestone F).
   players, 5 seeds each). The strongest baseline (Elo+clock+branching+Maia-2)
   reaches **Spearman 0.414 / 0.445 — at or above ChessMimic's 0.41** — and the
   evolving latent *still* adds significant think-time value **(B4+z)−B4 = −0.025 /
-  −0.029, P=1.00, CI excludes 0, every seed**. So the latent's timing value is not
-  an artifact of a weak baseline; it survives a baseline that matches published
-  SOTA rank-correlation using a released model's signal. Crucially, the timing
-  head reads only the latent, never the board trunk, so the robust timing pillar
+  −0.029, P=1.00, CI excludes 0, every seed**. **The airtight version replaces the
+  Maia difficulty *proxy* with an *actual released think-time model* — Allie
+  (Zhang et al., ICLR'25): we load its checkpoint, reconstruct each game's full
+  move sequence from our per-player FENs, and read its per-decision think-time
+  prediction as the external baseline.** Allie alone is strong — per-player
+  Spearman **0.62 / 0.65, well above ChessMimic's 0.41** — yet in the direct
+  *Allie-vs-Allie+z* comparison the evolving latent **still adds significant value
+  on both cohorts (−0.023, P=1.00 / −0.018, P=0.998)**. Honestly, the effect is
+  *smaller* than over weaker baselines (a strong released model captures more of
+  the timing signal) and, against the fullest co-fit baseline (Elo+clock+Allie),
+  is significant on 2017 (−0.013) but **non-significant on 2019 (−0.005, P=0.85)** —
+  we report that null. So the latent's timing value is not an artifact of a weak
+  baseline; it survives even an actual released think-time head. Crucially, the
+  timing head reads only the latent, never the board trunk, so the robust pillar
   is *structurally* invariant to backbone strength (also confirmed: timing D−B
   stays P=1.00 under the conv trunk) — which is why we lead with timing. On the
   **move** channel, a released-SOTA check tells the when-not-what story from the
   other side: the evolving latent recovers a player's *deviation from Maia-2*
   (log P_maia of the played move) at only **R²≈0.009** (vs 0.93 for a synthetic
   hidden state) — move choice is near-stateless even relative to a human-move
-  SOTA. (`results/g4_timing.txt`; `scripts/g4_{cache_maia,run_timing}.py`.)
+  SOTA. (`results/g4_timing.txt`; `scripts/g4_{cache_maia,cache_allie,run_timing,run_allie}.py`.)
 - **Generality (RQ5) and population recovery (F) now hold on real data**
   (ASSISTments 2009), not just synthetic KT: on the *same* 500 real students the
   evolving latent beats the memoryless twin at predicting responses (D−B=−0.0095,

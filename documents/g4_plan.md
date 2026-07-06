@@ -9,10 +9,20 @@
 > think-time value: (B4+z)−B4 = **−0.0254 / −0.0291, P=1.00**, CI excludes 0,
 > every seed. Move channel: the latent recovers a player's deviation-from-Maia-2
 > at only **R²≈0.009** (≈null). → **weak-backbone caveat retired for timing;
-> when-not-what holds against released SOTA on both channels.** Ran Maia-2 (the
-> loadable release) rather than Allie; the `external_pred`/`pure_external` hooks
-> below accept an Allie think-time prediction directly if a still-cleaner
-> external timing model is wanted later.
+> when-not-what holds against released SOTA on both channels.**
+>
+> **AIRTIGHT UPGRADE — vs Allie's actual released think-time (2026-07-06).** We
+> then ran the cleaner test against **Allie** (ICLR'25), a released model with a
+> real think-time head (not a move-model proxy): load its checkpoint, reconstruct
+> full move sequences from our FENs (0% unreconstructable), read its per-decision
+> think-time (`scripts/g4_cache_allie.py`, `g4_run_allie.py`). Allie is strong —
+> per-player **Spearman 0.62 / 0.65 ≫ ChessMimic 0.41** — yet the evolving latent
+> **still adds significantly in the direct Allie-vs-Allie+z test on both cohorts
+> (−0.023 P=1.00 / −0.018 P=0.998)**. Honest nuance: smaller than vs weaker
+> baselines, and **ns on 2019 (−0.005, P=0.85)** against the fullest Elo+clock+Allie
+> co-fit. Net: the timing add-on survives an *actual released think-time head*, is
+> robust in the direct comparison, but shrinks/cohort-depends against the very
+> strongest co-fit. This is the airtight retirement of the weak-backbone caveat.
 
 *The highest-ROI experiment before a competitive submission (paper-readiness
 audit, 2026-07-05). Converts the "weak from-scratch backbone" liability into the
