@@ -13,15 +13,22 @@ generality) real knowledge tracing. The state's value lives in a *trained
 hidden* latent, not a verbal persona prompt — which is how we carry it into an
 **LLM agent** (the project's headline direction; `TODO.md` Milestone B/G).
 
-**Three things that are actually new** (this replaces the old "conjunction of
-non-novel axes" framing — see `documents/design.md` §8):
+**Three things we lead with** (each axis has prior art — dynamic emotional chess,
+per-individual style, timing>choice in psychometrics; our contribution is the
+*controlled synthesis on real humans*, not standalone-axis novelty. Full cited
+positioning in `documents/related_work.md`; superseded framing in `design.md §8`):
 1. **The when-not-what finding.** Evolving state is legible in *timing*,
    near-null in *move choice* — robust across a 6-year era span and reproduced
-   in a non-game domain. A new, falsifiable empirical claim.
+   in a non-game domain. That timing reveals latent state better than choice is
+   old in response-time psychometrics; what is new is its form here — an
+   *evolving within-session behavioral state* against a *per-decision oracle* on
+   a *strict future split*, with move choice a near-null.
 2. **The equal-capacity evolving-vs-memoryless control on a strict future
    split.** Isolates *dynamics* from *habit* and raw *individualization* — the
-   #1 reviewer objection ("isn't this just history-conditioning?"), settled. No
-   behavior-simulation competitor runs this control.
+   #1 reviewer objection ("isn't this just history-conditioning?"), settled.
+   Evolving-vs-memoryless is a routine seqrec ablation; the differentiator is
+   the *equal-capacity, same-input* form on a per-decision **oracle** domain
+   with a real future split — which no behavior-simulation competitor runs.
 3. **The hidden-vs-verbal channel ordering is backbone-dependent** (measured,
    not assumed). With *no* language prior (board-native, RQ6) the trained
    *hidden* latent beats the verbal note (−0.069/−0.117). But *inside an actual

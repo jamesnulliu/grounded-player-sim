@@ -149,6 +149,23 @@ def test_b4_position_aware_adds_branching_factor():
     assert aware[-1] == 3 / 40.0  # three legal moves
 
 
+def test_b4_external_pred_appends_released_prediction():
+    # G4: external_pred=True appends log(context['external_time_pred']) as one
+    # more fitted feature; a missing prediction fails loudly (never silently
+    # degrades to the proxy).
+    from gps.experiments.ec import _b4_features
+
+    dp = _dp("8/8/8/8/8/8/8/8 w - - 0 1", ["e2e4", "d2d4"], sp=0)
+    aware = _b4_features(dp, position_aware=True)
+    with pytest.raises(ValueError, match="external_time_pred"):
+        _b4_features(dp, position_aware=True, external_pred=True)
+    dp.context["external_time_pred"] = math.e  # log -> 1.0
+    ext = _b4_features(dp, position_aware=True, external_pred=True)
+    assert len(ext) == len(aware) + 1
+    assert ext[: len(aware)] == aware
+    assert abs(ext[-1] - 1.0) < 1e-9
+
+
 def test_concentration_buckets_by_observable_feature(offline_wandb):
     # run_concentration(bucket_feature=...) buckets the held-out D-B by an
     # OBSERVABLE anchored dimension (real-data path) rather than a synthetic

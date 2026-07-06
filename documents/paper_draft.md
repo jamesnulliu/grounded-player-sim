@@ -34,19 +34,29 @@ LoRA→full fine-tuning, Δ ≈ −0.013 on timing); and delivering the state as
 **hidden soft-prompt** inside the LLM (G3, 3 seeds) shows the hidden-vs-verbal
 ordering **flips** — the verbal note wins there (the LLM reads it semantically),
 even as injected state still helps think-time. We do not claim novelty by
-conjunction: three results stand alone — the when-not-what asymmetry, the
-equal-capacity evolving-vs-memoryless future-split control, and the
-**backbone-dependent hidden-vs-verbal channel ordering** (the trained hidden
-vector is richer with no language prior; the verbal note is richer with one).
+conjunction, and we are explicit that each axis has prior art — dynamic
+emotional chess (Ailed), per-individual chess style (Elo-Disentangled,
+ChessMimic), timing-reveals-latent-state (response-time psychometrics), and an
+evolving latent under a future split (LATTE, HumanLM). Our contribution is the
+**controlled empirical synthesis those lines lack**: on real human data, with a
+per-decision oracle and a strict future split, an equal-capacity evolving latent
+beats a memoryless twin at predicting a specific person's *future think-time* —
+robust across a six-year era span and reproduced in a non-game domain — while
+move choice is a near-null; the same latent recovers population heterogeneity a
+"positive-average-person" cannot; and the hidden-vs-verbal channel ordering is
+**backbone-dependent** (hidden richer with no language prior, verbal richer
+inside an LLM).
 
 ## Contributions
 
 1. A game-agnostic **dynamic latent-state injector** decoupled from a swappable
    backbone; the same injector + trainer run on chess and knowledge tracing
    unchanged.
-2. The first test, on **real** data and a strict **future** split, that an
-   evolving latent beats an equal-capacity **memoryless history-conditioned**
-   control — the #1 reviewer objection, settled (RQ1, E-C2/E-C3).
+2. An **equal-capacity, same-input evolving-vs-memoryless control** on a
+   per-decision oracle domain and a strict **future** split — the form the
+   human-chess and user-simulation lines do not run, which isolates accumulated
+   *dynamics/individualization* from mere history-conditioning and settles the
+   #1 reviewer objection on **real** data (RQ1, E-C2/E-C3).
 3. A **per-individual evolving timing** result robust across a 6-year era span,
    two backbones, and five seeds, that adds significant value *over* a near-SOTA
    Elo+clock+**position-complexity** baseline (E-C6) — the differentiator vs
@@ -270,17 +280,44 @@ population heterogeneity (Milestone F).
   then powered it up.
 - 2013 archives lack `[%clk]` (move-NLL only); timing uses a 2017 prefix.
 
-## Positioning (vs 2026 prior art; design.md §8)
+## Positioning (vs 2026 prior art; full section in `documents/related_work.md`)
 
-We do **not** claim novelty by conjunction. Three results are new on their own:
-(1) **the when-not-what finding** — state is legible in timing, near-null in move
-choice, robust across a 6-year span and reproduced in a non-game domain; (2) **the
-equal-capacity evolving-vs-memoryless control on a strict future split** — isolates
-dynamics from habit/individualization, run by no behavior-simulation competitor;
-(3) **the backbone-dependent hidden-vs-verbal channel ordering** — HumanLM/LATTE
-deliver an LLM latent as *verbal* text; we show the trained *hidden* channel is
-richer with **no** language prior (board-native RQ6) but the verbal note wins
-*inside an LLM* (G3, the LLM reads it semantically), so we characterize *when*
-each channel is right. Competitors each own one *axis* we build on — aggregate
-think-time (Allie), per-move clock (ChessMimic), strong moves (Maia-3), evolving
-text latent (LATTE/HumanLM) — but none report these three.
+**No single axis here is unclaimed** — after a 2026-07 prior-art sweep we say this
+plainly. Per-individual chess style (Elo-Disentangled, arXiv:2606.25176, which
+beats Maia-3 on move NLL; Player-Specific; Mixture-of-Masters), cohort move+clock
+(ChessMimic), dynamic emotional chess (Ailed, arXiv:2603.05352), the principle
+that *timing reveals latent state better than choice* (decades of response-time
+psychometrics; Latency-Response Theory), and an evolving latent validated on a
+future split (LATTE, HumanLM) all already exist. We build on them and must not
+re-claim them.
+
+Our contribution is the **controlled empirical synthesis those lines lack**,
+which we frame as three findings, each stated in its *honest, differentiated*
+form:
+1. **The when-not-what asymmetry.** That latency exposes latent cognitive state
+   more richly than discrete choice is old news in psychometrics; what is new is
+   its form here — an *evolving within-session behavioral state*
+   (tilt/fatigue/time-pressure), measured against a *per-decision engine oracle*,
+   validated on a *strict future split*, robust across a six-year era span, and
+   reproduced in a non-game oracle domain — with move choice a near-null.
+2. **The equal-capacity evolving-vs-memoryless control on a real future split.**
+   Evolving-vs-memoryless is a routine seqrec ablation; our differentiator is
+   running it as an *equal-capacity, same-input* control on a per-decision oracle
+   domain with a strict future split, which isolates the value of accumulating
+   state from merely seeing recent history — the control the human-chess and
+   user-simulation lines do not run, and the answer to the #1 "isn't this just
+   history-conditioning?" objection.
+3. **The backbone-dependent hidden-vs-verbal channel ordering.** HumanLM/LATTE
+   each commit to one channel (verbal text / a single soft token); we compare
+   them head-to-head and show the ordering *flips* with the backbone's language
+   prior — hidden richer with no language prior (board-native RQ6, −0.069/−0.117),
+   verbal richer inside an instruction-tuned LLM (G3, Qwen3, 3 seeds).
+
+Closest in spirit is **Ailed** (dynamic emotional modulation of chess move + latency),
+but it is a *generative* engine with, in its authors' words, **no human-subject
+validation** — its state dynamics are asserted, not measured against real players.
+We make the corresponding claim falsifiable: the evolving state is fit to and
+scored against specific players' held-out future games, its value established by
+the equal-capacity control rather than by construction. (`documents/related_work.md`
+carries the full comparison and citations; verify the arXiv IDs marked unverified
+there before submission.)

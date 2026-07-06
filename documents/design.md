@@ -125,7 +125,14 @@ implementation choices keep the experiment from being circular:
 | Lichess PGN + Stockfish, SGF + KataGo ingestion | not yet (next on GPU/data
   host) |
 
-## 8. Positioning vs. the closest competitors (deep-read June 2026; sweep updated 2026-06-25)
+## 8. Positioning vs. the closest competitors (deep-read June 2026; sweep updated 2026-07-05)
+
+> **Canonical version: `documents/related_work.md`** (2026-07 sweep). It supersedes
+> this section's framing: a fresh sweep found that **each axis is now occupied**
+> — dynamic emotional chess (Ailed), per-individual style beating Maia-3
+> (Elo-Disentangled), and timing>choice (response-time psychometrics) — so the
+> contribution is the *controlled synthesis on real humans*, not standalone-axis
+> novelty. This section is kept for the detailed competitor notes + table below.
 
 The novelty claim must survive a prior-art challenge. **We no longer claim
 novelty by conjunction** (a weak position for a top venue). Three results stand
@@ -200,23 +207,40 @@ contribution.
 | Mixture of Masters | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ |
 | BGU blunder | ✓ | ✗ | ✗ | quality | ✗ | ✓ | ✗ | ✗ |
 | Allie | ✗ (Elo) | ✗ | ✗ | ✓ | ~ (agg) | ✓ | ✗ | ~ |
+| Elo-Disentangled | ✓ | ✗ | ✗ | ✓ (beats Maia-3) | ✗ | ✓ | ~ | ~ |
+| Ailed | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✗ |
 | LATTE | ✓ | ✓ | ✗ (pref) | ✗ | ✗ | ✗ (text) | ✓ | ✗ |
 | HumanLM | ~ (context) | ✗ | ✓ (text) | ✗ | ✗ | ✗ (text) | ✗ | ✗ |
 | **Ours** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓ (+Go)** | **✓** | **✓** |
+
+\* **Ailed's ✓s are asserted, not measured.** It is a *generative* engine with
+**no human-subject validation** (tested vs a Maia opponent), so its
+evolving/psych/timing/future-split "coverage" is by construction, not validated
+against real players — and it has **no engine oracle**. That gap (real-human
+future validation + oracle), not the axis list, is our differentiation from it.
 
 **SHARED territory — must NOT be claimed as novel (desk-reject risk):**
 "evolving latent into an LLM" (=LATTE), "natural-language latent state"
 (=HumanLM), "future temporal-split validation" (=LATTE), "trainable/RL latent"
 (=both), **"per-individual chess move prediction"** (=Player-Specific / Mixture
-of Masters), **"move+timing in chess"** (=ChessMimic), **"per-individual latent
-beats Elo at move-quality"** (=BGU blunder). The last three are NEW as of the
-2026-06-25 sweep — **per-individual alone is no longer a differentiator.**
+of Masters / **Elo-Disentangled, arXiv:2606.25176, which beats Maia-3**),
+**"move+timing in chess"** (=ChessMimic), **"per-individual latent beats Elo at
+move-quality"** (=BGU blunder), **"dynamic emotional state in chess driving move
++ timing"** (=Ailed, arXiv:2603.05352), and **"timing reveals latent state
+better than choice"** (= decades of response-time psychometrics /
+Latency-Response Theory). **Per-individual, dynamic-psych-in-chess, and
+timing>choice are each now occupied** — the contribution is the *controlled
+synthesis on real humans*, not any single axis. Full, cited version:
+`documents/related_work.md`.
 
 **Supporting axes** (these back the three single-axis novelties above — do not
 lead with them alone; several are now shared territory):
 1. A **temporally-evolving psychological** state (tilt/fatigue/time-pressure)
-   driving **moves + timing** — every chess competitor above is *static*; the
-   evolving-psych axis is the one none of them touch.
+   driving **moves + timing** — every chess competitor above is *static* except
+   **Ailed**, which models a dynamic emotional state but is a generative engine
+   with **no human-subject validation** (its dynamics are asserted, not measured
+   against real players). The evolving-psych axis *validated on real players'
+   future behavior against an oracle* is the one none of them occupy.
 2. **Engine-oracle-graded deviation** conditioning — we model `P(deviation |
    z_t, oracle)`, not raw moves; no chess competitor conditions on the oracle.
 3. **Strict future-per-individual split** — LATTE does this in text; no chess

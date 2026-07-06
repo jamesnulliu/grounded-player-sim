@@ -292,9 +292,60 @@ def test_timing_vs_aggregate_runs(offline_wandb):
         ds, split_mode="fraction", epochs=20, seed=0, bootstrap_n=200
     )
     assert res.n_players == 8
+    assert res.mode == "aggregate"
     assert math.isfinite(res.b4_nll) and math.isfinite(res.b4z_nll)
     assert res.add_ci.n_units == 8
     assert "E-C6" in res.summary()
+
+
+def test_g4_external_and_pure_external_modes(offline_wandb):
+    # G4 (documents/g4_plan.md): the add-on test runs against a released
+    # model's cached per-move think-time. We stamp a synthetic external pred
+    # (a decent-but-imperfect predictor) onto every decision and assert BOTH
+    # modes produce a valid bootstrap over players.
+    import math
+
+    from gps.experiments.ec import run_timing_vs_aggregate
+
+    ds = build_hidden_tilt_dataset(n_players=8, n_games=16, seed=0)
+    for traj in ds.trajectories:
+        for dp, obs in zip(traj.decisions, traj.observations):
+            dp.context["external_time_pred"] = max(
+                0.05, (obs.time_spent or 0.5) * 0.9 + 0.2
+            )
+
+    # (a) external prediction as one more FITTED baseline feature.
+    ext = run_timing_vs_aggregate(
+        ds, split_mode="fraction", epochs=20, seed=0, bootstrap_n=200,
+        external_pred=True,
+    )
+    assert ext.mode == "external"
+    assert math.isfinite(ext.b4_nll) and math.isfinite(ext.b4z_nll)
+    assert ext.add_ci.n_units == 8
+    assert "external" in ext.summary()
+
+    # (b) pure-external: baseline mu is log(released pred) LOCKED (+intercept);
+    # B+z adds the latent as the only extra predictor.
+    pure = run_timing_vs_aggregate(
+        ds, split_mode="fraction", epochs=20, seed=0, bootstrap_n=200,
+        pure_external=True,
+    )
+    assert pure.mode == "pure_external"
+    assert math.isfinite(pure.b4_nll) and math.isfinite(pure.b4z_nll)
+    assert pure.add_ci.n_units == 8
+    assert "released model" in pure.summary()
+
+
+def test_g4_missing_external_pred_fails_loudly(offline_wandb):
+    # Without a cached external prediction the G4 modes must raise, never
+    # silently fall back to the hand-built proxy.
+    from gps.experiments.ec import run_timing_vs_aggregate
+
+    ds = build_hidden_tilt_dataset(n_players=6, n_games=12, seed=0)
+    with pytest.raises(ValueError, match="external_time_pred"):
+        run_timing_vs_aggregate(
+            ds, split_mode="fraction", epochs=5, seed=0, pure_external=True
+        )
 
 
 def test_concentration_in_high_dynamics_moments(offline_wandb):

@@ -668,17 +668,23 @@ class TimingVsAggregate:
     b4z_pearson: float
     b4z_spearman: float
     n_players: int
+    mode: str = "aggregate"
 
     def summary(self) -> str:
         verdict = (
-            "YES, evolving latent adds value over aggregate"
+            f"YES, evolving latent adds value over {self.mode}"
             if self.add_ci.point < 0
             else "no add"
         )
+        label = {
+            "aggregate": "B4(aggregate)",
+            "external": "B(aggregate+released-pred)",
+            "pure_external": "B(released model)",
+        }.get(self.mode, "B")
         return (
-            f"[E-C6 timing vs aggregate] n_players={self.n_players}\n"
-            f"        held-out think-time NLL: B4(aggregate)={self.b4_nll:.4f}"
-            f" | B4+z(aggregate+evolving latent)={self.b4z_nll:.4f}"
+            f"[E-C6 timing vs {self.mode}] n_players={self.n_players}\n"
+            f"        held-out think-time NLL: {label}={self.b4_nll:.4f}"
+            f" | +z(baseline+evolving latent)={self.b4z_nll:.4f}"
             f" | latent-only(D)={self.d_nll:.4f}\n"
             f"        DOES THE LATENT ADD VALUE? (B4+z)-B4 mean="
             f"{self.add_ci.point:+.4f} 95% CI "
@@ -690,13 +696,44 @@ class TimingVsAggregate:
         )
 
 
-def _b4_features(dp, position_aware: bool = False):
+def _external_log_time(dp) -> float:
+    """log-seconds of a released model's per-decision think-time prediction.
+
+    The G4 add-on test (`documents/g4_plan.md`) compares against a *released*
+    SOTA human-chess model instead of the hand-built aggregate. Its per-move
+    predicted think-time (in **seconds**) is cached offline onto each decision
+    as ``context["external_time_pred"]`` (like an ``EngineReference``); we
+    consume only that scalar output, never the model's internals -- so any
+    encoding / move-vocabulary mismatch is sidestepped. Raises loudly if the
+    prediction is missing, rather than silently degrading to the proxy.
+    """
+    import math
+
+    pred = dp.context.get("external_time_pred")
+    if pred is None:
+        raise ValueError(
+            "external_pred/pure_external requires "
+            "context['external_time_pred'] (a released model's predicted "
+            "think-time in seconds) on every decision -- precompute + cache "
+            "it (see documents/g4_plan.md)."
+        )
+    return math.log(max(float(pred), 1e-3))
+
+
+def _b4_features(
+    dp, position_aware: bool = False, external_pred: bool = False
+):
     """Aggregate (non-individual) timing features for the Allie-style B4.
 
     ``position_aware`` appends the **branching factor** (number of legal moves,
     an oracle-free position-complexity proxy) -- a board-derived think-time
     driver. The fair test then asks whether the per-individual latent still
     adds value *over* an Elo + clock + complexity baseline.
+
+    ``external_pred`` (G4) appends a **released** model's predicted
+    log-think-time as one more *fitted* feature, so the baseline is at least as
+    strong as that released model plus our aggregate features -- a conservative
+    B for the "does the latent add value over released SOTA?" test.
     """
     import math
 
@@ -711,6 +748,8 @@ def _b4_features(dp, position_aware: bool = False):
     ]
     if position_aware:
         feats.append(len(dp.legal_actions) / 40.0)
+    if external_pred:
+        feats.append(_external_log_time(dp))
     return feats
 
 
@@ -745,15 +784,30 @@ def run_timing_vs_aggregate(
     seed: int = 0,
     bootstrap_n: int = 2000,
     position_aware: bool = False,
+    external_pred: bool = False,
+    pure_external: bool = False,
 ) -> TimingVsAggregate:
-    """E-C6: our evolving per-individual think-time vs an Elo-aggregate (B4).
+    """E-C6 / G4: our evolving per-individual think-time vs a baseline.
 
-    Trains our model (arm D, log-normal timing head), and fits B4 -- a
-    log-normal whose ``mu`` is a least-squares function of **aggregate**
-    features (Elo, move number, log time-remaining), *not* per-individual or
-    state (Allie-style). Both are scored on the same held-out steps: think-time
-    NLL (bootstrapped over players) and per-player predicted-vs-actual
-    correlation (the ChessMimic yardstick, B9).
+    Trains our model (arm D, log-normal timing head), and fits a baseline B
+    whose ``mu`` is a least-squares function of **aggregate** features (Elo,
+    move number, log time-remaining), *not* per-individual or state
+    (Allie-style). ``B+z`` adds the per-step evolving latent. Both are scored
+    on the same held-out steps: think-time NLL (bootstrapped over players) and
+    per-player predicted-vs-actual correlation (the ChessMimic yardstick, B9).
+
+    **G4 add-on-over-released-SOTA modes** (`documents/g4_plan.md`), both of
+    which read each decision's ``context["external_time_pred"]`` (a released
+    model's predicted think-time in seconds, cached offline):
+
+    * ``external_pred=True`` -- the released prediction is one more *fitted*
+      aggregate feature, so B is at least as strong as *released model + our
+      aggregate features* (a conservative baseline).
+    * ``pure_external=True`` -- B's ``mu`` is ``log(external pred)`` **locked**
+      (weight 1, no re-fit) and ``B+z`` is that fixed offset plus the latent as
+      the only free predictor: literally *released model* vs *released model +
+      z*, with no chance we handicapped B by re-fitting. Implies the external
+      ``position_aware``/``external_pred`` feature flags are ignored for B.
     """
     import math
 
@@ -802,30 +856,54 @@ def run_timing_vs_aggregate(
     mu_d = mu_d.cpu().tolist()
     sig_d = float(sig_d)
 
-    # --- fit B4 (aggregate) and B4+z (aggregate + evolving latent) -------
-    # B4+z is the value-add test: does the latent help *beyond* the clock/Elo?
-    x4, x4z, ys = [], [], []
+    # --- fit baseline B and B+z (baseline + evolving latent) ------------
+    # B+z is the value-add test: does the latent help *beyond* the baseline?
+    # Per decision each mode yields (base_feat, base_off, withz_feat, wz_off);
+    # ``mu = off + w . feat`` where ``off`` is a locked (unfitted) log-time.
+    #   aggregate/external: off=0; features are fitted (external pred, if on,
+    #     is one more fitted feature -- baseline >= released model + feats).
+    #   pure_external: off=log(released pred) LOCKED for both arms; B keeps
+    #     only a single intercept (a fair global recalibration of the offset --
+    #     arbitrary constant offset would otherwise inflate its NLL), and B+z
+    #     adds the latent as the ONLY extra predictor -> B+z - B isolates the
+    #     latent's marginal value over the released model itself.
+    def _rows(dp, z):
+        if pure_external:
+            off = _external_log_time(dp)
+            return [1.0], off, [1.0] + list(z), off
+        feat = _b4_features(dp, position_aware, external_pred)
+        return feat, 0.0, feat + list(z), 0.0
+
+    base_x, base_o, wz_x, wz_o, ys = [], [], [], [], []
     for b, (traj, sp) in enumerate(zip(dataset.trajectories, splits)):
         for t in range(0, sp):
-            feat = _b4_features(traj.decisions[t], position_aware)
-            x4.append(feat)
-            x4z.append(feat + lat[t][b])
+            bf, bo, wf, wo = _rows(traj.decisions[t], lat[t][b])
+            base_x.append(bf)
+            base_o.append(bo)
+            wz_x.append(wf)
+            wz_o.append(wo)
             ys.append(
                 math.log(max(traj.observations[t].time_spent or 1e-3, 1e-3))
             )
     y = np.asarray(ys)
 
-    def _fit(xs):
-        m = np.asarray(xs)
-        w, *_ = np.linalg.lstsq(m, y, rcond=None)
-        sig = float((y - m @ w).std()) or 1.0
+    def _fit(xs, offs):
+        m = np.asarray(xs, dtype=float)
+        tgt = y - np.asarray(offs, dtype=float)
+        if m.shape[1] == 0:  # no free weights -> locked offset only
+            return np.zeros(0), float(tgt.std()) or 1.0
+        w, *_ = np.linalg.lstsq(m, tgt, rcond=None)
+        sig = float((tgt - m @ w).std()) or 1.0
         return w, sig
 
-    w4, sig4 = _fit(x4)
-    w4z, sig4z = _fit(x4z)
+    w4, sig4 = _fit(base_x, base_o)
+    w4z, sig4z = _fit(wz_x, wz_o)
 
     def _nll(yt, mu, sig):
         return 0.5 * ((yt - mu) / sig) ** 2 + math.log(sig) + half_log2pi + yt
+
+    def _mu(w, feat, off):
+        return off + (float(np.dot(w, feat)) if feat else 0.0)
 
     # --- per-player held-out NLL + correlations -------------------------
     d_pp, b4_pp, b4z_pp = [], [], []
@@ -834,9 +912,9 @@ def run_timing_vs_aggregate(
         dn, bn, bzn, b4pred, bzpred, act = [], [], [], [], [], []
         for t in range(sp, len(traj.decisions)):
             yt = math.log(max(traj.observations[t].time_spent or 1e-3, 1e-3))
-            feat = _b4_features(traj.decisions[t], position_aware)
-            mb = float(np.dot(w4, feat))
-            mbz = float(np.dot(w4z, feat + lat[t][b]))
+            bf, bo, wf, wo = _rows(traj.decisions[t], lat[t][b])
+            mb = _mu(w4, bf, bo)
+            mbz = _mu(w4z, wf, wo)
             dn.append(_nll(yt, mu_d[t][b], sig_d))
             bn.append(_nll(yt, mb, sig4))
             bzn.append(_nll(yt, mbz, sig4z))
@@ -857,6 +935,13 @@ def run_timing_vs_aggregate(
     add_diffs = [bz - b for bz, b in zip(b4z_pp, b4_pp)]
     ci = bootstrap_ci(add_diffs, n_resamples=bootstrap_n, seed=seed)
     mean = lambda xs: sum(xs) / len(xs)  # noqa: E731
+    mode = (
+        "pure_external"
+        if pure_external
+        else "external"
+        if external_pred
+        else "aggregate"
+    )
     return TimingVsAggregate(
         d_nll=mean(d_pp),
         b4_nll=mean(b4_pp),
@@ -867,6 +952,7 @@ def run_timing_vs_aggregate(
         b4z_pearson=mean(b4z_pr),
         b4z_spearman=mean(b4z_sp),
         n_players=len(d_pp),
+        mode=mode,
     )
 
 
