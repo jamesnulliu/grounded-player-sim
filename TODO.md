@@ -480,19 +480,31 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
 
 ---
 
-## Milestone G — LLM-agent headline + strong backbones (P0, current focus)
+## Milestone G — LLM-agent deployment (RESOLVED 2026-07-05; consolidate next)
 
-> The pivot (2026-07): make the **LLM agent** the headline and put the
-> board-native proof on a **strong backbone**. The board-native D-vs-B results
-> stay as the controlled *mechanism proof*; the LLM is the *deployment*, and the
-> hidden-vs-verbal contrast inside the LLM is the LLM-native contribution.
-> Decide final emphasis on the numbers (design.md §10): run G2/G3 first, and
-> promote the LLM to co-headline **only if hidden > verbal is significant *in the
-> LLM*.** The three novelties this milestone serves (design.md §8): when-not-what,
-> the evolving-vs-memoryless future-split control, and hidden ≫ verbal.
+> **Status.** G2/G3 **done** (see below). The pivot's aspiration — make the LLM
+> the *hidden≫verbal* headline — was **not** supported: in the LLM, injected
+> state helps think-time (verbal−none −0.005) but **hidden does not beat verbal**
+> (the LLM reads the note semantically). So the LLM is the **deployment**
+> (state is usable in a real LLM) + the **backbone-dependent channel-ordering**
+> finding; **board-native (RQ6) stays the headline.** `results/g3_llm.txt`.
 >
-> **Runbook: `documents/milestone_g.md`** — claims + decision rules, what's
-> landed (CPU-tested), the GPU commands + resources for G1–G4.
+> **G1 (Maia) and G3-v2 are DEPRIORITIZED — do NOT run them (2026-07-05):**
+> 1. A strong backbone **absorbs the move signal** — the conv trunk already
+>    dropped move D−B −0.027→−0.003, and the LLM showed the same (a strong model
+>    leaves little residual). So latent+Maia on *moves* would very likely be a
+>    **null that weakens** the paper.
+> 2. The **timing** headline is **backbone-independent by construction** — the
+>    timing head reads only the latent, never the board trunk (confirmed:
+>    timing D−B stays P=1.00 under the conv trunk). So Maia **cannot** change the
+>    timing result; the "weak backbone" objection is answered *architecturally*,
+>    not experimentally.
+>    → Net: G1 is vacuous (timing) or risky (move). **Skip it. Consolidate.**
+>    Lead with timing (backbone-independent); move + LLM are honest secondaries.
+>
+> **Runbook: `documents/milestone_g.md`.** The G-code-1/G1/G4 items below are
+> kept for reference (what running Maia *would* entail) but are **not on the
+> critical path.**
 
 ### Resources (all fit on the existing 2×A100; the constraint is dev time)
 - **Maia-2 backbone:** 1 GPU ≥16GB (Maia-2 is tens of M params — an A100 is
@@ -505,7 +517,8 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
 - Run the Maia track and the LLM track in parallel, one A100 each.
 
 ### Code
-- [ ] **G-code-1: Maia-2 backbone** (`src/gps/policy/maia_backbone.py`). Load the
+- [~] **G-code-1: Maia-2 backbone (DEPRIORITIZED — see box above)**
+  (`src/gps/policy/maia_backbone.py`). Load the
   pretrained Maia-2 checkpoint, adapt its board encoding, expose it through
   `PolicyBackbone` (`encode_batch`/`trajectory_loss`/`per_traj_move_nll`) so the
   *same* D-vs-B injector experiment runs on a strong move model. Kills the "weak
@@ -545,7 +558,7 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   sketches) and run the 3 conditions → report `hidden − verbal` (G3).
 
 ### Experiments
-- [ ] **G1 (Maia D-vs-B):** rerun the E-C timing/move D-vs-B with Maia-2 as the
+- [~] **G1 (Maia D-vs-B) — DEPRIORITIZED (see box above):** rerun the E-C timing/move D-vs-B with Maia-2 as the
   shared backbone. Expected: the timing win holds (the timing head reads only the
   latent, so it is *structurally* backbone-invariant); the move ceiling rises —
   report whether the small move signal survives a strong move model.
@@ -614,8 +627,11 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
    tracing / Codeforces) for stronger cross-modal generality (design.md §11).
 6. Milestone F (population demo) — only if A–E land; decide demo-vs-pillar
    on the numbers.
-7. **Milestone G (LLM-agent headline + Maia backbone + head-to-head) — the
-   current active focus.** A strong backbone (Maia-2/3) kills the weak-backbone
-   objection on the board-native proof; the **hidden-vs-verbal-in-the-LLM result
-   (G3)** is what promotes the LLM from a probe to the headline; G4 replaces the
-   reconstructed-proxy baselines with released ChessMimic/Allie/Maia-3 weights.
+7. **Milestone G (LLM deployment) — RESOLVED 2026-07-05.** G2/G3 done: state
+   helps a real LLM (verbal−none −0.005) but **hidden does not beat verbal** (the
+   LLM reads it semantically) → the LLM is a *deployment* + the
+   backbone-dependent-ordering finding, **not** the headline. G1/Maia + v2
+   **deprioritized** (a strong backbone absorbs the move signal; timing is
+   backbone-independent by construction, so Maia can't change it — the
+   weak-backbone objection is answered architecturally). **Next: consolidate the
+   write-up** — lead with timing; move + LLM are honest secondaries.

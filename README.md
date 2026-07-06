@@ -38,11 +38,14 @@ proposal, `documents/design.md` for how the code maps onto it (and the key
 decisions + prior-art positioning), `documents/training.md` for the GPU/data
 wiring, `documents/milestone_a.md` for the make-or-break "is the latent just
 history-conditioning?" runbook, `documents/milestone_g.md` for the **LLM-agent
-headline** runbook (G1–G4, the current focus), and **`TODO.md`** for the work
-plan.
+deployment** result + why a strong Maia backbone was *deprioritized*, and
+**`TODO.md`** for the work plan.
 
 **Status.** Strong, landed results are **board-native** (small from-scratch
-head; a Maia-2/3 backbone is the next upgrade — `TODO.md` Milestone G):
+head). A Maia-2/3 backbone was **considered and deprioritized** (a strong trunk
+*absorbs* the move signal, and the timing headline is backbone-independent by
+construction — the timing head reads only the latent — so a strong backbone
+can't change it; `TODO.md` Milestone G). The headline is **timing**:
 
 - **Timing (headline).** The evolving latent beats an equal-capacity memoryless
   twin on think-time in **all 8 clocked conditions across 2017–2023** (5 seeds ×
