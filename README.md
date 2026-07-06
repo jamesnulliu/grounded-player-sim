@@ -10,8 +10,8 @@ robustly, concentrating under time pressure and for weaker players, and scaling
 with population heterogeneity. Validated against the player's *future* behavior
 on a strict temporal split, on real Lichess chess and (for cross-domain
 generality) real knowledge tracing. The state's value lives in a *trained
-hidden* latent, not a verbal persona prompt — which is how we carry it into an
-**LLM agent** (the project's headline direction; `TODO.md` Milestone B/G).
+hidden* latent, not a verbal persona prompt (RQ6) — and it adds think-time value
+even over a **released SOTA think-time model** (Allie, ICLR'25; Milestone G4).
 
 **Three things we lead with** (each axis has prior art — dynamic emotional chess,
 per-individual style, timing>choice in psychometrics; our contribution is the
@@ -72,16 +72,17 @@ can't change it; `TODO.md` Milestone G). The headline is **timing**:
   and generation beat the "positive average person" (Wasserstein 2× better). Go:
   **honest negative** (no robust effect under a board-size control) — future work.
 
-**LLM arm (the direction we're pushing).** Qwen3 via sglang is implemented and
-runs. So far: frozen verbal injection is a *negative control*; RL (slime GRPO)
-learns the task but its sparse reward can't resolve the state effect; a dense
-**SFT probe reproduces the board-native asymmetry** — state helps think-time
-(Δ ≈ −0.011, robust across 0.6B→8B and LoRA→full fine-tuning) more than moves.
-These effects are **small** — the LLM is currently a *probe*, not the headline.
-The **experiment that makes the LLM the headline** is the `HIDDEN` soft-prompt
-path + a trained injector, and the hidden-vs-verbal contrast *inside* the LLM
-(Milestone G). CLI: `gps ingest`, `gps train-ec`, `gps phase0`, `gps kt` (RQ5/F,
-synthetic or real via `--data`), `gps info`; at-scale sweep in `scripts/`.
+**LLM arm (an honest secondary result — RESOLVED, not the headline).** Qwen3 via
+sglang is implemented and runs. Frozen verbal injection is a *negative control*;
+RL (slime GRPO) learns the task but its sparse reward can't resolve the state
+effect; a dense **SFT probe reproduces the board-native asymmetry** — state helps
+think-time (Δ ≈ −0.011, robust across 0.6B→8B and LoRA→full fine-tuning) more than
+moves. These effects are **small**. Milestone G settled the LLM's role: *hidden
+does **not** beat verbal inside the LLM* (G3 — the LLM reads the note
+semantically), so the channel ordering is **backbone-dependent**, and the LLM is a
+deployment/secondary result — board-native timing stays the headline. CLI: `gps
+ingest`, `gps train-ec`, `gps phase0`, `gps kt` (RQ5/F, synthetic or real via
+`--data`), `gps info`; at-scale sweep in `scripts/`.
 
 ## Architecture at a glance
 

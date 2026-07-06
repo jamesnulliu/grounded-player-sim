@@ -125,135 +125,34 @@ implementation choices keep the experiment from being circular:
 | Lichess PGN + Stockfish, SGF + KataGo ingestion | not yet (next on GPU/data
   host) |
 
-## 8. Positioning vs. the closest competitors (deep-read June 2026; sweep updated 2026-07-05)
+## 8. Positioning vs. the closest competitors (see `documents/related_work.md`)
 
-> **Canonical version: `documents/related_work.md`** (2026-07 sweep). It supersedes
-> this section's framing: a fresh sweep found that **each axis is now occupied**
-> — dynamic emotional chess (Ailed), per-individual style beating Maia-3
-> (Elo-Disentangled), and timing>choice (response-time psychometrics) — so the
-> contribution is the *controlled synthesis on real humans*, not standalone-axis
-> novelty. This section is kept for the detailed competitor notes + table below.
+> **Canonical version: `documents/related_work.md`** (2026-07 sweep). This
+> section keeps only the design-relevant summary of the three novelties; the
+> detailed competitor notes, axes table, and shared-territory list live there.
 
-The novelty claim must survive a prior-art challenge. **We no longer claim
-novelty by conjunction** (a weak position for a top venue). Three results stand
-on their own and are what we lead with:
+**We no longer claim novelty by conjunction.** Each axis is now occupied by 2026
+prior art (per-individual chess style, cohort move+clock, dynamic emotional
+chess, timing>choice in psychometrics, evolving latent + future split), so the
+contribution is the **controlled empirical synthesis on real humans** those lines
+lack — three results that lead:
+
 1. **The when-not-what finding** — the evolving state is legible in *timing*,
    near-null in *move choice*; robust across a 6-year span and reproduced in a
-   non-game domain. A falsifiable empirical claim no competitor makes.
+   non-game domain (the raw timing>choice fact is old in response-time
+   psychometrics; the evolving-state + oracle + future-split *form* is ours).
 2. **The equal-capacity evolving-vs-memoryless control on a strict future
-   split** — isolates *dynamics* from habit and raw individualization. No
-   behavior-simulation paper runs this control; it settles the #1 objection.
+   split** — isolates *dynamics/individualization* from habit; the rigor the
+   human-chess and user-simulation lines skip. Settles the #1 objection.
 3. **The hidden-vs-verbal channel ordering is backbone-dependent** (measured) —
-   the trained *hidden* latent beats the verbal note with *no* language prior
-   (board-native RQ6, −0.069/−0.117), but *inside an LLM* (G3, Qwen3, 3 seeds)
-   the verbal note wins (the LLM reads "tilt"/"time pressure" semantically),
-   while injected state still helps think-time. HumanLM/LATTE only ever use the
-   verbal channel; we measure *when* that is the right choice.
+   the trained *hidden* latent wins with *no* language prior (board-native RQ6,
+   −0.069/−0.117), the verbal note wins *inside an LLM* (G3), while injected
+   state helps think-time either way.
 
-The prior-art table below still matters: each competitor owns one *axis* we build
-on (per-individual, move+timing-in-chess, evolving text latent), so we must never
-re-claim those. But the three results above — not their conjunction — are the
-contribution.
-
-### Chess move / timing competitors (the static axes, now occupied)
-
-* **ChessMimic** (arXiv:2606.04473, Jun 2026) — *the sharpest competitor.*
-  Three encoder-only transformers (move / **clock** / outcome), **one per
-  100-Elo band**; **beats Maia-2** on moves, per-move think-time at **Pearson
-  r=0.41**, outcome AUC 0.78, code+weights released. But: **cohort, not
-  individual**; **static** (no evolving state); **no engine-oracle**
-  conditioning; **no future-per-individual split**; no psychological state. It
-  owns "move+timing in chess" — we own "*whose* move+timing, and *why it
-  drifts*." Its r=0.41 clock is the concrete number our per-individual timing
-  must beat (see TODO E-C6).
-* **Toward Modeling Player-Specific Chess Behaviors** (arXiv:2605.11893,
-  May 2026) — adapts Maia-2 to **individual champions** + MCTS, with a
-  style-eval over board-transition distributions. Per-individual but
-  **static**, **move-only**, no timing, no future split.
-* **Mixture of Masters** (arXiv:2602.04447, Feb 2026) — sparse chess LM with
-  **player routing** to emulate specific GMs. Per-individual, **static**,
-  move-only.
-* **BGU "Blunder prediction in chess"** (Springer Applied Intelligence 2026) —
-  per-individual latent **"blunder profile"** (DeepFM collaborative embedding)
-  that **beats explicit Elo** at move-quality (0.801 AUC; tactical vs
-  strategic). Partly pre-empts our RQ2 "latent beats Elo," but the profile is
-  **static**, no timing, no future split, no tilt dynamics. It is our strongest
-  **B2/B7** baseline, not a scoop — cite it as such.
-* **Allie** (arXiv:2410.03893, ICLR 2025) — 355M transformer over UCI tokens,
-  conditioned ONLY on an Elo scalar. No individual identity, no evolving state,
-  **random** split, think-time **Elo-aggregate** (Pearson r=0.70).
-* **Maia-3 / "Chessformer"** (ICLR 2026) — current SOTA move baseline
-  (rating-conditioned encoder-only transformer; supersedes Maia-2). Use as
-  *the* population baseline B1; Maia-2 references elsewhere in the docs are now
-  stale and should be updated.
-
-### LLM evolving-state competitors (the dynamic axis, but not in games)
-
-* **HumanLM** (arXiv:2603.03303, Stanford) — one shared LLM, RL-trained to emit
-  **natural-language** psychological latent states (stance/emotion); individual
-  = a **static text profile**, state inferred **once per context** (not
-  evolving); **text** domains only — no games/moves/timing/oracle.
-* **LATTE** (arXiv:2605.26612) — evolving per-user **preference** state
-  (peer-anchored residual), sequence-forecast over sessions, injected as a
-  **single soft token** into a **frozen** LLM, **future temporal split**.
-  **Text reviews** only; no psychological state, no games, no oracle.
-
-### Comparison table (axes × who covers them)
-
-| Paper | Per-indiv | Evolving | Psych state | Move | Timing | Board game | Future split | Oracle |
-|---|---|---|---|---|---|---|---|---|
-| ChessMimic | ✗ (Elo band) | ✗ | ✗ | ✓ | ✓ (r=.41) | ✓ | ✗ | ✗ |
-| Player-Specific | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ~ |
-| Mixture of Masters | ✓ | ✗ | ✗ | ✓ | ✗ | ✓ | ✗ | ✗ |
-| BGU blunder | ✓ | ✗ | ✗ | quality | ✗ | ✓ | ✗ | ✗ |
-| Allie | ✗ (Elo) | ✗ | ✗ | ✓ | ~ (agg) | ✓ | ✗ | ~ |
-| Elo-Disentangled | ✓ | ✗ | ✗ | ✓ (beats Maia-3) | ✗ | ✓ | ~ | ~ |
-| Ailed | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✗ |
-| LATTE | ✓ | ✓ | ✗ (pref) | ✗ | ✗ | ✗ (text) | ✓ | ✗ |
-| HumanLM | ~ (context) | ✗ | ✓ (text) | ✗ | ✗ | ✗ (text) | ✗ | ✗ |
-| **Ours** | **✓** | **✓** | **✓** | **✓** | **✓** | **✓ (+Go)** | **✓** | **✓** |
-
-\* **Ailed's ✓s are asserted, not measured.** It is a *generative* engine with
-**no human-subject validation** (tested vs a Maia opponent), so its
-evolving/psych/timing/future-split "coverage" is by construction, not validated
-against real players — and it has **no engine oracle**. That gap (real-human
-future validation + oracle), not the axis list, is our differentiation from it.
-
-**SHARED territory — must NOT be claimed as novel (desk-reject risk):**
-"evolving latent into an LLM" (=LATTE), "natural-language latent state"
-(=HumanLM), "future temporal-split validation" (=LATTE), "trainable/RL latent"
-(=both), **"per-individual chess move prediction"** (=Player-Specific / Mixture
-of Masters / **Elo-Disentangled, arXiv:2606.25176, which beats Maia-3**),
-**"move+timing in chess"** (=ChessMimic), **"per-individual latent beats Elo at
-move-quality"** (=BGU blunder), **"dynamic emotional state in chess driving move
-+ timing"** (=Ailed, arXiv:2603.05352), and **"timing reveals latent state
-better than choice"** (= decades of response-time psychometrics /
-Latency-Response Theory). **Per-individual, dynamic-psych-in-chess, and
-timing>choice are each now occupied** — the contribution is the *controlled
-synthesis on real humans*, not any single axis. Full, cited version:
-`documents/related_work.md`.
-
-**Supporting axes** (these back the three single-axis novelties above — do not
-lead with them alone; several are now shared territory):
-1. A **temporally-evolving psychological** state (tilt/fatigue/time-pressure)
-   driving **moves + timing** — every chess competitor above is *static* except
-   **Ailed**, which models a dynamic emotional state but is a generative engine
-   with **no human-subject validation** (its dynamics are asserted, not measured
-   against real players). The evolving-psych axis *validated on real players'
-   future behavior against an oracle* is the one none of them occupy.
-2. **Engine-oracle-graded deviation** conditioning — we model `P(deviation |
-   z_t, oracle)`, not raw moves; no chess competitor conditions on the oracle.
-3. **Strict future-per-individual split** — LATTE does this in text; no chess
-   competitor does. It is what separates a dynamic model from a memorized habit.
-4. **Go** — completely empty: no model has any individual Go player/timing.
-
-One-sentence framing (paper): *ChessMimic predicts a 100-Elo band's average
-move and clock; LATTE / HumanLM model an evolving preference/psychological
-state in text. We learn a **specific person's** temporally-evolving
-**behavioral** state (tilt/fatigue/time-pressure) that conditions a policy to
-reproduce **their** move-and-timing **deviations from an engine oracle**,
-validated on **their future games**, across two engine-graded domains
-(chess + Go).*
+The full, cited competitor comparison (ChessMimic, Elo-Disentangled, Ailed,
+Allie, Maia-3, HumanLM, LATTE + the response-time literature), the axes table,
+and the shared-territory list now live in **`documents/related_work.md`** (the
+canonical version). Do not re-derive them here.
 
 Caution: ChessMimic / HumanLM / LATTE / Player-Specific / Mixture-of-Masters
 are all 2026 preprints (weeks-to-months old); "first to" on any single *axis* is

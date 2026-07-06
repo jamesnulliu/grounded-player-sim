@@ -480,31 +480,26 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
 
 ---
 
-## Milestone G — LLM-agent deployment (RESOLVED 2026-07-05; consolidate next)
+## Milestone G — LLM deployment + released-SOTA benchmark (DONE 2026-07-06)
 
-> **Status.** G2/G3 **done** (see below). The pivot's aspiration — make the LLM
-> the *hidden≫verbal* headline — was **not** supported: in the LLM, injected
-> state helps think-time (verbal−none −0.005) but **hidden does not beat verbal**
-> (the LLM reads the note semantically). So the LLM is the **deployment**
-> (state is usable in a real LLM) + the **backbone-dependent channel-ordering**
-> finding; **board-native (RQ6) stays the headline.** `results/g3_llm.txt`.
+> **Status: RESOLVED + G4 LANDED.** Full account: `documents/milestone_g.md`.
+> - **G3 (done):** in the LLM, injected state helps think-time (verbal−none
+>   −0.005) but **hidden does not beat verbal** (the LLM reads it semantically) →
+>   the hidden-vs-verbal ordering is **backbone-dependent**; board-native stays
+>   the headline. `results/g3_llm.txt`.
+> - **G4 (LANDED):** the latent adds think-time value *over released models' own
+>   predictions* — Maia-2 difficulty (baseline Spearman 0.41–0.45 ≈ ChessMimic,
+>   (B4+z)−B4 = −0.025/−0.029, P=1.00) and **Allie's actual released think-time**
+>   (Spearman 0.62–0.65; −0.023 P=1.00 / −0.018 P=0.998 in the direct test, ns on
+>   2019 co-fit — honest). 2 cohorts × 5 seeds. `results/g4_timing.txt`,
+>   `scripts/g4_{cache,run}_{maia,allie}.py`.
+> - **G1 (retrain a Maia move-backbone): not run, by design** — a strong backbone
+>   absorbs the move signal and the timing head is latent-only (backbone-
+>   independent), so the weak-backbone objection is answered architecturally +
+>   by G4's released-model benchmark, not by re-implementing Maia.
 >
-> **G1 (Maia) and G3-v2 are DEPRIORITIZED — do NOT run them (2026-07-05):**
-> 1. A strong backbone **absorbs the move signal** — the conv trunk already
->    dropped move D−B −0.027→−0.003, and the LLM showed the same (a strong model
->    leaves little residual). So latent+Maia on *moves* would very likely be a
->    **null that weakens** the paper.
-> 2. The **timing** headline is **backbone-independent by construction** — the
->    timing head reads only the latent, never the board trunk (confirmed:
->    timing D−B stays P=1.00 under the conv trunk). So Maia **cannot** change the
->    timing result; the "weak backbone" objection is answered *architecturally*,
->    not experimentally.
->    → Net: G1 is vacuous (timing) or risky (move). **Skip it. Consolidate.**
->    Lead with timing (backbone-independent); move + LLM are honest secondaries.
->
-> **Runbook: `documents/milestone_g.md`.** The G-code-1/G1/G4 items below are
-> kept for reference (what running Maia *would* entail) but are **not on the
-> critical path.**
+> The Maia-backbone code stubs and resources below are **obsolete** (kept only as
+> a record of the considered-and-skipped path).
 
 ### Resources (all fit on the existing 2×A100; the constraint is dev time)
 - **Maia-2 backbone:** 1 GPU ≥16GB (Maia-2 is tens of M params — an A100 is
@@ -627,11 +622,11 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
    tracing / Codeforces) for stronger cross-modal generality (design.md §11).
 6. Milestone F (population demo) — only if A–E land; decide demo-vs-pillar
    on the numbers.
-7. **Milestone G (LLM deployment) — RESOLVED 2026-07-05.** G2/G3 done: state
-   helps a real LLM (verbal−none −0.005) but **hidden does not beat verbal** (the
-   LLM reads it semantically) → the LLM is a *deployment* + the
-   backbone-dependent-ordering finding, **not** the headline. G1/Maia + v2
-   **deprioritized** (a strong backbone absorbs the move signal; timing is
-   backbone-independent by construction, so Maia can't change it — the
-   weak-backbone objection is answered architecturally). **Next: consolidate the
-   write-up** — lead with timing; move + LLM are honest secondaries.
+7. **Milestone G (LLM deployment + released-SOTA benchmark) — DONE 2026-07-06.**
+   G3: state helps a real LLM but **hidden does not beat verbal** →
+   backbone-dependent ordering (secondary, not the headline). **G4 LANDED:** the
+   latent adds think-time value over a released SOTA's own prediction — Maia-2
+   difficulty (≈ChessMimic Spearman) and **Allie's actual released think-time**
+   (Spearman 0.62–0.65), P=1.00 direct test, 2 cohorts → weak-backbone caveat
+   retired. Lead with timing; move + LLM are honest secondaries.
+   `documents/milestone_g.md`, `results/g4_timing.txt`.

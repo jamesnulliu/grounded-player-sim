@@ -4,13 +4,16 @@ Status: **landed** on real Lichess data. This file is the running results table
 for the chess headline; numbers are deterministic (CPU, fixed seeds) and
 reproducible with the commands at the bottom.
 
-> **Backbone caveat (read first).** All results below validate the *dynamic
-> latent mechanism* on small **from-scratch** backbones (board-native MLP; KT
-> logistic head) — **not on an LLM**. The `sglang`/API LLM backbones are stubs;
-> no experiment has run one. The D-vs-B comparison is valid for any shared
-> backbone, but the project's "LLM policy + dynamic latent" thesis is **not yet
-> empirically demonstrated**. Embedding the method in an LLM agent is the #1
-> open item — see `TODO.md` Milestone B.
+> **Backbone note (read first).** The core D-vs-B results below run on small
+> **from-scratch** backbones (board-native MLP; KT logistic head); the D-vs-B
+> comparison is valid for any shared backbone. The weak-backbone objection is
+> **resolved** two ways: (1) the timing head reads *only the latent*, so the
+> timing pillar is backbone-independent by construction; (2) **G4** shows the
+> latent adds think-time value *over released models' own predictions* — Maia-2
+> difficulty (baseline Spearman 0.41–0.45 ≈ ChessMimic) and **Allie's actual
+> released think-time** (Spearman 0.62–0.65), P=1.00 in the direct test, 2
+> cohorts (`results/g4_timing.txt`). The LLM arm (SFT probe, G3/G4) is an honest
+> secondary result, not the headline — see `documents/milestone_g.md`.
 
 ## Claim
 
