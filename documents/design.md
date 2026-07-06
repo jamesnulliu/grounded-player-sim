@@ -152,15 +152,10 @@ lack — three results that lead:
 The full, cited competitor comparison (ChessMimic, Elo-Disentangled, Ailed,
 Allie, Maia-3, HumanLM, LATTE + the response-time literature), the axes table,
 and the shared-territory list now live in **`documents/related_work.md`** (the
-canonical version). Do not re-derive them here.
-
-Caution: ChessMimic / HumanLM / LATTE / Player-Specific / Mixture-of-Masters
-are all 2026 preprints (weeks-to-months old); "first to" on any single *axis* is
-fragile and several are already lost. Anchor on the **three results** above
-(when-not-what, the evolving-vs-memoryless future-split control, the
-backbone-dependent hidden-vs-verbal ordering), supported by evolving-psych-state
-+ oracle + future-split — these hold even if another preprint lands. (This section IS the prior-art comparison;
-there is no separate `priorart.md`.)
+canonical version). Do not re-derive them here. Caution: the chess/LLM
+competitors are all 2026 preprints — "first to" on any single *axis* is fragile
+and several are already lost, which is why we anchor on the three results above,
+not axis-ownership.
 
 ## 9. Decision: verbal-vs-hidden is a HEADLINE, not a side experiment
 
