@@ -17,13 +17,15 @@ latent. See `design.md` §8 (the three novelties) and `TODO.md` Milestone G.
 |-----|-------|---------------|
 | **G1** | The evolving latent still beats the memoryless twin on **timing** with a *strong* (Maia-2) backbone — killing "the win is a weak-backbone artifact." | Timing D−B < 0, P=1.00 (expected: the timing head reads only the latent, so it is *structurally* backbone-invariant). Also report whether the small **move** signal survives a strong move model. |
 | **G2** | In an actual LLM, the state helps **think-time** prediction (dense completion-NLL SFT) — the sharp probe RL was too sparse for. | with-state NLL < no-state NLL on the held-out tail. |
-| **G3** | **hidden ≫ verbal** *inside* the LLM: the trained hidden soft-prompt beats the verbal note at reproducing the person. **The headline.** | hidden NLL < verbal NLL, directionally significant across seeds. Only needs to be *directional*, not large, to land vs HumanLM. |
+| **G3** | **DONE (v1, 3 seeds) — hidden does NOT beat verbal in the LLM.** verbal wins (hidden−verbal +0.0034); state still helps (verbal−none −0.005). The LLM reads the note *semantically*, so text is the efficient channel. hidden≫verbal stays board-native (RQ6); the LLM ordering is the reverse. | The honest claim is the **backbone-dependent ordering**, not "hidden wins in the LLM." `results/g3_llm.txt`, `scripts/g3_hidden.py`. |
 | **G4** | The per-individual evolving latent adds value over **released** SOTA (ChessMimic / Allie / Maia-3), not a reconstructed proxy. | (baseline+z) − baseline < 0 on held-out timing/move, per released model. |
 
-**Gating order (load-bearing).** Run **G3 first**. Promote the LLM to
-co-headline **only if hidden < verbal is significant in the LLM.** If it is null,
-keep board-native (G1) as the headline and the LLM as validation (design.md §10:
-make the emphasis call on the numbers).
+**Gating order (RESOLVED).** G3 ran first. **hidden < verbal did NOT hold** in
+the LLM (verbal wins, hidden−verbal +0.0034) — so, per the pre-registered rule,
+the LLM is **not** the hidden≫verbal headline. It is the *deployment* (injected
+state helps think-time, verbal−none −0.005) plus the **backbone-dependent
+channel-ordering** finding, and **board-native (G1/RQ6) stays the headline**.
+design.md §10 applied: the emphasis call was made on the numbers.
 
 ---
 

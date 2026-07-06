@@ -29,12 +29,15 @@ recovers real heterogeneity a "positive average person" cannot.
 The state's value lives in a **trained hidden latent, not a verbal persona
 prompt** (RQ6) — the bridge to LLM agents, where today's simulators (HumanLM,
 generative agents) condition on verbal personas. In an actual LLM (Qwen3) an SFT
-probe already reproduces the timing-≫-move asymmetry (robust across 0.6B→8B and
-LoRA→full fine-tuning, Δ ≈ −0.013 on timing); delivering the state as a **hidden
-soft-prompt and beating the verbal channel *inside* the LLM** is the headline
-experiment in progress. We do not claim novelty by conjunction: three results
-stand alone — the when-not-what asymmetry, the equal-capacity evolving-vs-
-memoryless future-split control, and hidden ≫ verbal state injection into an LLM.
+probe reproduces the timing-≫-move asymmetry (robust across 0.6B→8B and
+LoRA→full fine-tuning, Δ ≈ −0.013 on timing); and delivering the state as a
+**hidden soft-prompt** inside the LLM (G3, 3 seeds) shows the hidden-vs-verbal
+ordering **flips** — the verbal note wins there (the LLM reads it semantically),
+even as injected state still helps think-time. We do not claim novelty by
+conjunction: three results stand alone — the when-not-what asymmetry, the
+equal-capacity evolving-vs-memoryless future-split control, and the
+**backbone-dependent hidden-vs-verbal channel ordering** (the trained hidden
+vector is richer with no language prior; the verbal note is richer with one).
 
 ## Contributions
 
@@ -274,8 +277,10 @@ We do **not** claim novelty by conjunction. Three results are new on their own:
 choice, robust across a 6-year span and reproduced in a non-game domain; (2) **the
 equal-capacity evolving-vs-memoryless control on a strict future split** — isolates
 dynamics from habit/individualization, run by no behavior-simulation competitor;
-(3) **hidden ≫ verbal state injection** — HumanLM/LATTE deliver an LLM latent as
-*verbal* text or a single soft token; we show the trained *hidden* channel is
-richer (RQ6) and are porting it into an LLM agent. Competitors each own one *axis*
-we build on — aggregate think-time (Allie), per-move clock (ChessMimic), strong
-moves (Maia-3), evolving text latent (LATTE/HumanLM) — but none report these three.
+(3) **the backbone-dependent hidden-vs-verbal channel ordering** — HumanLM/LATTE
+deliver an LLM latent as *verbal* text; we show the trained *hidden* channel is
+richer with **no** language prior (board-native RQ6) but the verbal note wins
+*inside an LLM* (G3, the LLM reads it semantically), so we characterize *when*
+each channel is right. Competitors each own one *axis* we build on — aggregate
+think-time (Allie), per-move clock (ChessMimic), strong moves (Maia-3), evolving
+text latent (LATTE/HumanLM) — but none report these three.

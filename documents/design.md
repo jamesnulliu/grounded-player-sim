@@ -136,9 +136,12 @@ on their own and are what we lead with:
 2. **The equal-capacity evolving-vs-memoryless control on a strict future
    split** — isolates *dynamics* from habit and raw individualization. No
    behavior-simulation paper runs this control; it settles the #1 objection.
-3. **Hidden ≫ verbal state injection into an LLM agent** — HumanLM/LATTE deliver
-   the latent as *verbal* text or a single soft token; we show the trained
-   *hidden* channel is richer (RQ6) and port it into an actual LLM.
+3. **The hidden-vs-verbal channel ordering is backbone-dependent** (measured) —
+   the trained *hidden* latent beats the verbal note with *no* language prior
+   (board-native RQ6, −0.069/−0.117), but *inside an LLM* (G3, Qwen3, 3 seeds)
+   the verbal note wins (the LLM reads "tilt"/"time pressure" semantically),
+   while injected state still helps think-time. HumanLM/LATTE only ever use the
+   verbal channel; we measure *when* that is the right choice.
 
 The prior-art table below still matters: each competitor owns one *axis* we build
 on (per-individual, move+timing-in-chess, evolving text latent), so we must never
@@ -231,9 +234,9 @@ validated on **their future games**, across two engine-graded domains
 Caution: ChessMimic / HumanLM / LATTE / Player-Specific / Mixture-of-Masters
 are all 2026 preprints (weeks-to-months old); "first to" on any single *axis* is
 fragile and several are already lost. Anchor on the **three results** above
-(when-not-what, the evolving-vs-memoryless future-split control, hidden ≫ verbal
-in an LLM), supported by evolving-psych-state + oracle + future-split — these hold
-even if another preprint lands. (This section IS the prior-art comparison;
+(when-not-what, the evolving-vs-memoryless future-split control, the
+backbone-dependent hidden-vs-verbal ordering), supported by evolving-psych-state
++ oracle + future-split — these hold even if another preprint lands. (This section IS the prior-art comparison;
 there is no separate `priorart.md`.)
 
 ## 9. Decision: verbal-vs-hidden is a HEADLINE, not a side experiment

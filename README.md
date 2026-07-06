@@ -22,11 +22,14 @@ non-novel axes" framing — see `documents/design.md` §8):
    split.** Isolates *dynamics* from *habit* and raw *individualization* — the
    #1 reviewer objection ("isn't this just history-conditioning?"), settled. No
    behavior-simulation competitor runs this control.
-3. **Hidden ≫ verbal state injection.** Current LLM simulators (HumanLM,
-   generative agents) condition on a *verbal* persona; we show the trained
-   *hidden* latent is the richer channel (RQ6, board-native). Porting this
-   contrast into an actual LLM agent is the headline experiment in progress
-   (Milestone B/G) — the LLM-native version of the result.
+3. **The hidden-vs-verbal channel ordering is backbone-dependent** (measured,
+   not assumed). With *no* language prior (board-native, RQ6) the trained
+   *hidden* latent beats the verbal note (−0.069/−0.117). But *inside an actual
+   LLM* (G3, Qwen3-1.7B, 3 seeds) the ordering **flips**: the verbal note wins
+   (hidden−verbal ≈ +0.003), because the LLM reads "tilt"/"time pressure"
+   *semantically* — while injected state still **helps** think-time (verbal−none
+   ≈ −0.005, all 3 seeds). So we show *when* the verbal channel today's LLM
+   simulators (HumanLM) use is right, and when the hidden vector is. `results/g3_llm.txt`.
 
 See **`documents/paper_draft.md`** for the landed-results synthesis (abstract +
 contributions + headline table), `documents/results_ec.md` for the detailed

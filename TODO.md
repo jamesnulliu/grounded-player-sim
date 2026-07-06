@@ -11,8 +11,11 @@ axes" framing): **three results that stand on their own** (design.md §8):
    choice*; robust across a 6-year span + a non-game domain;
 2. **the equal-capacity evolving-vs-memoryless control on a strict future
    split** — isolates dynamics from habit/individualization;
-3. **hidden ≫ verbal state injection into an LLM agent** — richer than the verbal
-   persona today's LLM simulators use.
+3. **the backbone-dependent hidden-vs-verbal channel ordering** (G3, DONE) —
+   the trained hidden vector is richer with NO language prior (board-native RQ6),
+   but the verbal note WINS inside an LLM (Qwen3, 3 seeds; the LLM reads it
+   semantically); injected state still helps think-time either way.
+   `results/g3_llm.txt`.
 The per-individual / evolving / oracle / future-split / cross-domain axes are
 *supporting* territory — build on them, never re-claim them as novel.
 
@@ -546,13 +549,21 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   shared backbone. Expected: the timing win holds (the timing head reads only the
   latent, so it is *structurally* backbone-invariant); the move ceiling rises —
   report whether the small move signal survives a strong move model.
-- [ ] **G2 (LLM hidden injection):** SFT the LLM with a trained HIDDEN latent
-  (dense completion-NLL probe). Does the state help think-time in the LLM by more
-  than the verbal channel already does?
-- [ ] **G3 (hidden-vs-verbal IN the LLM) — the LLM-native headline.** Port RQ6 to
-  the LLM: the same trained state delivered as HIDDEN soft-prompt vs VERBAL note,
-  held-out NLL. The direct shot at HumanLM (whose latent is verbal). Only needs to
-  be *directionally significant*, not large, to land.
+- [x] **G2 (state helps timing in the LLM) — DONE.** The dense SFT probe shows
+  the verbal state note helps held-out think-time NLL (verbal−none −0.005, all 3
+  seeds) — injected state IS usable by a real LLM. (Hidden's marginal −0.0016 is
+  the weaker channel here; see G3.) `results/g3_llm.txt`.
+- [x] **G3 (hidden-vs-verbal IN the LLM) — DONE (v1, 3 seeds).** Qwen3-1.7B LoRA,
+  none/verbal/hidden from the twithstate data (needed the chat template +
+  near-zero projector init for a valid comparison). RESULT: verbal helps
+  (verbal−none −0.005, all 3 seeds) but **hidden does NOT beat verbal**
+  (hidden−verbal +0.0034; hidden−none marginal −0.0016). The LLM reads the verbal
+  note *semantically*, so text wins there — the ORDERING FLIPS vs board-native RQ6
+  (richer hidden vector wins with no language prior). Honest headline: hidden≫verbal
+  is board-native; in the LLM state helps but verbal ≥ hidden. `results/g3_llm.txt`,
+  `scripts/g3_hidden.py`. v2 (full *trained evolving* latent via joint injector
+  training) = optional follow-up; low payoff (effects ~0.003–0.008 nats, tie/neg
+  likely).
 - [ ] **G4 (head-to-head vs released SOTA):** benchmark against the *released*
   weights, not reconstructed proxies — **ChessMimic** (per-100-Elo move+clock
   transformers, code+weights out), **Allie** (Elo-conditioned think-time),
@@ -579,8 +590,9 @@ The per-individual / evolving / oracle / future-split / cross-domain axes are
   + HumanLM + LATTE experimental sections in full before drafting related work.
 - [ ] **Related-work section** writeup: the comparison table + framing from
   design.md §8. **Lead with the three single-axis novelties** (when-not-what,
-  the evolving-vs-memoryless future-split control, hidden ≫ verbal in an LLM);
-  never re-claim a shared axis, and drop the old "conjunction" framing.
+  the evolving-vs-memoryless future-split control, the backbone-dependent
+  hidden-vs-verbal ordering); never re-claim a shared axis, and drop the old
+  "conjunction" framing.
 - [ ] **Decide per-individual *parameter* vs. amortized state** (design-level):
   a free per-user vector is a sharper distinction from LATTE's amortized
   predictor, but conflicts with the 20-game data-efficiency goal. Pick per
