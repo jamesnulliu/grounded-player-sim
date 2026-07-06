@@ -1,0 +1,73 @@
+G4 — does the per-individual evolving latent add think-time value OVER a
+RELEASED-SOTA-informed baseline? (documents/g4_plan.md)   [LANDED, 2-cohort]
+================================================================================
+The audit's #1 concern: the timing headline rode on a hand-built Elo+clock+
+branching baseline. G4 answers it by boosting the baseline with a RELEASED human
+model (Maia-2, CSSLab, from_pretrained) and asking whether the evolving latent
+STILL adds value. ChessMimic (the per-move-clock SOTA) reports think-time
+Spearman r=0.41; that is the yardstick our baseline must reach.
+
+SETUP
+- Data: real Lichess 2017-04 AND 2019-07 blitz, each ingested from a 353MB
+  HTTP-range prefix (~1.2M games scanned/cohort -> 100 players, ~68.9k / 68.4k
+  clocked decisions; 100% [%clk], median 2.0s, ~9% zero-premoves). g4_data/ec20{17,19}.
+- Released model: Maia-2 blitz (maia2, from_pretrained). Per decision we cache
+  (scripts/g4_cache_maia.py): maia_entropy = entropy of Maia's legal-move
+  distribution (a released-model position-DIFFICULTY signal), and
+  maia_move_logprob = log P_maia(played move) (the move-channel target).
+  ~0.0% observed-move misses, ~290s/cohort on 1 A100.
+- Arms: D = evolving latent (NeuralInjector persist=True); B4/B4+z = a log-normal
+  aggregate whose mu is least-squares over the baseline features, B4+z adds the
+  per-step latent. Held-out session split; (B4+z)-B4 pooled per player over
+  5 seeds, bootstrapped over the 100 players. run_timing_vs_aggregate(...).
+
+TIMING — 5 seeds/cohort, n=100 players, session split, 15 epochs   [HEADLINE]
+--------------------------------------------------------------------------------
+ 2017-04:
+ baseline B (all include Elo + clock)      (B+z)-B    95% CI            P(<0)  B Spearman
+ Elo+clock+branching  (E-C6 proxy)         -0.0247  [-0.0338,-0.0157]  1.000   0.382
+ Elo+clock+MAIA-entropy (released diff.)   -0.0370  [-0.0473,-0.0267]  1.000   0.341
+ Elo+clock+branching+MAIA (STRONGEST)      -0.0254  [-0.0348,-0.0162]  1.000   0.414  <=
+
+ 2019-07 (independent cohort, replication):
+ Elo+clock+branching  (E-C6 proxy)         -0.0281  [-0.0407,-0.0167]  1.000   0.406
+ Elo+clock+MAIA-entropy (released diff.)   -0.0391  [-0.0556,-0.0243]  1.000   0.376
+ Elo+clock+branching+MAIA (STRONGEST)      -0.0291  [-0.0428,-0.0163]  1.000   0.445  <=
+
+=> THE RESULT (robust across 2 cohorts, 5 seeds each, all P=1.00): the STRONGEST
+   baseline reaches Spearman 0.414 / 0.445 -- at or ABOVE ChessMimic's 0.41 --
+   using a RELEASED human model's learned position difficulty, and the
+   per-individual evolving latent STILL adds significant think-time value
+   (-0.0254 / -0.0291; every seed < 0; CI excludes 0). The latent's timing value
+   is NOT an artifact of a weak baseline -- it survives against a baseline that
+   matches published SOTA rank-correlation and incorporates a released SOTA
+   model's signal, on two independent cohorts. WEAK-BACKBONE CAVEAT RETIRED for
+   the timing headline.
+   (Adding Maia-entropy to the proxy lifts Spearman 0.382->0.414 / 0.406->0.445;
+   the latent add-on is undiminished. Maia-entropy ALONE is a slightly weaker
+   complexity feature than branching (0.341/0.376) -- Maia is a MOVE model, so its
+   entropy is a difficulty PROXY, not a think-time head -- hence we headline the
+   COMBINED baseline, not "latent beats Maia-entropy alone". A released think-time
+   model (Allie) would be a still-cleaner external predictor; the external_pred /
+   pure_external hooks in run_timing_vs_aggregate accept it directly.)
+
+MOVE CHANNEL — does the evolving state encode the player's deviation from Maia-2?
+--------------------------------------------------------------------------------
+run_state_recovery(target_key="maia_move_logprob"): held-out R^2 of a linear
+probe from each arm's latent to log P_maia(played move) -- does the evolving
+state predict WHEN a player departs from the human-move SOTA? (2017, 3 seeds)
+ seed 0: D R^2=+0.0123  B R^2=-0.0001   dR^2=+0.0124
+ seed 1: D R^2=+0.0059  B R^2=-0.0021   dR^2=+0.0079
+ seed 2: D R^2=+0.0094  B R^2=-0.0003   dR^2=+0.0097
+ MEAN:   D R^2=+0.0092  B R^2=-0.0008   dR^2=+0.0100   (n=20,682 held-out)
+
+=> NEAR-NULL: the evolving latent recovers move-deviation-from-Maia at R^2~0.009
+   (vs 0.93 for the synthetic hidden STATE, E-C4) -- move choice is near-stateless
+   even relative to a human-move SOTA. WHEN-NOT-WHAT holds against released SOTA
+   on BOTH channels: state is legible in think-time (large, significant add-on
+   over a ChessMimic-grade baseline, 2 cohorts) but not in move choice (negligible).
+
+REPRODUCE
+  python scripts/g4_cache_maia.py ec2017/dataset.jsonl.gz ec2017/dataset_maia.jsonl.gz blitz
+  python scripts/g4_run_timing.py ec2017/dataset_maia.jsonl.gz 5 15    # and ec2019
+  # move probe: run_state_recovery(ds, target_key="maia_move_logprob", epochs=40)

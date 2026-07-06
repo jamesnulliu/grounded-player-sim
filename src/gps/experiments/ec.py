@@ -669,6 +669,7 @@ class TimingVsAggregate:
     b4z_spearman: float
     n_players: int
     mode: str = "aggregate"
+    add_per_player: list[float] | None = None  # (B+z)-B per player (pooling)
 
     def summary(self) -> str:
         verdict = (
@@ -678,6 +679,7 @@ class TimingVsAggregate:
         )
         label = {
             "aggregate": "B4(aggregate)",
+            "maia_aggregate": "B(aggregate+Maia-complexity)",
             "external": "B(aggregate+released-pred)",
             "pure_external": "B(released model)",
         }.get(self.mode, "B")
@@ -721,7 +723,10 @@ def _external_log_time(dp) -> float:
 
 
 def _b4_features(
-    dp, position_aware: bool = False, external_pred: bool = False
+    dp,
+    position_aware: bool = False,
+    external_pred: bool = False,
+    maia_complexity: bool = False,
 ):
     """Aggregate (non-individual) timing features for the Allie-style B4.
 
@@ -734,6 +739,15 @@ def _b4_features(
     log-think-time as one more *fitted* feature, so the baseline is at least as
     strong as that released model plus our aggregate features -- a conservative
     B for the "does the latent add value over released SOTA?" test.
+
+    ``maia_complexity`` (G4) appends a **released SOTA's** learned position
+    difficulty -- the entropy of Maia-2's legal-move distribution, cached as
+    ``context["maia_entropy"]``. Real think-time tracks how hard a position is
+    to read; Maia's move entropy is that difficulty estimated by a released
+    human-move model (a stronger, learned stand-in for the raw branching
+    factor). So the timing baseline becomes Elo + clock + *released-model
+    difficulty*, and G4 asks whether the evolving latent still adds value over
+    it. Fails loudly if the entropy was not cached.
     """
     import math
 
@@ -748,6 +762,15 @@ def _b4_features(
     ]
     if position_aware:
         feats.append(len(dp.legal_actions) / 40.0)
+    if maia_complexity:
+        ent = dp.context.get("maia_entropy")
+        if ent is None:
+            raise ValueError(
+                "maia_complexity=True requires context['maia_entropy'] (the "
+                "entropy of Maia-2's legal-move distribution) cached on every "
+                "decision -- see scripts/g4_cache_maia.py."
+            )
+        feats.append(float(ent))
     if external_pred:
         feats.append(_external_log_time(dp))
     return feats
@@ -786,6 +809,7 @@ def run_timing_vs_aggregate(
     position_aware: bool = False,
     external_pred: bool = False,
     pure_external: bool = False,
+    maia_complexity: bool = False,
 ) -> TimingVsAggregate:
     """E-C6 / G4: our evolving per-individual think-time vs a baseline.
 
@@ -871,7 +895,9 @@ def run_timing_vs_aggregate(
         if pure_external:
             off = _external_log_time(dp)
             return [1.0], off, [1.0] + list(z), off
-        feat = _b4_features(dp, position_aware, external_pred)
+        feat = _b4_features(
+            dp, position_aware, external_pred, maia_complexity
+        )
         return feat, 0.0, feat + list(z), 0.0
 
     base_x, base_o, wz_x, wz_o, ys = [], [], [], [], []
@@ -940,6 +966,8 @@ def run_timing_vs_aggregate(
         if pure_external
         else "external"
         if external_pred
+        else "maia_aggregate"
+        if maia_complexity
         else "aggregate"
     )
     return TimingVsAggregate(
@@ -953,6 +981,7 @@ def run_timing_vs_aggregate(
         b4z_spearman=mean(b4z_sp),
         n_players=len(d_pp),
         mode=mode,
+        add_per_player=add_diffs,
     )
 
 

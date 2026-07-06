@@ -148,6 +148,8 @@ All P below are P(D−B<0); CIs are 95% bootstrap over players.
 | E-C6 | **timing** vs memoryless (zero-inflated head) | −0.026, P=1.00 (−0.069 log-normal) |
 | E-C6 | **timing** adds value over Elo+clock aggregate | (B4+z)−B4 = −0.043, P=1.00 |
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
+| **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 2 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029**, P=1.00; strongest baseline **Spearman 0.414 / 0.445 ≥ ChessMimic 0.41** (2017/2019) → weak-backbone caveat retired for timing |
+| G4 | **move** channel vs Maia-2 (does state encode move-deviation?) | latent recovers Maia-deviation at **R²≈0.009** (≈null, vs 0.93 synthetic state) → move near-stateless even vs human-move SOTA |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
 | RQ5 | **E-D1 replication** (8 datasets, multi-platform, 3 subjects) | ASSISTments 09/12/15/17 + KDD Algebra/Bridge + Spanish (language) + Statics (engineering); D−B −0.004…−0.03, **significant every seed** — not dataset/platform/subject-specific |
@@ -223,17 +225,29 @@ population heterogeneity (Milestone F).
   players** — so the evolving state is legible in *how long* a person thinks,
   not *which move* they pick. Lead with timing; treat move as a genuine
   near-null in move choice, not a faint signal to amplify.
-- **Weak from-scratch backbone (largely mitigated for timing).** The MLP trunk
-  gets ~3.0 move-NLL (beats uniform 3.18). The low absolute think-time Pearson
-  (~0.14) was a *missing feature*: adding **position complexity** (branching
-  factor) to the baseline lifts it to **Spearman 0.39 ≈ ChessMimic's 0.41** —
-  and the evolving latent *still* adds significant value (P=1.00) on top,
-  replicated in **all 10 runs** of a 5-seed × 2-cohort sweep. Crucially, the
-  timing head reads only the latent, never the board trunk, so the robust timing
-  pillar is *structurally* invariant to backbone strength (confirmed: timing D−B
-  stays P=1.00 under the conv trunk) — which is precisely why we lead with
-  timing. A stronger/pretrained trunk raises the absolute *move* ceiling without
-  touching the timing claim.
+- **Weak from-scratch backbone — retired for timing (G4, released SOTA).** The
+  MLP trunk gets ~3.0 move-NLL (beats uniform 3.18). The low absolute think-time
+  Pearson (~0.14) was a *missing feature*: adding **position complexity**
+  (branching factor) to the baseline lifts it to **Spearman 0.39 ≈ ChessMimic's
+  0.41** — and the evolving latent *still* adds significant value (P=1.00) on top.
+  **G4 settles the residual "is the baseline a strawman?" doubt with actual
+  released weights:** we boost the baseline with **Maia-2**'s (CSSLab, released,
+  human-move SOTA) learned position difficulty (its legal-move-distribution
+  entropy) and re-run on two independent real cohorts (2017-04, 2019-07; 100
+  players, 5 seeds each). The strongest baseline (Elo+clock+branching+Maia-2)
+  reaches **Spearman 0.414 / 0.445 — at or above ChessMimic's 0.41** — and the
+  evolving latent *still* adds significant think-time value **(B4+z)−B4 = −0.025 /
+  −0.029, P=1.00, CI excludes 0, every seed**. So the latent's timing value is not
+  an artifact of a weak baseline; it survives a baseline that matches published
+  SOTA rank-correlation using a released model's signal. Crucially, the timing
+  head reads only the latent, never the board trunk, so the robust timing pillar
+  is *structurally* invariant to backbone strength (also confirmed: timing D−B
+  stays P=1.00 under the conv trunk) — which is why we lead with timing. On the
+  **move** channel, a released-SOTA check tells the when-not-what story from the
+  other side: the evolving latent recovers a player's *deviation from Maia-2*
+  (log P_maia of the played move) at only **R²≈0.009** (vs 0.93 for a synthetic
+  hidden state) — move choice is near-stateless even relative to a human-move
+  SOTA. (`results/g4_timing.txt`; `scripts/g4_{cache_maia,run_timing}.py`.)
 - **Generality (RQ5) and population recovery (F) now hold on real data**
   (ASSISTments 2009), not just synthetic KT: on the *same* 500 real students the
   evolving latent beats the memoryless twin at predicting responses (D−B=−0.0095,

@@ -1,5 +1,19 @@
 # G4 — add-on value over a *released* SOTA (experiment spec)
 
+> **LANDED (2026-07-06). Full numbers: `results/g4_timing.txt`.** On two
+> independent real cohorts (2017-04, 2019-07 blitz; 100 players, 5 seeds each) we
+> boosted the timing baseline with **Maia-2**'s (released, human-move SOTA)
+> move-entropy as a learned position-difficulty signal. The strongest baseline
+> (Elo+clock+branching+Maia-2) reaches **Spearman 0.414 / 0.445 ≥ ChessMimic's
+> 0.41**, and the per-individual evolving latent **still** adds significant
+> think-time value: (B4+z)−B4 = **−0.0254 / −0.0291, P=1.00**, CI excludes 0,
+> every seed. Move channel: the latent recovers a player's deviation-from-Maia-2
+> at only **R²≈0.009** (≈null). → **weak-backbone caveat retired for timing;
+> when-not-what holds against released SOTA on both channels.** Ran Maia-2 (the
+> loadable release) rather than Allie; the `external_pred`/`pure_external` hooks
+> below accept an Allie think-time prediction directly if a still-cleaner
+> external timing model is wanted later.
+
 *The highest-ROI experiment before a competitive submission (paper-readiness
 audit, 2026-07-05). Converts the "weak from-scratch backbone" liability into the
 headline: even a released SOTA human-chess model's own timing/move prediction is

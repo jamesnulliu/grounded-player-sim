@@ -166,6 +166,22 @@ def test_b4_external_pred_appends_released_prediction():
     assert abs(ext[-1] - 1.0) < 1e-9
 
 
+def test_b4_maia_complexity_appends_released_difficulty():
+    # G4: maia_complexity=True appends context['maia_entropy'] (a released
+    # model's move-distribution entropy) as a difficulty feature; missing
+    # entropy fails loudly.
+    from gps.experiments.ec import _b4_features
+
+    dp = _dp("8/8/8/8/8/8/8/8 w - - 0 1", ["e2e4", "d2d4"], sp=0)
+    aware = _b4_features(dp, position_aware=True)
+    with pytest.raises(ValueError, match="maia_entropy"):
+        _b4_features(dp, position_aware=True, maia_complexity=True)
+    dp.context["maia_entropy"] = 1.5
+    ext = _b4_features(dp, position_aware=True, maia_complexity=True)
+    assert len(ext) == len(aware) + 1
+    assert ext[-1] == 1.5
+
+
 def test_concentration_buckets_by_observable_feature(offline_wandb):
     # run_concentration(bucket_feature=...) buckets the held-out D-B by an
     # OBSERVABLE anchored dimension (real-data path) rather than a synthetic
