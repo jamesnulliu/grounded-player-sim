@@ -48,7 +48,11 @@ real chess, not only the synthetic Milestone-A toy.
 - **Metric / test:** held-out next-move NLL; significance by **bootstrap over
   players** (the independent unit, design.md §5). Early stopping at 15 epochs
   (the from-scratch head overfits beyond ~30). Lower NLL is better; **D−B < 0
-  means the evolving latent wins.**
+  means the evolving latent wins.** Throughout this file, **P(D−B<0)** is the
+  fraction of player-bootstrap resamples with D<B (`BootstrapCI.p_below_zero`)
+  — a bootstrap sign-support statistic, not a frequentist p-value; the primary
+  significance criterion is the 95% CI excluding zero, with P reported
+  alongside as a directional-consistency summary.
 
 ## Results — `2013-01` blitz (100 players, uniform-over-legal = 3.18)
 
@@ -254,8 +258,43 @@ premoves vs. composure), and only the *evolving* latent tracks it; a memoryless
 twin cannot. The concentration is **specific** — bucketing by `post_loss`
 (≈flat: −0.063/−0.068/−0.053) or `fatigue` (non-monotone) shows no such pattern.
 So the timing edge is not uniform: it lives exactly where a person's clock
-management turns on their current state. *(Caveat: high-time-pressure is also the
-highest-variance regime, which amplifies NLL gaps.)*
+management turns on their current state.
+
+**Paper-readiness audit fix (2026-07): variance-controlled re-analysis.** The
+caveat above (high-time-pressure is also the highest-variance regime, which
+could mechanically inflate a decision-level mean gap) is real and worth
+closing, not just flagging. `run_concentration_stratified`
+(`src/gps/experiments/ec.py`) re-runs the same time_pressure terciles but (1)
+aggregates to one point **per player** per bucket before bootstrapping
+(bootstrap over players, not decisions — design.md sec 5's own rule, which
+the original decision-level version above does not follow), and (2) reports
+that per-player mean **normalized by the bucket's own decision-level stdev**
+— a standardized effect size a pure variance confound would shrink toward
+flat, a genuine state-dependence effect would not. Across both cohorts × 2
+seeds each: raw high/low ratio 4.0–6.1×, **variance-normalized ratio
+2.7–3.6×** — every run "survives" the control (normalized ratio stays well
+above 1×), and every high-time_pressure bucket's 95% player-bootstrap CI
+excludes zero (P=1.00 in all 4 runs). So the concentration reading is not a
+variance artifact; it firms up the state-dependence interpretation rather
+than requiring it be softened to individualization-only. Full numbers:
+`results/concentration_variance_controlled.txt`.
+
+**Paper-readiness audit addition (2026-07): stable per-individual-speed
+baseline.** A response-time-psychometrics-literate reviewer will also ask
+whether the evolving latent beats a *stable* per-person speed calibration
+(van der Linden 2006/2007's hierarchical speed model), not just a fully
+memoryless one. The static-individual control (B2, `StaticIndividualInjector`
+— a per-player constant fed the same item/position features and lognormal
+timing head as D) was already implemented for the E-C1 *move* result above
+but never scored on *timing*; doing so is the neural analogue of that
+baseline. Result: D beats B2 on timing significantly on **2017-04** (3/3
+seeds, P≥0.996, every CI excludes 0) but is **null on 2019-07** (3/3 seeds,
+every CI crosses 0) — cohort-dependent, the same pattern already seen for
+other secondary controls on this cohort pair (2019-07 is consistently
+noisier here; its concentration decision-level stdev above is also ~2×
+2017-04's). Reported honestly as a partial, cohort-dependent result, not a
+universal win — the memoryless-B headline stays the one that is robust
+across both cohorts. Full numbers: `results/stable_speed_baseline.txt`.
 
 ### ...and for **weaker players** (rating stratification)
 
@@ -429,17 +468,52 @@ Reproduce: `run_kt(build_kt_dataset(...))` (`gps.experiments.kt`).
 
 **On REAL data (ASSISTments 2009).** We also ran the *unchanged* pipeline on a
 real KT dataset (3114 students, 149 skills, 278k responses; item feature = each
-skill's empirical difficulty; no response-time column, so the **correctness**
-channel only). The loader is a first-class, tested module —
-`gps.data.kt_csv.load_kt_csv` (parses the standard 5-column KT export straight
-into a `TrajectoryDataset`; `tests/test_kt_csv.py`) — so these real-data results
-reproduce from committed code, not a one-off script. On **500 students** (≥50 responses each), the evolving latent
-beats the memoryless twin at predicting **real** student responses, and the win
-is **seed-stable across 3 seeds**: D−B = −0.0095 / −0.0116 / −0.0090 (mean
-≈ −0.010), **P(D−B<0)=1.00 in every seed**, every 95% CI excludes 0, D wins
-64–73%. So the per-individual evolving latent extracts a real signal a
-memoryless reader misses — a non-synthetic RQ5 result. (Notably the *response*
-channel, weak on synthetic data, carries signal on real students.)
+skill's empirical difficulty, correctness channel). The loader is a
+first-class, tested module — `gps.data.kt_csv.load_kt_csv` (parses the
+standard 5-column KT export straight into a `TrajectoryDataset`;
+`tests/test_kt_csv.py`) — so these real-data results reproduce from committed
+code, not a one-off script. On **500 students** (≥50 responses each), the
+evolving latent beats the memoryless twin at predicting **real** student
+responses, and the win is **seed-stable across 3 seeds**: D−B = −0.0095 /
+−0.0116 / −0.0090 (mean ≈ −0.010), **P(D−B<0)=1.00 in every seed**, every 95%
+CI excludes 0, D wins 64–73%. So the per-individual evolving latent extracts a
+real signal a memoryless reader misses — a non-synthetic RQ5 result. (Notably
+the *response* channel, weak on synthetic data, carries signal on real
+students.)
+
+**Paper-readiness audit fix (2026-07): KT split leakage.** `load_kt_csv` fit
+per-skill difficulty over the *whole* file, including an evaluated student's
+own held-out future responses — genuine leakage (the exact failure pyKT flags
+as a standard reviewer checkpoint). Fixed to use only each evaluated student's
+*training-prefix* rows (`tests/test_kt_csv.py::
+test_load_kt_csv_difficulty_leakage_safe` regression-tests this). Re-running
+the n=500 headline post-fix: D−B = −0.0100 / −0.0188 / −0.0097 (mean ≈
+−0.0128), **P=1.00 every seed** — the effect is intact, if anything marginally
+*larger* than the pre-fix numbers above (expected: the leaked feature is
+shared identically by both D and B arms, so it mostly cancels in the paired
+difference). The seven cross-dataset/cross-platform replications below predate
+this fix and were not individually re-verified, but the same
+shared-feature-cancellation argument applies structurally to all of them.
+Full numbers: `results/real_kt_rt.txt`.
+
+**Real response-time timing (NEW, 2026-07): honest negative.** The above
+"no response-time column" was true of the *theophilee-preprocessed* 5-column
+export, not the raw ASSISTments 2009 file, which does carry
+`ms_first_response`. We re-derived it (`scripts/prepare_kt_data.py`, clipped
+[0.5s, 300s]) and ran the timing channel on real students for the first time,
+pre-registering the same test that holds on chess and synthetic KT: timing
+must significantly favor D, with response comparatively weaker. It does not
+replicate — response stays significant every seed (P=1.00), but timing is
+inconsistent (n=500, 3 seeds): D−B = +0.0003 (null, P=0.46), +0.0045
+(**significant wrong sign**, P=0.01), −0.0062 (significant right sign but
+small, P=0.99); unchanged at 150 epochs (rules out undertraining). So the
+timing-vs-response asymmetry does **not** transfer to real ASSISTments
+response times — the *when-not-what* claim stays scoped to real chess +
+synthetic KT, not claimed as a cross-domain law on real data. Plausible
+reason: ASSISTments' response time is an incidental UI timer, not a
+self-paced clock a student strategically manages the way a chess clock (or
+the synthetic frustration process generating the synthetic-KT timing signal)
+is. Full numbers: `results/real_kt_rt.txt`.
 
 The effect is **robust to cohort definition**: a sweep over `n_students ∈
 {150, 300, 500} × min_resp ∈ {30, 50}` gives a negative D−B (D beats memoryless)

@@ -1,0 +1,80 @@
+REAL KT WITH RESPONSE TIMES (ASSISTments 2009 skill_builder_data_corrected,
+raw file *does* carry `ms_first_response` -- contrary to the earlier belief
+that "the public 2009 release has no timing"; theophilee's standard
+preprocessing recipe just drops that column. `ms_first_response` clipped to
+[0.5s, 300s] to guard clock-skew negatives and multi-minute idle gaps; fed as
+the real timing target via a log-normal head, same architecture used for
+chess/synthetic-KT timing.)
+
+Builder: scripts/prepare_kt_data.py (raw CSV -> 6-col TSV) + `gps kt --data
+... --response-time-col 5`. Cohort: n=500 students, >=50 responses, capped
+200, train_frac=0.7 (matches run_kt's split). 2026-07-12/13.
+
+--------------------------------------------------------------------------
+PART 1 -- KT split-leakage bug fix (paper-readiness audit, P0)
+--------------------------------------------------------------------------
+`gps.data.kt_csv.load_kt_csv` used to fit each skill's empirical difficulty
+over the WHOLE file, including an evaluated student's own held-out future
+responses -- classic KT split leakage (the exact failure mode pyKT flags as
+a standard reviewer checkpoint; TODO.md's "our strict temporal split
+answers it" was not quite true for this feature). Fixed in
+src/gps/data/kt_csv.py: difficulty for an evaluated student now uses only
+that student's TRAINING-PREFIX rows (mirrors BoardNativeBackbone
+.split_indices's exact boundary); non-evaluated students' full sequences
+are still used (never scored, so not leakage). Regression test added:
+tests/test_kt_csv.py::test_load_kt_csv_difficulty_leakage_safe.
+
+RESPONSE headline, re-run post-fix (n=500, min_resp=50, epochs=60, 3 seeds):
+  seed 0: D=0.5617 B=0.5716  D-B=-0.0100 [-0.0125,-0.0075]  D wins 64%  P=1.00
+  seed 1: D=0.5630 B=0.5818  D-B=-0.0188 [-0.0234,-0.0142]  D wins 57%  P=1.00
+  seed 2: D=0.5616 B=0.5713  D-B=-0.0097 [-0.0127,-0.0070]  D wins 59%  P=1.00
+  mean D-B ~ -0.0128, every seed significant (CI excludes 0, P=1.00).
+
+  Old (leaky) numbers for comparison: -0.0095 / -0.0116 / -0.0090 (mean
+  ~-0.010). VERDICT: the leakage bug was real and worth fixing, but its
+  effect on the headline is negligible -- if anything the corrected numbers
+  are marginally LARGER. Expected: the leaked difficulty feature is shared
+  identically by both D and B arms, so it mostly cancels in the paired D-B
+  difference. The original RQ5 response claim is NOT an artifact of leakage.
+
+--------------------------------------------------------------------------
+PART 2 -- Real timing (NEW, first real-RT run -- P0 "cross-domain
+when-not-what" item)
+--------------------------------------------------------------------------
+Pre-registered test (paper-readiness plan): timing must significantly favor
+D, with the response effect comparatively smaller -- the "when not what"
+signature already seen on real chess + synthetic KT.
+
+n=500, min_resp=50, epochs=60, 3 seeds, response_time_col=5:
+  seed 0: RESPONSE D-B=-0.0090 [-0.0126,-0.0055] P=1.00 (wins 62%)
+          TIMING   D-B=+0.0003 [-0.0051,+0.0056] P=0.46  -- NULL
+  seed 1: RESPONSE D-B=-0.0093 [-0.0124,-0.0061] P=1.00 (wins 55%)
+          TIMING   D-B=+0.0045 [+0.0005,+0.0086] P=0.01  -- SIGNIFICANT, WRONG SIGN (B beats D)
+  seed 2: RESPONSE D-B=-0.0102 [-0.0136,-0.0071] P=1.00 (wins 56%)
+          TIMING   D-B=-0.0062 [-0.0114,-0.0011] P=0.99  -- significant, right sign, small
+
+  Robustness check, seed 0 at 150 epochs (rule out undertraining):
+          TIMING   D-B=-0.0009 [-0.0093,+0.0070] P=0.59  -- still null.
+
+VERDICT: HONEST NEGATIVE. On real ASSISTments 2009 response times, the
+evolving latent does NOT reliably beat the memoryless twin on timing --
+the opposite pattern from chess and synthetic KT, where timing is the
+*stronger*, more robust channel. RESPONSE stays robustly significant every
+seed; TIMING is inconsistent (one null, one wrong-sign-significant, one
+right-sign-significant) and does not survive more epochs. This does NOT
+meet the pre-registered bar, so the when-not-what asymmetry should NOT be
+claimed as reproduced cross-domain on real response-time data -- it stays
+scoped to real chess + synthetic KT (matching the existing, correctly
+hedged framing in related_work.md/TODO.md).
+
+Plausible reason (not verified further): ASSISTments `ms_first_response` is
+a tutoring-software UI timer (item-reading + typing + possible
+distractions), not a self-paced strategic clock a student actively manages
+the way a chess player manages a clock or the synthetic KT frustration
+process was designed to drive both channels together. The mechanism this
+project's asymmetry claim rests on (an evolving internal state legible in
+self-paced deliberation time) may need a domain where time is genuinely
+under the subject's strategic control, not just measured incidentally.
+
+This is a clean, reviewer-proof negative in the same spirit as the Go
+result (results/go_timing.txt) -- reported honestly rather than omitted.

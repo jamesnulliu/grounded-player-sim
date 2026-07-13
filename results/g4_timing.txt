@@ -1,5 +1,5 @@
 G4 — does the per-individual evolving latent add think-time value OVER a
-RELEASED-SOTA-informed baseline? (documents/g4_plan.md)   [LANDED, 2-cohort]
+RELEASED-SOTA-informed baseline? (documents/g4_plan.md)   [LANDED, 3-cohort]
 ================================================================================
 The audit's #1 concern: the timing headline rode on a hand-built Elo+clock+
 branching baseline. G4 answers it by boosting the baseline with a RELEASED human
@@ -40,20 +40,28 @@ ABOVE ChessMimic's 0.41; Allie pred vs actual within-player Spearman ~0.6, mean
  2017  Elo+clock+Allie (all co-fit)        -0.0129  [-0.0176,-0.0081]  1.000   0.627
  2019  Allie LOCKED (Allie vs Allie+z)     -0.0177  [-0.0297,-0.0053]  0.998   0.642
  2019  Elo+clock+Allie (all co-fit)        -0.0054  [-0.0141,+0.0061]  0.854   0.654  (ns)
+ 2021  Allie LOCKED (Allie vs Allie+z)     -0.0329  [-0.0449,-0.0226]  1.000   0.646
+ 2021  Elo+clock+Allie (all co-fit)        -0.0133  [-0.0183,-0.0088]  1.000   0.661
 
 => HONEST AIRTIGHT RESULT: even over Allie -- a released think-time model that
-   alone reaches Spearman 0.62-0.65 (>> ChessMimic 0.41) -- the per-individual
+   alone reaches Spearman 0.62-0.66 (>> ChessMimic 0.41) -- the per-individual
    evolving latent STILL adds significant think-time value in the direct
-   "Allie vs Allie+z" test on BOTH cohorts (-0.0231 P=1.00 / -0.0177 P=0.998),
-   and in 3 of 4 configs. The effect is SMALLER than over the Maia/branching
-   baselines (a strong released model captures more of the timing signal, as
-   expected) and, against the fullest co-fit baseline (Elo+clock+Allie), is
-   significant on 2017 (-0.0129) but NON-SIGNIFICANT on 2019 (-0.0054, P=0.85) --
-   we report that null. Net: the latent's marginal think-time value survives an
-   ACTUAL released SOTA think-time model, is robust in the direct comparison, but
-   shrinks and becomes cohort-dependent against the very strongest co-fit baseline.
-   This is the airtight retirement of the weak-backbone caveat -- not a
-   Maia-derived proxy but a released think-time head.
+   "Allie vs Allie+z" test on ALL THREE cohorts (-0.0231 P=1.00 / -0.0177
+   P=0.998 / -0.0329 P=1.00). Against the fullest co-fit baseline
+   (Elo+clock+Allie), the 2019 null (-0.0054, P=0.85) had left this reading
+   marginal (1 significant, 1 not); a THIRD cohort (2021-06, fresh ingest +
+   Allie cache, same 100-player / 5-seed recipe, 2026-07-13) resolves it:
+   -0.0133, CI [-0.0183,-0.0088], P=1.000 -- clearly significant, closely
+   matching 2017's -0.0129. So the co-fit picture is 2 significant cohorts
+   (2017, 2021) vs 1 null (2019), not a 1-vs-1 tie -- the direct-test-always-
+   significant / co-fit-usually-significant-but-cohort-dependent picture is
+   now the fair summary, not "marginal." Net: the latent's marginal think-time
+   value survives an ACTUAL released SOTA think-time model, is robust in the
+   direct comparison on every cohort tried, and is significant on 2 of 3
+   cohorts even against the very strongest co-fit baseline. This is the
+   airtight retirement of the weak-backbone caveat -- not a Maia-derived proxy
+   but a released think-time head. `g4_data/ec2021/` (2021-06 prefix,
+   g4_cache_{maia,allie}.py, g4_run_allie.py 5 15).
 
 Allie integration notes: medium ckpt (3.5GB) loads with all 298 params matched;
 optimum>=2 dropped BetterTransformer so model.py carries a no-op shim (torch 2.x
@@ -73,14 +81,18 @@ TIMING (Maia difficulty proxy) — 5 seeds/cohort, n=100, session split, 15 epoc
  Elo+clock+MAIA-entropy (released diff.)   -0.0391  [-0.0556,-0.0243]  1.000   0.376
  Elo+clock+branching+MAIA (STRONGEST)      -0.0291  [-0.0428,-0.0163]  1.000   0.445  <=
 
-=> THE RESULT (robust across 2 cohorts, 5 seeds each, all P=1.00): the STRONGEST
-   baseline reaches Spearman 0.414 / 0.445 -- at or ABOVE ChessMimic's 0.41 --
+ 2021-06 (third independent cohort, 2026-07-13):
+ Elo+clock+branching+MAIA (STRONGEST)      -0.0386  [-0.0500,-0.0284]  1.000   0.447  <=
+
+=> THE RESULT (robust across 3 cohorts, 5 seeds each, all P=1.00): the STRONGEST
+   baseline reaches Spearman 0.414 / 0.445 / 0.447 -- at or ABOVE ChessMimic's 0.41 --
    using a RELEASED human model's learned position difficulty, and the
    per-individual evolving latent STILL adds significant think-time value
-   (-0.0254 / -0.0291; every seed < 0; CI excludes 0). The latent's timing value
+   (-0.0254 / -0.0291 / -0.0386; every seed < 0; CI excludes 0). The latent's
+   timing value
    is NOT an artifact of a weak baseline -- it survives against a baseline that
    matches published SOTA rank-correlation and incorporates a released SOTA
-   model's signal, on two independent cohorts. WEAK-BACKBONE CAVEAT RETIRED for
+   model's signal, on three independent cohorts. WEAK-BACKBONE CAVEAT RETIRED for
    the timing headline.
    (Adding Maia-entropy to the proxy lifts Spearman 0.382->0.414 / 0.406->0.445;
    the latent add-on is undiminished. Maia-entropy ALONE is a slightly weaker
@@ -104,7 +116,7 @@ state predict WHEN a player departs from the human-move SOTA? (2017, 3 seeds)
    (vs 0.93 for the synthetic hidden STATE, E-C4) -- move choice is near-stateless
    even relative to a human-move SOTA. WHEN-NOT-WHAT holds against released SOTA
    on BOTH channels: state is legible in think-time (large, significant add-on
-   over a ChessMimic-grade baseline, 2 cohorts) but not in move choice (negligible).
+   over a ChessMimic-grade baseline, 3 cohorts) but not in move choice (negligible).
 
 REPRODUCE
   python scripts/g4_cache_maia.py ec2017/dataset.jsonl.gz ec2017/dataset_maia.jsonl.gz blitz

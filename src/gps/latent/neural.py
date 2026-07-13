@@ -76,6 +76,23 @@ class NeuralInjector(LatentStateInjector):
         thing that differs between a ``persist=True`` and ``persist=False``
         injector is whether the recurrence accumulates state across steps.
         See :meth:`latent_trajectory`.
+
+        *Declared vs. actively-trained parameters (paper-readiness audit,
+        2026-07):* ``persist=False`` means every step's incoming hidden state
+        is exactly zero, so ``cell.weight_hh`` (the GRU's hidden-to-hidden
+        matrix, roughly 2/3 of the injector's parameters) receives zero
+        gradient and never leaves its random init -- verified directly
+        (``persist=True`` ``weight_hh`` grad-abs-sum ≈132; ``persist=False``
+        ≈0). D and B have identical *declared* parameter counts, but only B's
+        ``weight_ih``/biases are ever *trained*. This is not an unfairness to
+        correct, though: ``weight_hh``'s output is causally inert whenever its
+        input is identically zero regardless of its trained value, and a
+        memoryless model has no state for it to ever receive by construction
+        -- there is no way to make it "actively used" without making the
+        control not-memoryless. Disclosed here rather than silently, since a
+        reviewer computing gradient-flow-verified active parameter counts
+        (not the usual bar, but a fair one to name) would otherwise find this
+        undisclosed.
     """
 
     def __init__(

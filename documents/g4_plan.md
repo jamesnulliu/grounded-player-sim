@@ -1,28 +1,37 @@
 # G4 — add-on value over a *released* SOTA (experiment spec)
 
-> **LANDED (2026-07-06). Full numbers: `results/g4_timing.txt`.** On two
-> independent real cohorts (2017-04, 2019-07 blitz; 100 players, 5 seeds each) we
-> boosted the timing baseline with **Maia-2**'s (released, human-move SOTA)
-> move-entropy as a learned position-difficulty signal. The strongest baseline
-> (Elo+clock+branching+Maia-2) reaches **Spearman 0.414 / 0.445 ≥ ChessMimic's
-> 0.41**, and the per-individual evolving latent **still** adds significant
-> think-time value: (B4+z)−B4 = **−0.0254 / −0.0291, P=1.00**, CI excludes 0,
-> every seed. Move channel: the latent recovers a player's deviation-from-Maia-2
-> at only **R²≈0.009** (≈null). → **weak-backbone caveat retired for timing;
-> when-not-what holds against released SOTA on both channels.**
+> **LANDED (2026-07-06, extended to a 3rd cohort 2026-07-13). Full numbers:
+> `results/g4_timing.txt`.** On three independent real cohorts (2017-04,
+> 2019-07, 2021-06 blitz; 100 players, 5 seeds each) we boosted the timing
+> baseline with **Maia-2**'s (released, human-move SOTA) move-entropy as a
+> learned position-difficulty signal. The strongest baseline
+> (Elo+clock+branching+Maia-2) reaches **Spearman 0.414 / 0.445 / 0.447 ≥
+> ChessMimic's 0.41**, and the per-individual evolving latent **still** adds
+> significant think-time value: (B4+z)−B4 = **−0.0254 / −0.0291 / −0.0386,
+> P=1.00**, CI excludes 0, every seed. Move channel: the latent recovers a
+> player's deviation-from-Maia-2 at only **R²≈0.009** (≈null). → **weak-backbone
+> caveat retired for timing; when-not-what holds against released SOTA on both
+> channels.**
 >
-> **AIRTIGHT UPGRADE — vs Allie's actual released think-time (2026-07-06).** We
-> then ran the cleaner test against **Allie** (ICLR'25), a released model with a
-> real think-time head (not a move-model proxy): load its checkpoint, reconstruct
-> full move sequences from our FENs (0% unreconstructable), read its per-decision
-> think-time (`scripts/g4_cache_allie.py`, `g4_run_allie.py`). Allie is strong —
-> per-player **Spearman 0.62 / 0.65 ≫ ChessMimic 0.41** — yet the evolving latent
-> **still adds significantly in the direct Allie-vs-Allie+z test on both cohorts
-> (−0.023 P=1.00 / −0.018 P=0.998)**. Honest nuance: smaller than vs weaker
-> baselines, and **ns on 2019 (−0.005, P=0.85)** against the fullest Elo+clock+Allie
-> co-fit. Net: the timing add-on survives an *actual released think-time head*, is
-> robust in the direct comparison, but shrinks/cohort-depends against the very
-> strongest co-fit. This is the airtight retirement of the weak-backbone caveat.
+> **AIRTIGHT UPGRADE — vs Allie's actual released think-time (2026-07-06,
+> extended 2026-07-13).** We then ran the cleaner test against **Allie**
+> (ICLR'25), a released model with a real think-time head (not a move-model
+> proxy): load its checkpoint, reconstruct full move sequences from our FENs
+> (0% unreconstructable), read its per-decision think-time
+> (`scripts/g4_cache_allie.py`, `g4_run_allie.py`). Allie is strong —
+> per-player **Spearman 0.62 / 0.64 / 0.65 ≫ ChessMimic 0.41** — yet the
+> evolving latent **still adds significantly in the direct Allie-vs-Allie+z
+> test on all three cohorts (−0.023 P=1.00 / −0.018 P=0.998 / −0.033 P=1.00)**.
+> Honest nuance: smaller than vs weaker baselines, and against the fullest
+> Elo+clock+Allie co-fit, significant on 2017 (−0.013) and **2021 (−0.013,
+> P=1.00)** but **ns on 2019 (−0.005, P=0.85)**. A third cohort was added
+> *specifically* to resolve whether that 2019 null meant the co-fit result was
+> a coin-flip (1 significant, 1 not) — 2021 breaks the tie 2-significant/1-null,
+> so the fair description is "usually significant, cohort-dependent," not
+> "marginal." Net: the timing add-on survives an *actual released think-time
+> head*, is robust in the direct comparison on every cohort tried, and is
+> significant on 2 of 3 cohorts even against the very strongest co-fit. This is
+> the airtight retirement of the weak-backbone caveat.
 
 *The highest-ROI experiment before a competitive submission (paper-readiness
 audit, 2026-07-05). Converts the "weak from-scratch backbone" liability into the

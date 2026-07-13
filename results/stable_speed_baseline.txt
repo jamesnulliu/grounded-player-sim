@@ -1,0 +1,59 @@
+STABLE PER-INDIVIDUAL-SPEED BASELINE (paper-readiness audit P1 item): does
+the evolving latent add think-time value beyond a *stable* per-individual
+calibration -- not just beyond a fully memoryless twin? A reviewer versed in
+response-time psychometrics will want a van der Linden-style baseline (a
+per-person latent speed + item/position difficulty, no within-session
+dynamics) as the thing the evolving latent must beat, not just a
+zero-history control.
+
+We already have this control implemented and trained jointly on the timing
+head -- `StaticIndividualInjector` (`run_ec(control="static")`, arm "B2"):
+a per-player learned constant (no accumulation over the trajectory) fed into
+the same lognormal timing head as D. This is the neural-net analogue of a
+van der Linden lognormal RT model (per-person speed theta_p + item/position
+difficulty from the shared history features, fit by gradient descent instead
+of closed-form MLE). It was already reported for E-C1 on the MOVE channel
+(results_ec.md: "dynamic > static-individual embedding, pooled -0.120") but
+never scored on TIMING -- this closes that gap.
+
+Data: cached g4_data/ec{2017,2019}/dataset.jsonl.gz (100 players each, same
+cohorts as the concentration/G4 experiments). session split, epochs=15.
+2026-07-13.
+
+2017-04 (3 seeds):
+  seed 0: MOVE D-B=+0.0098 P=0.22 (ns) | TIMING D-B=-0.0617 [-0.1039,-0.0234] P=0.9995
+  seed 1: MOVE D-B=-0.0472 P=1.00      | TIMING D-B=-0.0512 [-0.0942,-0.0134] P=0.996
+  seed 2: MOVE D-B=-0.0202 P=0.92      | TIMING D-B=-0.0650 [-0.1056,-0.0280] P=1.000
+  => TIMING: the evolving latent beats the stable-speed baseline in ALL 3
+     seeds, every CI excludes 0, P>=0.996. The dynamics genuinely add value
+     beyond knowing "this player is generally fast/slow at this stage" --
+     answers the "isn't this just per-person calibration?" objection.
+
+2019-07 (3 seeds):
+  seed 0: MOVE D-B=+0.0296 P=0.98 (B2 wins) | TIMING D-B=-0.0284 [-0.0836,+0.0268] P=0.837 (ns)
+  seed 1: MOVE D-B=+0.0432 P=1.00 (B2 wins) | TIMING D-B=-0.0233 [-0.0794,+0.0343] P=0.793 (ns)
+  seed 2: MOVE D-B=+0.0337 P=0.99 (B2 wins) | TIMING D-B=-0.0498 [-0.1063,+0.0080] P=0.958 (ns)
+  => TIMING: null in all 3 seeds (every CI crosses 0). MOVE: static-individual
+     B2 significantly BEATS D in all 3 seeds (opposite of the memoryless-B
+     move result) -- on 2019-07, a stable per-player speed/style constant
+     already captures most of what the evolving latent captures for THIS
+     cohort's move choice.
+
+VERDICT: cohort-dependent, same qualitative pattern already disclosed for
+other controls on this pair of cohorts (see "E-C timing + cohort dependence"
+in project memory / results_ec.md's G4 co-fit section, where 2019-07 is
+consistently the weaker/noisier cohort -- its concentration decision-sd is
+also ~2x 2017-04's, see results/concentration_variance_controlled.txt).
+Report honestly as a cohort-dependent result, not a universal win: the
+evolving latent clears the "stable per-individual speed" bar on 2017-04 but
+not 2019-07. Do not claim this baseline is beaten unconditionally; scope the
+claim to "beats a stable-speed baseline on at least one real cohort,
+cohort-dependent like the other secondary controls," and keep the primary
+headline (D vs memoryless B) as the one that is robust across both cohorts.
+
+Reproduce:
+  from gps.data.store import load_dataset
+  from gps.experiments.ec import run_ec
+  ds = load_dataset("g4_data/ec2017/dataset.jsonl.gz")
+  r = run_ec(ds, control="static", split_mode="session", epochs=15, seed=0)
+  r.timing_ci  # BootstrapCI for D vs the stable-speed (B2) baseline

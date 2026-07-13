@@ -41,11 +41,15 @@ evolving latent under a future split (LATTE, HumanLM). Our contribution is the
 **controlled empirical synthesis those lines lack**: on real human data, with a
 per-decision oracle and a strict future split, an equal-capacity evolving latent
 beats a memoryless twin at predicting a specific person's *future think-time* —
-robust across a six-year era span and reproduced in a non-game domain — while
-move choice is a near-null; the same latent recovers population heterogeneity a
-"positive-average-person" cannot; and the hidden-vs-verbal channel ordering is
-**backbone-dependent** (hidden richer with no language prior, verbal richer
-inside an LLM).
+robust across a six-year era span, and the same timing-over-response asymmetry
+reproduces in a non-game domain on synthetic response-time data (real
+knowledge-tracing datasets reproduce the *response* side of the pattern —
+heterogeneity-scaling across all eight — but not yet the *timing* side: a first
+real-response-time run on ASSISTments is an honest negative, §Limitations) —
+while move choice is a near-null; the same latent recovers population
+heterogeneity a "positive-average-person" cannot; and the hidden-vs-verbal
+channel ordering is **backbone-dependent** (hidden richer with no language
+prior, verbal richer inside an LLM).
 
 ## Contributions
 
@@ -132,24 +136,31 @@ step still sees only that player's past.
 ## Results (headline)
 
 Lower NLL is better; D = evolving latent, B = equal-capacity memoryless twin.
-All P below are P(D−B<0); CIs are 95% bootstrap over players.
+All "P" below are **P(D−B<0)** — the fraction of player-bootstrap resamples
+with D<B (`gps.eval.bootstrap.BootstrapCI.p_below_zero`), a bootstrap
+sign-support statistic, **not a frequentist p-value**; we lead with the 95%
+CI (bootstrap over players, never over decisions/moves, which are
+within-player correlated) excluding zero as the significance criterion, and
+report P alongside as a directional-consistency summary.
 
 | RQ | Experiment | Result |
 |----|-----------|--------|
 | RQ1 | **E-C2** dynamic > memoryless (real chess, 100 players) | D−B ≈ −0.069, P=1.00; survives B at 2× latent width |
-| RQ1 | **E-C1** dynamic > static-individual embedding | pooled −0.120, CI [−0.135,−0.106], P=1.00 |
+| RQ1 | **E-C1** dynamic > static-individual embedding (move) | pooled −0.120, CI [−0.135,−0.106], P=1.00 |
 | RQ3 | **E-C3** future-*sessions* split | pooled −0.067, CI [−0.077,−0.057], P=1.00 |
 | — | replication (rapid, diff. time control) | −0.062, P=1.00 |
 | RQ2 | **E-C4** state-recovery probe (presence) | held-out R²: D=0.93 vs B=0.65 |
 | RQ2 | **E-C4** causal clamp (use) | monotone dose-response, expected direction |
 | §5 | concentration (synthetic) | edge monotone-concentrated in high-tilt decisions |
 | §5 | concentration (**real timing**) | think-time edge **2–8× larger under time pressure** (robust 2 cohorts/2 seeds); flat for post-loss/fatigue |
+| §5 | concentration, **variance-controlled** (paper-readiness fix) | player-bootstrapped, normalized by within-bucket decision-level stdev: raw ratio 4.0–6.1× shrinks to **2.7–3.6×, still survives** (2 cohorts × 2 seeds) — not a pure variance artifact |
 | — | rating stratification | timing edge **≈3× larger for weakest vs strongest players** (high−low +0.027, P(high<low)=0.00, 480 players) |
+| — | dynamic **beats a stable per-individual speed baseline** (van der Linden-style; paper-readiness addition) | timing D−B significant on 2017-04 (3/3 seeds, P≥0.996) but **null on 2019-07** (3/3 seeds) — cohort-dependent, not a universal win |
 | E-C6 | **timing** vs memoryless (zero-inflated head) | −0.026, P=1.00 (−0.069 log-normal) |
 | E-C6 | **timing** adds value over Elo+clock aggregate | (B4+z)−B4 = −0.043, P=1.00 |
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
-| **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 2 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029**, P=1.00; baseline **Spearman 0.414 / 0.445 ≥ ChessMimic 0.41** (2017/2019) |
-| **G4** | ... and over **Allie**'s (ICLR'25) *actual released think-time* — the airtight test (Spearman **0.62/0.65** ≫ 0.41) | latent still adds in the direct **Allie-vs-Allie+z** test both cohorts (**−0.023 P=1.00 / −0.018 P=0.998**); smaller vs Allie, and **ns on 2019** against the fullest Elo+clock+Allie co-fit (−0.005) — honest → weak-backbone caveat retired vs a released think-time head |
+| **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 3 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029 / −0.039**, P=1.00; baseline **Spearman 0.414 / 0.445 / 0.447 ≥ ChessMimic 0.41** (2017/2019/2021) |
+| **G4** | ... and over **Allie**'s (ICLR'25) *actual released think-time* — the airtight test (Spearman **0.62/0.64/0.65** ≫ 0.41) | latent still adds in the direct **Allie-vs-Allie+z** test on **all 3 cohorts** (**−0.023 P=1.00 / −0.018 P=0.998 / −0.033 P=1.00**); smaller vs Allie, and against the fullest Elo+clock+Allie co-fit, significant on 2017 (−0.013) and **2021 (−0.013, P=1.00)** but ns on 2019 (−0.005, P=0.85) — a **3rd cohort resolves the previously-marginal co-fit picture to 2-significant/1-null**, not a 1-vs-1 tie — weak-backbone caveat retired vs a released think-time head |
 | G4 | **move** channel vs Maia-2 (does state encode move-deviation?) | latent recovers Maia-deviation at **R²≈0.009** (≈null, vs 0.93 synthetic state) → move near-stateless even vs human-move SOTA |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
@@ -234,23 +245,31 @@ population heterogeneity (Milestone F).
   **G4 settles the residual "is the baseline a strawman?" doubt with actual
   released weights:** we boost the baseline with **Maia-2**'s (CSSLab, released,
   human-move SOTA) learned position difficulty (its legal-move-distribution
-  entropy) and re-run on two independent real cohorts (2017-04, 2019-07; 100
-  players, 5 seeds each). The strongest baseline (Elo+clock+branching+Maia-2)
-  reaches **Spearman 0.414 / 0.445 — at or above ChessMimic's 0.41** — and the
-  evolving latent *still* adds significant think-time value **(B4+z)−B4 = −0.025 /
-  −0.029, P=1.00, CI excludes 0, every seed**. **The airtight version replaces the
-  Maia difficulty *proxy* with an *actual released think-time model* — Allie
-  (Zhang et al., ICLR'25): we load its checkpoint, reconstruct each game's full
-  move sequence from our per-player FENs, and read its per-decision think-time
-  prediction as the external baseline.** Allie alone is strong — per-player
-  Spearman **0.62 / 0.65, well above ChessMimic's 0.41** — yet in the direct
-  *Allie-vs-Allie+z* comparison the evolving latent **still adds significant value
-  on both cohorts (−0.023, P=1.00 / −0.018, P=0.998)**. Honestly, the effect is
-  *smaller* than over weaker baselines (a strong released model captures more of
-  the timing signal) and, against the fullest co-fit baseline (Elo+clock+Allie),
-  is significant on 2017 (−0.013) but **non-significant on 2019 (−0.005, P=0.85)** —
-  we report that null. So the latent's timing value is not an artifact of a weak
-  baseline; it survives even an actual released think-time head. Crucially, the
+  entropy) and re-run on **three** independent real cohorts (2017-04, 2019-07,
+  2021-06; 100 players, 5 seeds each). The strongest baseline
+  (Elo+clock+branching+Maia-2) reaches **Spearman 0.414 / 0.445 / 0.447 — at or
+  above ChessMimic's 0.41** — and the evolving latent *still* adds significant
+  think-time value **(B4+z)−B4 = −0.025 / −0.029 / −0.039, P=1.00, CI excludes
+  0, every seed**. **The airtight version replaces the Maia difficulty *proxy*
+  with an *actual released think-time model* — Allie (Zhang et al., ICLR'25):
+  we load its checkpoint, reconstruct each game's full move sequence from our
+  per-player FENs, and read its per-decision think-time prediction as the
+  external baseline.** Allie alone is strong — per-player Spearman **0.62 /
+  0.64 / 0.65, well above ChessMimic's 0.41** — yet in the direct
+  *Allie-vs-Allie+z* comparison the evolving latent **still adds significant
+  value on all three cohorts (−0.023, P=1.00 / −0.018, P=0.998 / −0.033,
+  P=1.00)**. Honestly, the effect is *smaller* than over weaker baselines (a
+  strong released model captures more of the timing signal) and, against the
+  fullest co-fit baseline (Elo+clock+Allie), is significant on 2017 (−0.013)
+  and **2021 (−0.013, P=1.00)** but **non-significant on 2019 (−0.005,
+  P=0.85)** — we report that null and do not average it away. A **third
+  cohort was added specifically to resolve this**: with 2017 and 2019 alone
+  the co-fit result was a 1-significant/1-null tie a reviewer could read
+  either way; 2021 breaks the tie 2-significant/1-null, so we now describe the
+  co-fit test as "usually significant, cohort-dependent" rather than
+  "marginal." So the latent's timing value is not an artifact of a weak
+  baseline; it survives even an actual released think-time head on every
+  cohort tried. Crucially, the
   timing head reads only the latent, never the board trunk, so the robust pillar
   is *structurally* invariant to backbone strength (also confirmed: timing D−B
   stays P=1.00 under the conv trunk) — which is why we lead with timing. On the
@@ -261,13 +280,22 @@ population heterogeneity (Milestone F).
   SOTA. (`results/g4_timing.txt`; `scripts/g4_{cache_maia,cache_allie,run_timing,run_allie}.py`.)
 - **Generality (RQ5) and population recovery (F) now hold on real data**
   (ASSISTments 2009), not just synthetic KT: on the *same* 500 real students the
-  evolving latent beats the memoryless twin at predicting responses (D−B=−0.0095,
-  P=1.00, robust across a 150–500-student cohort sweep) and recovers the accuracy
-  distribution (Wasserstein 2× < average-person, corr 0.96). Residual limitation:
-  this public KT release has **no response-time column**, so the real-KT result
-  uses the *correctness* channel only — we cannot check the timing-vs-response
-  asymmetry on real students the way we do on chess (the synthetic KT, which has
-  timing, shows the same timing-robust / response-weak signature).
+  evolving latent beats the memoryless twin at predicting responses (D−B=−0.0095
+  originally; −0.0128 mean on the leakage-fixed re-run below, both P=1.00 every
+  seed, robust across a 150–500-student cohort sweep) and recovers the accuracy
+  distribution (Wasserstein 2× < average-person, corr 0.96). **We since found
+  the standard preprocessing recipe (theophilee) drops a real response-time
+  column the raw file has (`ms_first_response`); we re-derived it and ran the
+  timing channel on real students for the first time.** The result is a clean
+  negative, not the hoped-for cross-domain confirmation: response stays
+  significant every seed (P=1.00), but timing is inconsistent across seeds (one
+  null, one wrong-sign-significant, one right-sign-significant) and doesn't
+  stabilize with more training (`results/real_kt_rt.txt`). So the timing-vs-
+  response asymmetry does **not** transfer to real ASSISTments response times —
+  it stays supported by real chess + synthetic KT only, not claimed as a
+  cross-domain law on real data. Plausible reason: ASSISTments' response time is
+  an incidental UI timer, not a self-paced clock the student strategically
+  manages the way a chess clock (or the synthetic frustration process) is.
 - **What the edge *is*, mechanistically (dynamics vs. individualization).** On
   synthetic players with a *known* hidden state the latent provably encodes and
   causally uses it (RQ2, probe + clamp). On **real** data the evolving-vs-
@@ -279,8 +307,41 @@ population heterogeneity (Milestone F).
   structure. We therefore support the real-data *dynamics* reading via the
   **concentration** signature (the edge concentrates under time pressure, which a
   uniform individualization edge would not) and reserve the strongest
-  state-*tracking* claim for the synthetic probe/clamp. The headline empirical
-  claim (evolving > memoryless on future behavior) is unaffected either way.
+  state-*tracking* claim for the synthetic probe/clamp. **This concentration
+  signature could itself be a variance artifact (high-time-pressure decisions
+  are also the noisiest), so we re-ran it player-bootstrapped and normalized by
+  each bucket's own decision-level stdev: the standardized effect survives
+  (2.7–3.6× high-vs-low, down from a raw 4.0–6.1×, across 2 cohorts × 2 seeds;
+  `results/concentration_variance_controlled.txt`)** — the dynamics reading is
+  not merely a noise artifact. The headline empirical claim (evolving >
+  memoryless on future behavior) is unaffected either way.
+- **No live human study — future-split real-behavior prediction is a
+  complementary, not categorically stronger, form of evidence.** HumanLM ran a
+  111-participant live study; a reviewer may hold us to that bar. We do not
+  claim held-out prediction on 480+ real players' *future* games over a 6-year
+  span *substitutes* for interactive human evaluation — the two answer
+  different questions (does the model predict what a specific real person will
+  do next, vs. does an evaluator judge an interaction as human-like) and each
+  has failure modes the other cannot catch (a live study can't detect
+  future-behavior drift over months; held-out prediction can't detect
+  interaction-level authenticity). We report the one we ran, at a scale (480+
+  players, real Lichess/ASSISTments history) a lab session could not match, and
+  regard live evaluation as complementary future work, not a gap the current
+  numbers already fill.
+- **Practical significance of the headline NLL gap.** A −0.01 to −0.07 nats
+  improvement invites "does it matter?" We do not rest that answer on the raw
+  NLL number. Two more direct utility demonstrations: (i) **calibration** — the
+  timing head is a proper log-normal likelihood, so the NLL gap is directly a
+  held-out log-likelihood/deviance improvement, not an arbitrary loss units
+  comparison; (ii) **Milestone F** (population heterogeneity recovery and
+  generation) is the standalone practical payoff — the per-individual latent
+  reconstructs the *distribution* of real players' behavior (Wasserstein 2–5×
+  closer than an average-person point-mass, recall 0.75–1.00 vs. 0.00) and
+  *generates* novel, plausible, diverse players by sampling from a fitted
+  latent prior. That is a capability an average-person model structurally
+  cannot have regardless of how small its own point-prediction gap looks, and
+  we present it as a separate demonstrated utility — not as an argument that
+  the point-prediction gap itself is large.
 - **Go — attempted, no effect at any board size (honest negative).** We built a
   real-Go pipeline (OGS: per-move think-times from the game JSON; oracle-free) and
   ran the timing D-vs-B. A naive mixed-cohort run *looked* positive (D−B ≈ −0.002,

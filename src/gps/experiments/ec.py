@@ -895,9 +895,7 @@ def run_timing_vs_aggregate(
         if pure_external:
             off = _external_log_time(dp)
             return [1.0], off, [1.0] + list(z), off
-        feat = _b4_features(
-            dp, position_aware, external_pred, maia_complexity
-        )
+        feat = _b4_features(dp, position_aware, external_pred, maia_complexity)
         return feat, 0.0, feat + list(z), 0.0
 
     base_x, base_o, wz_x, wz_o, ys = [], [], [], [], []
@@ -1022,35 +1020,22 @@ class Concentration:
         )
 
 
-def run_concentration(
+def _train_d_b_and_per_step_nll(
     dataset: TrajectoryDataset,
     *,
-    channel: str = "timing",
-    target_key: str = "hidden_h",
-    bucket_feature: str | None = None,
-    n_buckets: int = 3,
-    train_frac: float = 0.7,
-    latent_dim: int = 16,
-    hidden_dim: int = 64,
-    epochs: int = 15,
-    lr: float = 1e-2,
-    seed: int = 0,
-) -> Concentration:
-    """Bucket the held-out D-vs-B per-decision NLL by behavioural context.
-
-    Trains arms D and B, then on held-out decisions computes ``nll_D - nll_B``
-    per decision (``channel`` = ``"timing"`` or ``"move"``) and buckets it.
-    By default the bucket key is the ground-truth hidden state
-    (``context[target_key]``, synthetic only). On **real** data set
-    ``bucket_feature`` to an anchored dimension (``"post_loss"``,
-    ``"time_pressure"``, ``"fatigue"``, ``"momentum"``) -- an *observable*
-    context -- to ask **where** the latent's edge concentrates. A more-negative
-    gap in the high-state bucket means the latent helps where human state
-    matters most.
+    channel: str,
+    train_frac: float,
+    latent_dim: int,
+    hidden_dim: int,
+    epochs: int,
+    lr: float,
+    seed: int,
+):
+    """Train the D (evolving) and B (memoryless) arms once; return per-step
+    ``[T, B]`` NLL grids plus the eval mask. Shared by ``run_concentration``
+    and ``run_concentration_stratified``.
     """
     import torch
-
-    from gps.latent.structured import history_features
 
     splits = BoardNativeBackbone.split_indices(
         dataset.trajectories, train_frac=train_frac
@@ -1097,6 +1082,55 @@ def run_concentration(
 
     nll_d = _per_step_nll(*nets["D"])
     nll_b = _per_step_nll(*nets["B"])
+    return nll_d, nll_b, eval_mask
+
+
+def run_concentration(
+    dataset: TrajectoryDataset,
+    *,
+    channel: str = "timing",
+    target_key: str = "hidden_h",
+    bucket_feature: str | None = None,
+    n_buckets: int = 3,
+    train_frac: float = 0.7,
+    latent_dim: int = 16,
+    hidden_dim: int = 64,
+    epochs: int = 15,
+    lr: float = 1e-2,
+    seed: int = 0,
+) -> Concentration:
+    """Bucket the held-out D-vs-B per-decision NLL by behavioural context.
+
+    Trains arms D and B, then on held-out decisions computes ``nll_D - nll_B``
+    per decision (``channel`` = ``"timing"`` or ``"move"``) and buckets it.
+    By default the bucket key is the ground-truth hidden state
+    (``context[target_key]``, synthetic only). On **real** data set
+    ``bucket_feature`` to an anchored dimension (``"post_loss"``,
+    ``"time_pressure"``, ``"fatigue"``, ``"momentum"``) -- an *observable*
+    context -- to ask **where** the latent's edge concentrates. A more-negative
+    gap in the high-state bucket means the latent helps where human state
+    matters most.
+
+    This decision-level mean is a quick read but conflates two things: a
+    bucket can look "more concentrated" either because the state genuinely
+    matters more there, or simply because that bucket is a higher-variance
+    regime (more spread in the per-decision gap inflates the mean's magnitude
+    in either direction, and pools decisions within a player rather than
+    treating the player as the independent unit). ``run_concentration_
+    stratified`` controls for both.
+    """
+    from gps.latent.structured import history_features
+
+    nll_d, nll_b, eval_mask = _train_d_b_and_per_step_nll(
+        dataset,
+        channel=channel,
+        train_frac=train_frac,
+        latent_dim=latent_dim,
+        hidden_dim=hidden_dim,
+        epochs=epochs,
+        lr=lr,
+        seed=seed,
+    )
 
     # Collect held-out (diff, hidden_state) pairs.
     pairs = []
@@ -1130,6 +1164,152 @@ def run_concentration(
             (labels[i], len(diffs), sum(diffs) / max(len(diffs), 1))
         )
     return Concentration(channel=channel, buckets=buckets)
+
+
+@dataclass
+class StratifiedConcentration:
+    """Variance-controlled, player-bootstrapped concentration check.
+
+    Addresses the objection that ``run_concentration``'s decision-level mean
+    gap can look "concentrated" in a bucket purely because that bucket is
+    noisier, and pools within-player decisions rather than treating the
+    player as the independent unit (design.md sec 5's own bootstrap rule).
+    Per bucket, aggregates held-out ``nll_D - nll_B`` to **one point per
+    player** before bootstrapping (``raw_ci``), and additionally reports that
+    same per-player mean **normalized by the bucket's pooled decision-level
+    stdev** (``normalized_ci``) -- a standardized effect size a pure variance
+    confound would shrink towards flat across buckets, but a genuine
+    state-dependence effect would not.
+    """
+
+    channel: str
+    bucket_feature: str
+    buckets: list[str]
+    raw_ci: list[BootstrapCI]
+    normalized_ci: list[BootstrapCI]
+    bucket_decision_std: list[float]
+
+    def summary(self) -> str:
+        lines = [
+            f"[stratified concentration] channel={self.channel} "
+            f"feature={self.bucket_feature}"
+        ]
+        for lab, rci, nci, sd in zip(
+            self.buckets,
+            self.raw_ci,
+            self.normalized_ci,
+            self.bucket_decision_std,
+        ):
+            lines.append(
+                f"  {lab}: raw D-B={rci.point:+.4f} "
+                f"[{rci.low:+.4f},{rci.high:+.4f}] P={rci.p_below_zero:.2f} "
+                f"n_players={rci.n_units} | decision-sd={sd:.4f} | "
+                f"normalized={nci.point:+.4f} "
+                f"[{nci.low:+.4f},{nci.high:+.4f}]"
+            )
+        raw_ratio = abs(self.raw_ci[-1].point) / max(
+            abs(self.raw_ci[0].point), 1e-9
+        )
+        norm_ratio = abs(self.normalized_ci[-1].point) / max(
+            abs(self.normalized_ci[0].point), 1e-9
+        )
+        verdict = (
+            "SURVIVES variance control (state-dependence reading holds)"
+            if norm_ratio > 1.2
+            else "DOES NOT survive variance control (likely a variance "
+            "confound; soften to individualization, not dynamics)"
+        )
+        lines.append(
+            f"  raw high/low ratio={raw_ratio:.2f}x | "
+            f"variance-normalized ratio={norm_ratio:.2f}x -> {verdict}"
+        )
+        return "\n".join(lines)
+
+
+def run_concentration_stratified(
+    dataset: TrajectoryDataset,
+    *,
+    channel: str = "timing",
+    bucket_feature: str = "time_pressure",
+    n_buckets: int = 3,
+    train_frac: float = 0.7,
+    latent_dim: int = 16,
+    hidden_dim: int = 64,
+    epochs: int = 15,
+    lr: float = 1e-2,
+    seed: int = 0,
+    bootstrap_n: int = 2000,
+) -> StratifiedConcentration:
+    """Paper-readiness P0: variance-controlled, player-bootstrapped rerun of
+    the concentration check (see ``StratifiedConcentration``).
+    """
+    import statistics as st
+    from collections import defaultdict
+
+    from gps.latent.structured import history_features
+
+    nll_d, nll_b, eval_mask = _train_d_b_and_per_step_nll(
+        dataset,
+        channel=channel,
+        train_frac=train_frac,
+        latent_dim=latent_dim,
+        hidden_dim=hidden_dim,
+        epochs=epochs,
+        lr=lr,
+        seed=seed,
+    )
+
+    triples = []  # (bucket_key, player_id, nll_D - nll_B)
+    for b, traj in enumerate(dataset.trajectories):
+        for t, dp in enumerate(traj.decisions):
+            if not bool(eval_mask[t][b]):
+                continue
+            h = history_features(dp).get(bucket_feature)
+            if h is None:
+                continue
+            triples.append(
+                (float(h), traj.player_id, nll_d[t][b] - nll_b[t][b])
+            )
+    if not triples:
+        raise ValueError(f"no held-out decision carries {bucket_feature!r}")
+    triples.sort(key=lambda x: x[0])
+
+    labels = (
+        [
+            f"low-{bucket_feature}",
+            f"mid-{bucket_feature}",
+            f"high-{bucket_feature}",
+        ]
+        if n_buckets == 3
+        else [f"{bucket_feature}-q{i}" for i in range(n_buckets)]
+    )
+    n = len(triples)
+    raw_cis, norm_cis, decision_sds = [], [], []
+    for i in range(n_buckets):
+        chunk = triples[i * n // n_buckets : (i + 1) * n // n_buckets]
+        by_player: dict[str, list[float]] = defaultdict(list)
+        for _h, pid, gap in chunk:
+            by_player[pid].append(gap)
+        player_means = [sum(g) / len(g) for g in by_player.values()]
+        decision_gaps = [g for _h, _pid, g in chunk]
+        sd = st.pstdev(decision_gaps) if len(decision_gaps) > 1 else 1.0
+        decision_sds.append(sd)
+        raw_cis.append(
+            bootstrap_ci(player_means, n_resamples=bootstrap_n, seed=seed)
+        )
+        norm_player_means = [m / max(sd, 1e-9) for m in player_means]
+        norm_cis.append(
+            bootstrap_ci(norm_player_means, n_resamples=bootstrap_n, seed=seed)
+        )
+
+    return StratifiedConcentration(
+        channel=channel,
+        bucket_feature=bucket_feature,
+        buckets=labels,
+        raw_ci=raw_cis,
+        normalized_ci=norm_cis,
+        bucket_decision_std=decision_sds,
+    )
 
 
 # --------------------------------------------------------------------------- #

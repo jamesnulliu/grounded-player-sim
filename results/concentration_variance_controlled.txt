@@ -1,0 +1,48 @@
+VARIANCE-CONTROLLED, PLAYER-BOOTSTRAPPED CONCENTRATION (paper-readiness
+audit P0 item): does the timing D-B edge really CONCENTRATE under time
+pressure, or is the existing decision-level `run_concentration` mean gap
+merely amplified because high-time-pressure decisions are a noisier regime
+(and because it pools within-player decisions rather than treating the
+player as the independent unit, contra design.md sec 5's own bootstrap
+rule)?
+
+Method: gps.experiments.ec.run_concentration_stratified. Same time_pressure
+terciles as the original check, but (1) aggregates held-out nll_D-nll_B to
+ONE point per player per bucket before bootstrapping (bootstrap over
+players, not decisions), and (2) additionally reports that per-player mean
+normalized by the bucket's pooled decision-level stdev -- a standardized
+effect size a pure variance confound would shrink toward flat across
+buckets, but genuine state-dependence would not.
+
+Data: cached ingested cohorts g4_data/ec{2017,2019}/dataset.jsonl.gz (100
+players, 2013-01-style Lichess blitz pipeline, 2017-04 and 2019-07). Same
+cohorts as results/timing_concentration.txt. 2026-07-13.
+
+  cohort    seed  raw ratio (hi/lo)  normalized ratio (hi/lo)  verdict
+  2017-04   0     3.97x              2.72x                     survives
+  2017-04   1     4.06x              3.55x                     survives
+  2019-07   0     6.09x              2.78x                     survives
+  2019-07   1     4.68x              3.07x                     survives
+
+Every high-time_pressure bucket's 95% CI (bootstrap over players) excludes
+zero, P=1.00, in all 4 runs. Low-time_pressure buckets are also significant
+in all 4 runs (P=0.98-1.00); mid-time_pressure is marginal in 2/4 (P=0.82,
+0.87) -- consistent with the original (non-monotone-in-the-middle) pattern
+already reported.
+
+VERDICT: the concentration effect SURVIVES variance control. Normalizing by
+each bucket's own decision-level noise shrinks the raw ~4-6x gap to a
+smaller but still clearly >1x standardized ratio (2.7-3.6x) in every run.
+So the "the latent's timing edge concentrates under time pressure" reading
+is not an artifact of high-time-pressure decisions simply being noisier,
+and bootstrapping over players (the correct independent unit) rather than
+decisions does not wash the effect out either -- it firms up the
+state-dependence interpretation in paper_draft.md's Limitations section
+rather than requiring it be softened to individualization-only.
+
+Reproduce:
+  from gps.data.store import load_dataset
+  from gps.experiments.ec import run_concentration_stratified
+  ds = load_dataset("g4_data/ec2017/dataset.jsonl.gz")
+  run_concentration_stratified(ds, channel="timing",
+      bucket_feature="time_pressure", n_buckets=3, seed=0).summary()

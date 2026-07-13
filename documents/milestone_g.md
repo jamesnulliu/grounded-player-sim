@@ -14,18 +14,25 @@ backbone. The honest resolution:
   **deployment**/secondary result, not the headline. `results/g3_llm.txt`,
   `scripts/g3_hidden.py`.
 
-* **G4 (LANDED 2026-07-06) — the weak-backbone objection, answered with released
-  weights.** Instead of retraining a strong backbone (a Maia move-backbone was
-  deprioritized — see below), we tested whether the evolving latent adds
-  think-time value *over a released model's own prediction*:
+* **G4 (LANDED 2026-07-06, extended to a 3rd cohort 2026-07-13) — the
+  weak-backbone objection, answered with released weights.** Instead of
+  retraining a strong backbone (a Maia move-backbone was deprioritized — see
+  below), we tested whether the evolving latent adds think-time value *over a
+  released model's own prediction*:
   - **Maia-2** (released human-move SOTA) move-entropy as a difficulty signal:
-    strongest baseline Spearman **0.414 / 0.445 ≥ ChessMimic's 0.41**, latent
-    still adds **(B4+z)−B4 = −0.025 / −0.029, P=1.00** (2 cohorts × 5 seeds).
+    strongest baseline Spearman **0.414 / 0.445 / 0.447 ≥ ChessMimic's 0.41**,
+    latent still adds **(B4+z)−B4 = −0.025 / −0.029 / −0.039, P=1.00** (3
+    cohorts × 5 seeds).
   - **Allie** (ICLR'25) — the airtight test with an *actual released think-time
-    head* (Spearman **0.62 / 0.65** ≫ 0.41): latent still adds in the direct
-    Allie-vs-Allie+z test on both cohorts (**−0.023 P=1.00 / −0.018 P=0.998**);
-    honestly *smaller* vs Allie and **ns on 2019** against the fullest
-    Elo+clock+Allie co-fit. Move-deviation-from-Maia R²≈0.009 (null).
+    head* (Spearman **0.62 / 0.64 / 0.65** ≫ 0.41): latent still adds in the
+    direct Allie-vs-Allie+z test on all three cohorts (**−0.023 P=1.00 /
+    −0.018 P=0.998 / −0.033 P=1.00**); honestly *smaller* vs Allie, and
+    against the fullest Elo+clock+Allie co-fit, significant on 2017 and 2021
+    (−0.013 both) but **ns on 2019**. The 3rd cohort (2021-06, added
+    2026-07-13 specifically to test whether the 2019 null made the co-fit
+    result a coin-flip) resolves it 2-significant/1-null — "usually
+    significant, cohort-dependent," not "marginal." Move-deviation-from-Maia
+    R²≈0.009 (null).
   `results/g4_timing.txt`, `scripts/g4_{cache,run}_{maia,allie}.py`.
 
 * **Why we did NOT retrain a Maia move-backbone (G1).** A strong backbone

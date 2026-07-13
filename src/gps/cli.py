@@ -186,6 +186,8 @@ def _cmd_kt(args: argparse.Namespace) -> int:
             args.data,
             n_students=args.n_students,
             min_responses=args.min_responses,
+            train_frac=args.train_frac,
+            response_time_col=args.response_time_col,
         )
         print(
             f"real KT ({args.data}): {len(ds.trajectories)} students, "
@@ -197,6 +199,7 @@ def _cmd_kt(args: argparse.Namespace) -> int:
 
     r = run_kt(
         ds,
+        train_frac=args.train_frac,
         latent_dim=args.latent_dim,
         hidden_dim=args.hidden_dim,
         epochs=args.epochs,
@@ -206,6 +209,7 @@ def _cmd_kt(args: argparse.Namespace) -> int:
     if args.population:
         p = run_population(
             ds,
+            train_frac=args.train_frac,
             latent_dim=args.latent_dim,
             hidden_dim=args.hidden_dim,
             epochs=args.epochs,
@@ -373,6 +377,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     kt.add_argument("--n-students", type=int, default=48)
     kt.add_argument("--min-responses", type=int, default=50)
+    kt.add_argument("--train-frac", type=float, default=0.7)
+    kt.add_argument(
+        "--response-time-col",
+        type=int,
+        default=None,
+        help="0-indexed column with a per-row response time in ms (real "
+        "timing channel); omit for the correctness-only 5-column format",
+    )
     kt.add_argument("--latent-dim", type=int, default=16)
     kt.add_argument("--hidden-dim", type=int, default=32)
     kt.add_argument("--epochs", type=int, default=40)

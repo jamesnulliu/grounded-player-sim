@@ -204,6 +204,33 @@ def test_concentration_buckets_by_observable_feature(offline_wandb):
     assert all(math.isfinite(m) for _, _, m in r.buckets)
 
 
+def test_concentration_stratified_variance_controlled(offline_wandb):
+    # run_concentration_stratified (paper-readiness P0): same idea as
+    # run_concentration but bootstraps over PLAYERS within each bucket and
+    # also reports a variance-normalized gap, so it needs several players.
+    from gps.experiments.ec import run_concentration_stratified
+
+    ds = _dataset([20, 18, 22, 16, 24, 19])
+    r = run_concentration_stratified(
+        ds,
+        channel="timing",
+        bucket_feature="time_pressure",
+        n_buckets=2,
+        latent_dim=8,
+        hidden_dim=16,
+        epochs=8,
+        seed=0,
+        bootstrap_n=200,
+    )
+    assert len(r.buckets) == 2 == len(r.raw_ci) == len(r.normalized_ci)
+    assert all("time_pressure" in label for label in r.buckets)
+    assert all(math.isfinite(ci.point) for ci in r.raw_ci)
+    assert all(math.isfinite(ci.point) for ci in r.normalized_ci)
+    assert all(sd >= 0 for sd in r.bucket_decision_std)
+    summary = r.summary()
+    assert "variance-normalized ratio" in summary
+
+
 def test_temporal_split_has_no_leakage(offline_wandb):
     # Belt-and-braces: the train mask the trainer uses must exclude every
     # held-out eval step (no peeking at the future), for every player.

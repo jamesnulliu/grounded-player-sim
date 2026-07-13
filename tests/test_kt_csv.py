@@ -72,11 +72,55 @@ def test_load_kt_csv_respects_n_students(tmp_path):
 def test_load_kt_csv_skill_difficulty(tmp_path):
     csv_path = tmp_path / "kt.csv"
     _write_csv(csv_path)
-    ds = load_kt_csv(str(csv_path), n_students=10, min_responses=5)
-    # skill 1 correct rate across A+B+C = (1,1,1,0,1,1,1,1)=7/8 -> diff 0.125;
-    # skill 2 = (0,1,0,0,0)=1/5 -> diff 0.8. So skill-2 items are "harder".
+    ds = load_kt_csv(
+        str(csv_path), n_students=10, min_responses=5, train_frac=0.7
+    )
+    # A and B are evaluated (>= min_responses), so only their *training*
+    # prefix (round(0.7*n), matching split_indices) feeds the difficulty
+    # estimate -- their own held-out suffix is excluded. C is filtered out
+    # (2 < 5) and so never evaluated; its full sequence is safe to use.
+    #   skill 1: A[:4]=(1,1) + B[:4]=(0,1) + C=(1,1) -> 5/6 correct -> 0.167
+    #   skill 2: A[:4]=(0,1) + B[:4]=(0,0)            -> 1/4 correct -> 0.75
     diffs = {
         round(d.state[0], 3) for t in ds.trajectories for d in t.decisions
     }
-    assert 0.125 in diffs  # easy skill
-    assert 0.8 in diffs  # hard skill
+    assert 0.167 in diffs  # easy skill
+    assert 0.75 in diffs  # hard skill
+
+
+def test_load_kt_csv_difficulty_leakage_safe(tmp_path):
+    """Flipping a student's own held-out (eval-suffix) responses must not
+    change the difficulty feature fed into that student's *train-period*
+    decisions -- regression test for the leakage this loader used to have
+    (difficulty was fit over the whole file, including eval-suffix rows)."""
+
+    def _rows(a_tail):
+        rows = ["user_id\titem_id\ttimestamp\tcorrect\tskill_id"]
+        # student A: 10 responses, skill 1 throughout. train_frac=0.7 ->
+        # boundary=round(0.7*10)=7, so only the first 7 rows should ever
+        # influence a difficulty estimate used by A's own decisions.
+        a_seq = [1, 1, 0, 1, 0, 1, 1] + a_tail
+        for i, correct in enumerate(a_seq):
+            rows.append(f"A\t{100 + i}\t{i}\t{correct}\t1")
+        # student B: filler so skill 1 has another contributor too.
+        for i, correct in enumerate([1, 0, 1, 0, 1, 0, 1, 0, 1, 0]):
+            rows.append(f"B\t{200 + i}\t{i}\t{correct}\t1")
+        return "\n".join(rows) + "\n"
+
+    path_low = tmp_path / "low.csv"
+    path_high = tmp_path / "high.csv"
+    path_low.write_text(_rows([0, 0, 0]))  # held-out suffix: all wrong
+    path_high.write_text(_rows([1, 1, 1]))  # held-out suffix: all correct
+
+    ds_low = load_kt_csv(
+        str(path_low), n_students=10, min_responses=5, train_frac=0.7
+    )
+    ds_high = load_kt_csv(
+        str(path_high), n_students=10, min_responses=5, train_frac=0.7
+    )
+    a_low = next(t for t in ds_low.trajectories if t.player_id == "A")
+    a_high = next(t for t in ds_high.trajectories if t.player_id == "A")
+
+    # Train-period decision (index 0, inside the [0, 7) prefix): identical
+    # difficulty feature regardless of A's own held-out future responses.
+    assert a_low.decisions[0].state == a_high.decisions[0].state
