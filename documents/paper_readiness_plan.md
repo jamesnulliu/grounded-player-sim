@@ -52,6 +52,7 @@ when-not-what criteria fail. Artifacts: `documents/ednet_protocol.md`,
 
 Convert `paper_draft.md` from a synthesis into a paper structure now. The
 empirical package is frozen: preserve the corrected KT association, the
-3-of-5 stable-speed result, and the two real education timing nulls. Do not
-start chess-F, another Go experiment, or controllable generation before the
-manuscript is stable.
+3-of-5 stable-speed result, the two real education timing nulls, and the
+Allie+static-vs-evolving result (significant on 2017/2021, null on 2019). Do
+not start chess-F, another Go experiment, or controllable generation before
+the manuscript is stable.

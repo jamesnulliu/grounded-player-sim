@@ -72,6 +72,22 @@ PYTHONPATH=src python scripts/run_ednet_replication.py --aggregate-only \
 Cells are resumable under `runs/ednet-kt1-singleton/`. Pooling averages each
 student's paired `D-B` over seeds before bootstrapping students.
 
+## Allie static-vs-evolving control
+
+The strongest G4 identity control compares the same locked Allie prediction
+plus a static per-player embedding against Allie plus the evolving latent. The
+runner uses the three existing Allie-cached cohorts, five seeds, 15 epochs, and
+a held-out session split:
+
+```bash
+PYTHONPATH=src python scripts/g4_allie_static_vs_evolving.py
+PYTHONPATH=src python scripts/g4_allie_static_vs_evolving.py --aggregate-only
+```
+
+Pass repeated `--cell COHORT:SEED` arguments to partition the 15 cells across
+GPUs. Cells are resumable under `runs/g4-allie-static-vs-evolving/`; the pooled
+artifact is `results/g4_allie_static_vs_evolving.json`.
+
 ## Scaling the E-C results across GPUs
 
 The per-player D-vs-B comparison is **embarrassingly parallel** — every

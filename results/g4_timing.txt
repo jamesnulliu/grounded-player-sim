@@ -43,6 +43,23 @@ ABOVE ChessMimic's 0.41; Allie pred vs actual within-player Spearman ~0.6, mean
  2021  Allie LOCKED (Allie vs Allie+z)     -0.0329  [-0.0449,-0.0226]  1.000   0.646
  2021  Elo+clock+Allie (all co-fit)        -0.0133  [-0.0183,-0.0088]  1.000   0.661
 
+STRONGEST IDENTITY CONTROL — Allie+static-individual vs Allie+evolving
+-------------------------------------------------------------------------------
+Both arms use the same locked Allie prediction + global intercept. The static
+arm adds one learned per-player embedding held fixed over time; the evolving
+arm adds the recurrent history-conditioned latent. Five seeds, session split;
+seed-averaged paired differences bootstrapped over players:
+
+ cohort     +static NLL  +evolving NLL  evolving-static   95% CI
+ 2017-04       2.5361        2.5191         -0.0170        [-0.0254,-0.0082]
+ 2019-07       2.3186        2.3172         -0.0014        [-0.0138,+0.0112] ns
+ 2021-06       2.2920        2.2726         -0.0194        [-0.0300,-0.0088]
+
+Across 299 unique players: -0.0126 [-0.0188,-0.0061], P(<0)=1.000. Thus the
+evolving state beats stable identity calibration over the same released timing
+model on 2/3 cohorts; 2019 remains an explicit null. Full result and seed audit:
+results/g4_allie_static_vs_evolving.{txt,json}.
+
 => HONEST AIRTIGHT RESULT: even over Allie -- a released think-time model that
    alone reaches Spearman 0.62-0.66 (>> ChessMimic 0.41) -- the per-individual
    evolving latent STILL adds significant think-time value in the direct

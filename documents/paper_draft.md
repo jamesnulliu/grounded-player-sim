@@ -168,7 +168,7 @@ report P alongside as a directional-consistency summary.
 | E-C6 | **timing** adds value over Elo+clock aggregate | (B4+z)−B4 = −0.043, P=1.00 |
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
 | **G4** | ... and over a baseline with a **released SOTA's** difficulty (**Maia-2** move-entropy), 3 cohorts × 5 seeds | (B4+z)−B4 = **−0.025 / −0.029 / −0.039**, P=1.00; baseline **Spearman 0.414 / 0.445 / 0.447 ≥ ChessMimic 0.41** (2017/2019/2021) |
-| **G4** | ... and over **Allie**'s (ICLR'25) *actual released think-time* — the airtight test (Spearman **0.62/0.64/0.65** ≫ 0.41) | latent still adds in the direct **Allie-vs-Allie+z** test on **all 3 cohorts** (**−0.023 P=1.00 / −0.018 P=0.998 / −0.033 P=1.00**); smaller vs Allie, and against the fullest Elo+clock+Allie co-fit, significant on 2017 (−0.013) and **2021 (−0.013, P=1.00)** but ns on 2019 (−0.005, P=0.85) — a **3rd cohort resolves the previously-marginal co-fit picture to 2-significant/1-null**, not a 1-vs-1 tie — weak-backbone caveat retired vs a released think-time head |
+| **G4** | ... and over **Allie**'s (ICLR'25) *actual released think-time* — the airtight test (Spearman **0.62/0.64/0.65** ≫ 0.41) | direct **Allie-vs-Allie+z** is significant on all 3 cohorts; against **Allie+static-individual**, evolving is significant on **2017 and 2021** (−0.017/−0.019) and null on 2019 (−0.001), isolating dynamics beyond identity on 2/3 cohorts |
 | G4 | **move** channel vs Maia-2 (does state encode move-deviation?) | latent recovers Maia-deviation at **R²≈0.009** (≈null, vs 0.93 synthetic state) → move near-stateless even vs human-move SOTA |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
@@ -276,7 +276,11 @@ cross-population pattern to a law.
   co-fit test as "usually significant, cohort-dependent" rather than
   "marginal." So the latent's timing value is not an artifact of a weak
   baseline; it survives even an actual released think-time head on every
-  cohort tried. Crucially, the
+  cohort tried. A stricter identity control holds Allie fixed and compares a
+  static per-player embedding with the evolving latent: evolving wins on 2017
+  and 2021 (−0.017/−0.019, CIs exclude zero) and is null on 2019 (−0.001), so
+  evolution beyond stable calibration is significant on 2/3 cohorts.
+  Crucially, the
   timing head reads only the latent, never the board trunk, so the robust pillar
   is *structurally* invariant to backbone strength (also confirmed: timing D−B
   stays P=1.00 under the conv trunk) — which is why we lead with timing. On the

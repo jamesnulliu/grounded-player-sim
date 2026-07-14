@@ -154,6 +154,24 @@ Elo+clock+complexity baseline (P=1.00), and that baseline holds Spearman
 ≈ 0.37–0.40 ≈ ChessMimic's 0.41. The strongest timing claim is robust, not a
 single-seed artifact.
 
+**Released-model + identity control (strongest dynamics isolation).** The
+direct Allie-vs-Allie+z result could still include stable player calibration,
+so we compare the same locked Allie prediction plus either (i) a learned
+per-player embedding held constant over time or (ii) the evolving latent.
+Five-seed, per-player pooled results:
+
+| cohort | Allie+static NLL | Allie+evolving NLL | evolving−static | 95% CI |
+|--------|-----------------:|--------------------:|----------------:|--------|
+| 2017-04 | 2.5361 | 2.5191 | **−0.0170** | [−0.0254,−0.0082] |
+| 2019-07 | 2.3186 | 2.3172 | −0.0014 | [−0.0138,+0.0112] |
+| 2021-06 | 2.2920 | 2.2726 | **−0.0194** | [−0.0300,−0.0088] |
+
+The unique-player aggregate is −0.0126 [−0.0188,−0.0061] over 299 players.
+Dynamics therefore add value beyond both Allie and stable identity on **2 of 3
+cohorts**, with 2019 again null. This is a stronger isolation of evolution than
+Allie-vs-Allie+z alone, but remains usually significant rather than universal.
+Full audit: `results/g4_allie_static_vs_evolving.{txt,json}`.
+
 **Two findings, stated honestly:**
 1. **Timing is where the evolving state robustly helps.** The per-individual
    evolving advantage holds three ways on 2017-04 (all P=1.00): vs the

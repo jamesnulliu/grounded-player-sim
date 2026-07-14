@@ -64,8 +64,9 @@ can't change it; `TODO.md` Milestone G). The headline is **timing**:
   twin on think-time in **all 8 clocked conditions across 2017–2023** (5 seeds ×
   2 backbones, 2×A100), P=1.00, and **adds value over a near-SOTA
   Elo+clock+complexity baseline** (Spearman ≈ ChessMimic's 0.41). It also beats a
-  static-individual style (E-C1) and survives a capacity sweep and a
-  future-*sessions* split (E-C2/E-C3).
+  static-individual style (E-C1), and over the same locked Allie prediction the
+  evolving latent beats a static per-player embedding on 2 of 3 cohorts. It
+  also survives a capacity sweep and a future-*sessions* split (E-C2/E-C3).
 - **Move choice is a near-null** on real data (flat by post-loss / time-pressure)
   — the when-not-what asymmetry.
 - **Mechanism.** On a synthetic player with a *known* hidden state the latent

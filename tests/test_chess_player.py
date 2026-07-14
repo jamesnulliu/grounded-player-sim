@@ -333,7 +333,22 @@ def test_g4_external_and_pure_external_modes(offline_wandb):
     assert pure.mode == "pure_external"
     assert math.isfinite(pure.b4_nll) and math.isfinite(pure.b4z_nll)
     assert pure.add_ci.n_units == 8
+    assert len(pure.b4z_per_player) == len(pure.player_ids) == 8
     assert "released model" in pure.summary()
+
+    # (c) the same locked external baseline with a static per-player latent.
+    static = run_timing_vs_aggregate(
+        ds,
+        split_mode="fraction",
+        epochs=20,
+        seed=0,
+        bootstrap_n=200,
+        pure_external=True,
+        latent_control="static",
+    )
+    assert static.latent_control == "static"
+    assert len(static.b4z_per_player) == len(static.player_ids) == 8
+    assert math.isfinite(static.b4z_nll)
 
 
 def test_g4_missing_external_pred_fails_loudly(offline_wandb):

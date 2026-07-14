@@ -670,6 +670,9 @@ class TimingVsAggregate:
     n_players: int
     mode: str = "aggregate"
     add_per_player: list[float] | None = None  # (B+z)-B per player (pooling)
+    b4z_per_player: list[float] | None = None
+    player_ids: list[str] | None = None
+    latent_control: str = "evolving"
 
     def summary(self) -> str:
         verdict = (
@@ -686,7 +689,8 @@ class TimingVsAggregate:
         return (
             f"[E-C6 timing vs {self.mode}] n_players={self.n_players}\n"
             f"        held-out think-time NLL: {label}={self.b4_nll:.4f}"
-            f" | +z(baseline+evolving latent)={self.b4z_nll:.4f}"
+            f" | +z(baseline+{self.latent_control} latent)="
+            f"{self.b4z_nll:.4f}"
             f" | latent-only(D)={self.d_nll:.4f}\n"
             f"        DOES THE LATENT ADD VALUE? (B4+z)-B4 mean="
             f"{self.add_ci.point:+.4f} 95% CI "
@@ -810,6 +814,7 @@ def run_timing_vs_aggregate(
     external_pred: bool = False,
     pure_external: bool = False,
     maia_complexity: bool = False,
+    latent_control: str = "evolving",
 ) -> TimingVsAggregate:
     """E-C6 / G4: our evolving per-individual think-time vs a baseline.
 
@@ -832,6 +837,12 @@ def run_timing_vs_aggregate(
       the only free predictor: literally *released model* vs *released model +
       z*, with no chance we handicapped B by re-fitting. Implies the external
       ``position_aware``/``external_pred`` feature flags are ignored for B.
+
+    ``latent_control`` chooses the add-on representation: ``"evolving"`` uses
+    the recurrent injector, while ``"static"`` uses one learned embedding per
+    player, held constant over the trajectory. This supports a paired
+    Allie+static-individual vs Allie+evolving test without changing the Allie
+    offset, split, timing likelihood, or downstream linear readout.
     """
     import math
 
@@ -844,19 +855,34 @@ def run_timing_vs_aggregate(
             dataset.trajectories, train_frac
         )
 
-    injector = NeuralInjector(
-        kind=InjectionKind.HIDDEN,
-        latent_dim=latent_dim,
-        seed=seed,
-        persist=True,
-    )
+    if latent_control == "evolving":
+        injector = NeuralInjector(
+            kind=InjectionKind.HIDDEN,
+            latent_dim=latent_dim,
+            seed=seed,
+            persist=True,
+        )
+    elif latent_control == "static":
+        from gps.latent.static_individual import StaticIndividualInjector
+
+        injector = StaticIndividualInjector(
+            [trajectory.player_id for trajectory in dataset.trajectories],
+            kind=InjectionKind.HIDDEN,
+            latent_dim=latent_dim,
+            seed=seed,
+        )
+    else:
+        raise ValueError(
+            "latent_control must be 'evolving' or 'static', got "
+            f"{latent_control!r}"
+        )
     cfg = TrainConfig(
         epochs=epochs,
         lr=lr,
         seed=seed,
         batch_size=16,
-        experiment="E-C6-timing",
-        extra={"timing_lambda": 0.5, "arm": "D"},
+        experiment=f"E-C6-timing-{latent_control}",
+        extra={"timing_lambda": 0.5, "arm": latent_control},
     )
     inj, backbone, *_ = _train_arm(
         injector, latent_dim, hidden_dim, dataset, splits, cfg
@@ -930,7 +956,7 @@ def run_timing_vs_aggregate(
         return off + (float(np.dot(w, feat)) if feat else 0.0)
 
     # --- per-player held-out NLL + correlations -------------------------
-    d_pp, b4_pp, b4z_pp = [], [], []
+    d_pp, b4_pp, b4z_pp, player_ids = [], [], [], []
     b4_pr, b4z_pr, b4z_sp = [], [], []
     for b, (traj, sp) in enumerate(zip(dataset.trajectories, splits)):
         dn, bn, bzn, b4pred, bzpred, act = [], [], [], [], [], []
@@ -950,6 +976,7 @@ def run_timing_vs_aggregate(
         d_pp.append(sum(dn) / len(dn))
         b4_pp.append(sum(bn) / len(bn))
         b4z_pp.append(sum(bzn) / len(bzn))
+        player_ids.append(traj.player_id)
         bp, _ = _corr(b4pred, act)
         bzp, bzs = _corr(bzpred, act)
         b4_pr.append(bp)
@@ -980,6 +1007,9 @@ def run_timing_vs_aggregate(
         n_players=len(d_pp),
         mode=mode,
         add_per_player=add_diffs,
+        b4z_per_player=b4z_pp,
+        player_ids=player_ids,
+        latent_control=latent_control,
     )
 
 

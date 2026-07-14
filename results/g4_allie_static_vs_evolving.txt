@@ -1,0 +1,45 @@
+ALLIE + STATIC-INDIVIDUAL VS ALLIE + EVOLVING (2026-07-14)
+
+Question: after controlling for both a released think-time model and a stable
+per-player calibration, does within-player evolution still add held-out timing
+value?
+
+Protocol:
+  cohorts: 2017-04, 2019-07, 2021-06 (100 players each)
+  seeds: 0--4; 15 epochs; session split; latent_dim=16; hidden_dim=64
+  shared external predictor: Allie medium checkpoint, cached per decision
+  shared offset: log(Allie prediction), locked, plus one global intercept
+  static arm: learned per-player embedding, constant over the trajectory
+  evolving arm: recurrent NeuralInjector over the player's history features
+  metric: held-out timing NLL; signed effect = evolving - static
+  pooling: average each player's paired effect over seeds, then bootstrap
+  players. The cross-cohort summary first averages the one repeated username
+  across cohorts, then bootstraps 299 unique players.
+
+cohort    Allie    +static   +evolving   evolving-static   95% CI
+2017-04   2.5421    2.5361    2.5191       -0.0170          [-0.0254,-0.0082]
+2019-07   2.3349    2.3186    2.3172       -0.0014          [-0.0138,+0.0112]
+2021-06   2.3054    2.2920    2.2726       -0.0194          [-0.0300,-0.0088]
+
+Unique-player aggregate: evolving-static = -0.0126,
+95% CI [-0.0188,-0.0061], P(D-B<0)=1.000, n=299.
+
+Seed audit:
+  2017-04: all 5 seeds favor evolving; every per-seed CI excludes zero.
+  2019-07: 3 negative / 2 small positive; every per-seed CI crosses zero.
+  2021-06: all 5 seeds favor evolving; every per-seed CI excludes zero.
+
+VERDICT: the evolving latent adds significant timing value beyond both Allie
+and a stable per-individual calibration on 2 of 3 cohorts. The 2019-07 cohort
+is an honest null, matching its other strong-control results. This isolates a
+within-player dynamic contribution more directly than Allie-vs-Allie+z alone:
+the result is usually significant and cohort-dependent, not universal.
+
+Artifacts:
+  results/g4_allie_static_vs_evolving.json
+  runs/g4-allie-static-vs-evolving/<cohort>/seed-<seed>.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/g4_allie_static_vs_evolving.py
+  PYTHONPATH=src python scripts/g4_allie_static_vs_evolving.py \
+    --aggregate-only

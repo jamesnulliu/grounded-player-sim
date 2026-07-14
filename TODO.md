@@ -105,6 +105,12 @@ found by re-deriving them from the code directly. Work below, done this pass:
   cohort-dependent," not "marginal." The direct Allie-vs-Allie+z test and the
   Maia-complexity baseline test are both significant on all 3 cohorts.
   `results/g4_timing.txt`, `g4_data/ec2021/`.
+- **DONE — Allie + static-individual vs Allie + evolving.** With the released
+  Allie prediction locked identically in both arms, evolving beats a static
+  per-player embedding on 2017-04 (−0.017) and 2021-06 (−0.019), and is null on
+  2019-07 (−0.001). Unique-player aggregate: −0.0126
+  [−0.0188,−0.0061], n=299. This isolates dynamics beyond stable identity on
+  2/3 cohorts. `results/g4_allie_static_vs_evolving.{txt,json}`.
 
 ---
 

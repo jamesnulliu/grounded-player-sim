@@ -1,0 +1,282 @@
+{
+  "cohorts": [
+    {
+      "cohort": "2017-04",
+      "dataset_sha256": "b77ef6b7f70fdc97bcccafdfbdf348217c2da8b0b76addae06ad1b5072a43c60",
+      "evolving_minus_static": {
+        "confidence": 0.95,
+        "high": -0.008176414012145488,
+        "low": -0.025426226940743948,
+        "n_units": 100,
+        "p_below_zero": 1.0,
+        "point": -0.01700197097158152
+      },
+      "mean_nll": {
+        "allie": 2.542068806591505,
+        "allie_plus_evolving": 2.5190939127441445,
+        "allie_plus_static": 2.536095883715726
+      },
+      "n_players": 100,
+      "seed_results": [
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.00884206724844425,
+            "low": -0.029133747372519222,
+            "n_units": 100,
+            "p_below_zero": 1.0,
+            "point": -0.01913821266547443
+          },
+          "seed": 0
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.010250487416878264,
+            "low": -0.028835875232063046,
+            "n_units": 100,
+            "p_below_zero": 1.0,
+            "point": -0.019693241659924157
+          },
+          "seed": 1
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.005984528426741868,
+            "low": -0.023198900382814084,
+            "n_units": 100,
+            "p_below_zero": 0.9995,
+            "point": -0.014734266329769064
+          },
+          "seed": 2
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.01114643309713909,
+            "low": -0.02925896222367539,
+            "n_units": 100,
+            "p_below_zero": 1.0,
+            "point": -0.02033639982041937
+          },
+          "seed": 3
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.0021493560933793523,
+            "low": -0.01996095541041794,
+            "n_units": 100,
+            "p_below_zero": 0.991,
+            "point": -0.011107734382320567
+          },
+          "seed": 4
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "cohort": "2019-07",
+      "dataset_sha256": "2901c70b91499a63a8064acd0124388c6cf9f781c85fba32270f20874039e387",
+      "evolving_minus_static": {
+        "confidence": 0.95,
+        "high": 0.011160300470866979,
+        "low": -0.013815509574528316,
+        "n_units": 100,
+        "p_below_zero": 0.5928,
+        "point": -0.0014356200726072632
+      },
+      "mean_nll": {
+        "allie": 2.3349146914125156,
+        "allie_plus_evolving": 2.3171883321327598,
+        "allie_plus_static": 2.318623952205367
+      },
+      "n_players": 100,
+      "seed_results": [
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": 0.01304856416370449,
+            "low": -0.014384635623590953,
+            "n_units": 100,
+            "p_below_zero": 0.548,
+            "point": -0.0006875459104164716
+          },
+          "seed": 0
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": 0.0013228726024494724,
+            "low": -0.02182732658316071,
+            "n_units": 100,
+            "p_below_zero": 0.958,
+            "point": -0.010102251743653826
+          },
+          "seed": 1
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": 0.007324053417791137,
+            "low": -0.014901353471650433,
+            "n_units": 100,
+            "p_below_zero": 0.711,
+            "point": -0.0035958083478492796
+          },
+          "seed": 2
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": 0.020081276794316868,
+            "low": -0.011978496925040726,
+            "n_units": 100,
+            "p_below_zero": 0.3465,
+            "point": 0.0036215412300887174
+          },
+          "seed": 3
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": 0.017292224601285554,
+            "low": -0.009450172746102522,
+            "n_units": 100,
+            "p_below_zero": 0.3005,
+            "point": 0.0035859644087945486
+          },
+          "seed": 4
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    },
+    {
+      "cohort": "2021-06",
+      "dataset_sha256": "e212cf9b87df48dd74ed331239d63e5483a04a84aa9723553932513dc0b006f4",
+      "evolving_minus_static": {
+        "confidence": 0.95,
+        "high": -0.008760696773052579,
+        "low": -0.0299643669508855,
+        "n_units": 100,
+        "p_below_zero": 0.9998,
+        "point": -0.01937908374605724
+      },
+      "mean_nll": {
+        "allie": 2.3054446682404874,
+        "allie_plus_evolving": 2.2725731424255073,
+        "allie_plus_static": 2.291952226171565
+      },
+      "n_players": 100,
+      "seed_results": [
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.010353186203684816,
+            "low": -0.03057929697013546,
+            "n_units": 100,
+            "p_below_zero": 1.0,
+            "point": -0.020708565136865188
+          },
+          "seed": 0
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.011738359435108887,
+            "low": -0.03282457320456108,
+            "n_units": 100,
+            "p_below_zero": 1.0,
+            "point": -0.02214305598590352
+          },
+          "seed": 1
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.009339034301129062,
+            "low": -0.03320179016557547,
+            "n_units": 100,
+            "p_below_zero": 0.9985,
+            "point": -0.02130810424966704
+          },
+          "seed": 2
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.004121565455798279,
+            "low": -0.027733318638973305,
+            "n_units": 100,
+            "p_below_zero": 0.9945,
+            "point": -0.0158534627791197
+          },
+          "seed": 3
+        },
+        {
+          "ci": {
+            "confidence": 0.95,
+            "high": -0.005727594765437297,
+            "low": -0.028336431538271426,
+            "n_units": 100,
+            "p_below_zero": 0.999,
+            "point": -0.016882230578730742
+          },
+          "seed": 4
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ],
+  "comparison": "Allie+evolving minus Allie+static-individual",
+  "generated_at": "2026-07-14T18:35:57.403031+00:00",
+  "overall": {
+    "evolving_minus_static": {
+      "confidence": 0.95,
+      "high": -0.006101615050377488,
+      "low": -0.018759645266686057,
+      "n_units": 299,
+      "p_below_zero": 0.9998,
+      "point": -0.012605835929126475
+    },
+    "n_cohort_players": 300,
+    "n_unique_players": 299
+  },
+  "protocol": {
+    "cohorts": [
+      "2017-04",
+      "2019-07",
+      "2021-06"
+    ],
+    "epochs": 15,
+    "pure_external": true,
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "split_mode": "session"
+  },
+  "schema_version": 1
+}
