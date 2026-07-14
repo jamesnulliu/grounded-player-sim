@@ -74,9 +74,10 @@ per-person speed calibration" — we test this directly: an equal-capacity
 static-individual control (a per-player constant fed the same item/position
 features and lognormal timing head as the evolving latent — the neural
 analogue of van der Linden's stable-speed term) is significantly beaten on
-timing on one of two real cohorts (`results/stable_speed_baseline.txt`;
-cohort-dependent, not a universal win — reported honestly rather than only on
-the cohort where it lands). Our contribution is therefore *not* the bare
+timing on three of five real cohorts, with all five point estimates favoring
+the evolving model (`results/stable_speed_baseline.txt`; cohort-dependent, not
+a universal win — reported honestly rather than only where it lands). Our
+contribution is therefore *not* the bare
 "timing > choice" asymmetry but its specific form here: (i) the relevant latent is
 an *evolving within-session behavioral state* (tilt/fatigue/time-pressure), not a
 stable trait, and we test that distinction against a stable-trait baseline
@@ -84,9 +85,10 @@ directly rather than only against a zero-history one; (ii) it is measured in an
 interactive game against a *per-decision engine oracle*; (iii) it is validated
 on a strict *future* split; and (iv) an equal-capacity *evolving-vs-memoryless*
 control shows the asymmetry is a property of the modeled
-*dynamics/individualization*, not of the estimator. We also reproduce the
-asymmetry in a non-game oracle domain (knowledge tracing), tying it to the ITS
-response-time literature rather than to chess alone.
+*dynamics/individualization*, not of the estimator. Synthetic knowledge
+tracing reproduces the asymmetry, but frozen real-time tests on ASSISTments and
+EdNet do not; real KT supports response prediction and population recovery,
+not a real cross-domain timing law.
 
 **Evolving user state and the equal-capacity control.** Sequential
 recommendation and user-simulation model evolving user state and routinely
@@ -126,6 +128,6 @@ chess (Elo-Disentangled), cohort move+clock (ChessMimic), dynamic chess emotion
 control that the individual lines lack*: on real human data, with a per-decision
 oracle and a strict future split, an equal-capacity evolving latent beats a
 memoryless twin at predicting a *specific person's future think-time* — robustly
-across a six-year era span and reproduced in a non-game domain — while move choice
-is a near-null, and the same latent recovers population heterogeneity a
-"positive-average-person" baseline cannot.
+across a six-year chess span, with synthetic but not real education timing
+transfer — while move choice is a near-null, and the same latent recovers
+population heterogeneity a "positive-average-person" baseline cannot.

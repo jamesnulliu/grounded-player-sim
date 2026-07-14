@@ -18,13 +18,16 @@ own.*
 >   difficulty+correctness oracle. The "Stockfish/KataGo oracle is the moat"
 >   emphasis below is only partly realized — the moat that held is the
 >   *future-per-individual split* + the *equal-capacity control*, not engine grading.
-> - **Two headlines this proposal did not anticipate:** (1) a **heterogeneity
->   scaling law** — the latent's edge grows with population/among-player/context
->   variability (Pearson 0.89 across 8 real KT datasets); (2) **G4** — the latent
+> - **Two analyses this proposal did not anticipate:** (1) behavioral
+>   heterogeneity across contexts/players, with a **suggestive but non-robust**
+>   cross-KT-dataset association after fixed-loader verification (signed Pearson
+>   0.78 / Spearman 0.48, Spanish-sensitive; not a scaling law); (2) **G4** — the latent
 >   adds think-time value over *released SOTA* models' own predictions (Maia-2
 >   difficulty ≈ ChessMimic Spearman; Allie's actual think-time, Spearman 0.62–0.65).
 > - **The when-not-what asymmetry** (state legible in *timing*, near-null in *move
->   choice*) is the empirical spine — not fully anticipated here.
+>   choice*) is the empirical spine — not fully anticipated here. It is robust
+>   on real chess and synthetic KT, but frozen real-time tests on ASSISTments
+>   and EdNet are null, so it is not claimed as a real cross-domain law.
 
 ---
 
@@ -138,8 +141,10 @@ behavior simulation*, validated against future behavior; (2) a game-agnostic
 simulator with a dynamic latent + joint move+timing prediction; (3) an
 engine/IRT-graded, temporally-split, per-individual benchmark with a synthetic
 ground-truth check; (4) empirical findings — the **when-not-what asymmetry**, the
-equal-capacity evolving-vs-memoryless control, the heterogeneity scaling law, the
-backbone-dependent channel ordering, and the G4 released-SOTA add-on.
+equal-capacity evolving-vs-memoryless control, the qualified multi-granularity
+heterogeneity analysis, the backbone-dependent channel ordering, and the G4
+released-SOTA add-on. The historical “scaling law” wording is superseded by the
+fixed-loader result in `results/kt_replication_fixed_loader.txt`.
 
 *Full cited related work + the axes/shared-territory analysis:
 `documents/related_work.md`. Detailed results + reproduction:

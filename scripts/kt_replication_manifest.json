@@ -1,0 +1,105 @@
+{
+  "schema_version": 1,
+  "protocol": {
+    "seeds": [0, 1, 2],
+    "min_responses": 50,
+    "max_len": 200,
+    "train_frac": 0.7,
+    "latent_dim": 16,
+    "hidden_dim": 32,
+    "epochs": 60,
+    "lr": 0.01,
+    "batch_size": 32,
+    "bootstrap_n": 2000
+  },
+  "datasets": [
+    {
+      "id": "assist09",
+      "label": "ASSISTments 2009",
+      "source_path": "../data/kt/source/skill_builder_data_corrected.csv",
+      "prepared_path": "../data/kt/prepared/assist09.tsv",
+      "preparer": "assistments09_raw",
+      "source_delimiter": "comma",
+      "n_students": 500,
+      "source_reference": "http://base.ustc.edu.cn/data/ASSISTment/2009_skill_builder_data_corrected.zip (skill_builder_data_corrected.csv; mirror Last-Modified 2021-01-22)",
+      "provenance_note": "Raw corrected skill-builder release; use order_id ordering and first skill tag per interaction."
+    },
+    {
+      "id": "assist12",
+      "label": "ASSISTments 2012",
+      "source_path": "../data/kt/source/assist12.tsv",
+      "prepared_path": "../data/kt/prepared/assist12.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 500,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/assistments12/preprocessed_data.csv",
+      "provenance_note": "The standard five-column export used by the original replication."
+    },
+    {
+      "id": "assist15",
+      "label": "ASSISTments 2015",
+      "source_path": "../data/kt/source/assist15.tsv",
+      "prepared_path": "../data/kt/prepared/assist15.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 500,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/assistments15/preprocessed_data.csv",
+      "provenance_note": "The standard five-column export used by the original replication."
+    },
+    {
+      "id": "assist17",
+      "label": "ASSISTments 2017",
+      "source_path": "../data/kt/source/assist17.tsv",
+      "prepared_path": "../data/kt/prepared/assist17.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 500,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/assistments17/preprocessed_data.csv",
+      "provenance_note": "The standard five-column export used by the original replication."
+    },
+    {
+      "id": "algebra05",
+      "label": "KDD Cup Algebra 2005-2006",
+      "source_path": "../data/kt/source/algebra05.tsv",
+      "prepared_path": "../data/kt/prepared/algebra05.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 500,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/algebra05/preprocessed_data.csv",
+      "provenance_note": "The standard five-column Cognitive Tutor export used by the original replication."
+    },
+    {
+      "id": "bridge06",
+      "label": "KDD Cup Bridge to Algebra 2006-2007",
+      "source_path": "../data/kt/source/bridge06.tsv",
+      "prepared_path": "../data/kt/prepared/bridge06.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 500,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/bridge_algebra06/preprocessed_data.csv",
+      "provenance_note": "The standard five-column Cognitive Tutor export used by the original replication."
+    },
+    {
+      "id": "spanish",
+      "label": "Spanish vocabulary",
+      "source_path": "../data/kt/source/spanish.tsv",
+      "prepared_path": "../data/kt/prepared/spanish.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 150,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/spanish/preprocessed_data.csv",
+      "provenance_note": "The standard five-column language-learning export used by the original replication; preserve the original 150-student cohort."
+    },
+    {
+      "id": "statics",
+      "label": "Statics 2011",
+      "source_path": "../data/kt/source/statics.tsv",
+      "prepared_path": "../data/kt/prepared/statics.tsv",
+      "preparer": "standard_5col",
+      "source_delimiter": "tab",
+      "n_students": 200,
+      "source_reference": "https://github.com/theophilee/learner-performance-prediction/blob/a7ae193aa6957003a764aed7c95b07666fd4f1da/data/statics/preprocessed_data.csv",
+      "provenance_note": "The standard five-column engineering export used by the held-out original replication; preserve the original 200-student cohort."
+    }
+  ]
+}

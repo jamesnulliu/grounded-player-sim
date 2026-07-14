@@ -6,21 +6,26 @@ augmented with a trainable, per-individual dynamic latent state**.
 **Thesis — model *when* a person acts, not only *what* they choose.** A learned
 latent `z_t` that evolves over a player's own action+timing trajectory predicts
 that specific person's **think-time** far better than their **move choice** —
-robustly, concentrating under time pressure and for weaker players, and scaling
-with population heterogeneity. Validated against the player's *future* behavior
-on a strict temporal split, on real Lichess chess and (for cross-domain
-generality) real knowledge tracing. The state's value lives in a *trained
-hidden* latent, not a verbal persona prompt (RQ6) — and it adds think-time value
-even over a **released SOTA think-time model** (Allie, ICLR'25; Milestone G4).
+robustly, concentrating under time pressure and for weaker players. A
+fixed-loader eight-dataset KT rerun finds a suggestive, but not robust,
+association with population heterogeneity (signed Pearson 0.78, Spearman 0.48).
+Validated against the player's
+*future* behavior on a strict temporal split, on real Lichess chess and real
+knowledge-tracing *responses*. The state's value lives in a *trained hidden*
+latent, not a verbal persona prompt (RQ6) — and it adds think-time value even
+over a **released SOTA think-time model** (Allie, ICLR'25; Milestone G4).
 
 **Three things we lead with** (each axis has prior art — dynamic emotional chess,
 per-individual style, timing>choice in psychometrics; our contribution is the
 *controlled synthesis on real humans*, not standalone-axis novelty. Full cited
 positioning in `documents/related_work.md`; superseded framing in `design.md §8`):
 1. **The when-not-what finding.** Evolving state is legible in *timing*,
-   near-null in *move choice* — robust across a 6-year era span and reproduced
-   in a non-game domain. That timing reveals latent state better than choice is
-   old in response-time psychometrics; what is new is its form here — an
+   near-null in *move choice* — robust across a 6-year era span in real chess
+   and reproduced on synthetic KT timing. Frozen real-time tests on both
+   ASSISTments and EdNet are honest negatives; real KT supports the
+   response/individualization result, not a real cross-domain timing law. That
+   timing reveals latent state better than
+   choice is old in response-time psychometrics; what is new is its form here — an
    *evolving within-session behavioral state* against a *per-decision oracle* on
    a *strict future split*, with move choice a near-null.
 2. **The equal-capacity evolving-vs-memoryless control on a strict future
@@ -46,7 +51,8 @@ decisions + prior-art positioning), `documents/training.md` for the GPU/data
 wiring, `documents/milestone_a.md` for the make-or-break "is the latent just
 history-conditioning?" runbook, `documents/milestone_g.md` for the **LLM-agent
 deployment** result + why a strong Maia backbone was *deprioritized*, and
-**`TODO.md`** for the work plan.
+**`TODO.md`** for the status index. The active verification and writing gates
+are tracked in **`documents/paper_readiness_plan.md`**.
 
 **Status.** Strong, landed results are **board-native** (small from-scratch
 head). A Maia-2/3 backbone was **considered and deprioritized** (a strong trunk
@@ -65,12 +71,16 @@ can't change it; `TODO.md` Milestone G). The headline is **timing**:
 - **Mechanism.** On a synthetic player with a *known* hidden state the latent
   encodes it (probe R²=0.93 vs 0.65) and causally uses it (clamp dose-response);
   the real timing edge **concentrates** under time pressure (2–8×) and for weaker
-  players (≈3×), and **scales with population heterogeneity** (Pearson 0.89
-  across 8 real KT datasets) — one law across populations, players, and contexts.
-- **Generality.** Reproduced in knowledge tracing on **real students across 8
-  datasets / multiple platforms / 3 subjects**; population-heterogeneity recovery
-  and generation beat the "positive average person" (Wasserstein 2× better). Go:
-  **honest negative** (no robust effect under a board-size control) — future work.
+  players (≈3×). Across KT datasets the analogous signed association is
+  suggestive (Pearson 0.78) but rank-weak (Spearman 0.48), bootstrap-uncertain,
+  and Spanish-sensitive — evidence for a hypothesis, not a scaling law.
+- **Generality.** On real KT responses, the fixed-loader rerun significantly
+  favors the evolving latent in **22/24 seed cells** across 8 datasets / 3
+  subjects; one Statics seed is null and one ASSISTments 2015 seed significantly
+  reverses, leaving 7/8 dataset means in D's favor. Population-heterogeneity
+  recovery and generation beat the "positive average person" (Wasserstein 2×
+  better). Go: **honest negative** (no robust effect under a board-size control)
+  — future work.
 
 **LLM arm (an honest secondary result — RESOLVED, not the headline).** Qwen3 via
 sglang is implemented and runs. Frozen verbal injection is a *negative control*;

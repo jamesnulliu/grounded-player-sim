@@ -232,6 +232,7 @@ def run_kt(
     seed: int = 0,
     batch_size: int = 32,
     bootstrap_n: int = 2000,
+    timing_lambda: float = 0.5,
 ) -> KTResult:
     """RQ5: evolving latent (D) vs memoryless twin (B) on student responses."""
     splits = BoardNativeBackbone.split_indices(
@@ -245,7 +246,7 @@ def run_kt(
             seed=seed,
             batch_size=batch_size,
             experiment=f"E-D1-{name}",
-            extra={"timing_lambda": 0.5, "arm": name},
+            extra={"timing_lambda": timing_lambda, "arm": name},
         )
         out[name] = _train_kt_arm(
             persist, dataset, splits, latent_dim, hidden_dim, cfg

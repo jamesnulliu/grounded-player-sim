@@ -1,0 +1,81 @@
+EIGHT-DATASET KT REPLICATION AGAINST THE LEAKAGE-FIXED LOADER
+=======================================================================
+Run date: 2026-07-13
+
+Protocol
+--------
+Frozen manifest: scripts/kt_replication_manifest.json
+Seeds 0/1/2; train_frac=0.7; min_responses=50; max_len=200;
+latent_dim=16; hidden_dim=32; epochs=60; lr=0.01; batch_size=32.
+Cohorts: n=500 except Spanish n=150 and Statics n=200, preserving the
+historical replication caps. Each cell is D (persistent latent) vs B
+(memoryless twin), bootstrapped over students.
+
+Sources
+-------
+ASSISTments 2009 was rebuilt from the corrected raw skill-builder CSV at the
+USTC mirror using scripts/prepare_kt_data.py. The other seven canonical
+five-column exports come from theophilee/learner-performance-prediction commit
+a7ae193aa6957003a764aed7c95b07666fd4f1da. Source, prepared-output, manifest,
+and cohort hashes are recorded in results/kt_replication_fixed_loader.json and
+the ignored data/kt/prepared/*.provenance.json receipts.
+
+The raw 2009 recipe yields 283,105 rows / 112 skill features, not the stale
+278k / 149 metadata in results/real_kt.txt. Its selected n=500 cohort and all
+three fixed-loader D-B values exactly reproduce results/real_kt_rt.txt, so the
+old metadata was stale rather than evidence of a different audit run.
+
+Response result (D-B; negative favors the evolving latent)
+-----------------------------------------------------------
+dataset      spread     seed 0       seed 1       seed 2       mean
+bridge06     0.09599    -0.00588     -0.00540     -0.00572     -0.00567
+algebra05    0.12319    -0.00817     -0.00897     -0.00873     -0.00862
+statics      0.14174    +0.00099     -0.00831     -0.00795     -0.00509
+assist17     0.14681    -0.01313     -0.01399     -0.01862     -0.01524
+assist12     0.15350    -0.01025     -0.01017     -0.01267     -0.01103
+assist15     0.15828    -0.01201     -0.01588     +0.04668     +0.00626
+assist09     0.18968    -0.00995     -0.01878     -0.00974     -0.01283
+spanish      0.25812    -0.04312     -0.03831     -0.05177     -0.04440
+
+Sign audit
+----------
+- 22/24 cells significantly favor D (95% player-bootstrap CI excludes zero).
+- Statics seed 0 is null/slightly wrong sign: +0.00099,
+  CI [-0.00456,+0.00672].
+- ASSISTments 2015 seed 2 significantly favors B: +0.04668,
+  CI [+0.04128,+0.05212]. This cell reproduces bit-for-bit in an independent
+  rerun, as does the Statics seed-0 null.
+- D wins on the three-seed mean for 7/8 datasets; ASSISTments 2015 favors B on
+  average because its seed-2 reversal is large.
+
+Scaling re-fit
+--------------
+The scientifically interpretable y-axis is signed latent advantage,
+-mean(D-B): positive means D wins. Under that definition:
+
+  Pearson = 0.776
+  Spearman = 0.476
+  dataset-bootstrap 95%: Pearson [-0.364, 0.977],
+                         Spearman [-0.447, 1.000]
+  leave-one-dataset-out: Pearson [0.138, 0.900],
+                         Spearman [0.214, 0.786]
+
+Omitting Spanish, the high-spread/high-effect anchor, lowers signed Pearson to
+0.138. This is a suggestive descriptive association, not a robust scaling law.
+
+For direct comparability, the historical abs(mean(D-B)) definition gives
+Pearson 0.876 / Spearman 0.667 (bootstrap Pearson [0.111,0.980]). But absolute
+value turns ASSISTments 2015's control win into a positive "effect magnitude";
+it must not be described as the latent's advantage now that signs are mixed.
+
+Verdict
+-------
+The fixed-loader re-verification was necessary. The broad KT result remains
+strong but is not universal: 22/24 seed cells and 7/8 dataset means favor the
+evolving latent. The old "significant every seed of every dataset" statement
+is false. The heterogeneity relationship weakens materially and is sensitive
+to the Spanish anchor; contribution #5 should be demoted from a headline law
+to a qualified, suggestive cross-dataset pattern.
+
+Machine-readable summary: results/kt_replication_fixed_loader.json
+Per-cell records: runs/kt-replication-fixed-loader/ (git-ignored)

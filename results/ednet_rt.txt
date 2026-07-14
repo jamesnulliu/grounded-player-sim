@@ -1,0 +1,61 @@
+EDNET-KT1 REAL RESPONSE-TIME TEST (2026-07-13)
+
+Question: does the chess when-not-what pattern transfer to a second real
+education response-time dataset after the ASSISTments timing negative?
+
+Protocol was frozen before student-log ingestion in
+scripts/ednet_manifest.json and documents/ednet_protocol.md. The official
+README describes KT1 elapsed_time as milliseconds spent on the current
+question, but upstream issue #5 leaves bundle averaging/attachment unresolved.
+The primary cohort therefore uses only singleton-question bundles, where one
+reported duration cannot be duplicated across several questions.
+
+Data and cohort:
+  source: official EdNet-KT1.zip, 1,201,163,816 bytes
+  source SHA-256: 0d13933f90201c5101c7fe8659e44474fa049e3fb93181a8ba6fb3e63267b535
+  contents SHA-256: aa910a0436d9dbac0ba232f55e27b37ad8d39da285fcf15f1c1eb5d064be98e7
+  item bank: 13,169 questions; 8,006 singleton questions
+  cohort: first 500 eligible users in numeric ID order, >=50 valid rows
+  sequence: earliest 200 valid singleton rows per user
+  final prepared data: 89,618 rows; median 200 rows/user; accuracy 0.649
+  elapsed time: median 21s, p99 87s; 67/89,618 clipped above 300s
+
+Comparison:
+  D = evolving NeuralInjector(persist=True)
+  B = equal-declared-capacity memoryless twin (persist=False)
+  item feature = leakage-safe empirical question difficulty
+  per-student 70/30 future split; 60 epochs; timing lambda=0.5; seeds 0--2
+  CIs bootstrap students. P(D-B<0) is bootstrap sign support, not a p-value.
+
+seed  response D-B  response 95% CI       timing D-B  timing 95% CI
+0     -0.0151       [-0.0190,-0.0113]     -0.0017     [-0.0064,+0.0036]
+1     -0.0219       [-0.0273,-0.0162]     -0.0000     [-0.0076,+0.0087]
+2     -0.0107       [-0.0169,-0.0048]     +0.0005     [-0.0053,+0.0074]
+
+Frozen pooled analysis (average each student's D-B over seeds, then bootstrap
+the 500 students):
+  RESPONSE: D-B=-0.01592, 95% CI [-0.02018,-0.01184], P=1.000
+  TIMING:   D-B=-0.00041, 95% CI [-0.00592,+0.00594], P=0.565
+
+Pre-registered criteria:
+  timing transfer: FAIL (pooled CI crosses zero; seed 2 is wrong-sign)
+  full when-not-what: FAIL
+
+VERDICT: honest timing null, robust response positive. EdNet independently
+confirms that the evolving latent helps future real-student response prediction,
+but it does not reproduce chess's timing-over-choice asymmetry. Together with
+the ASSISTments response-time negative, real non-game timing transfer has now
+failed in two education datasets. The paper must scope when-not-what to real
+chess plus synthetic KT and describe strategic clock management as a plausible
+mechanism, not an established cross-domain law.
+
+Artifacts:
+  results/ednet_replication.json
+  runs/ednet-kt1-singleton/seed-{0,1,2}.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/prepare_ednet.py --download
+  PYTHONPATH=src python scripts/run_ednet_replication.py --validate-only
+  PYTHONPATH=src python scripts/run_ednet_replication.py
+  PYTHONPATH=src python scripts/run_ednet_replication.py --aggregate-only \
+    --summary-out results/ednet_replication.json

@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "source_prefix_bytes": 370000000,
+  "ingest": {
+    "speed": "blitz",
+    "min_games": 30,
+    "min_sessions": 3,
+    "max_players": 100,
+    "gap_threshold_seconds": 1800.0,
+    "workers": 8,
+    "batch_size": 512,
+    "max_games_per_player": 20
+  },
+  "training": {
+    "seeds": [0, 1, 2],
+    "train_frac": 0.7,
+    "latent_dim": 16,
+    "hidden_dim": 64,
+    "epochs": 15,
+    "lr": 0.01,
+    "batch_size": 16,
+    "bootstrap_n": 2000,
+    "timing_lambda": 0.5,
+    "split_mode": "session",
+    "control": "static",
+    "timing_model": "lognormal",
+    "trunk": "mlp"
+  },
+  "cohorts": [
+    {
+      "id": "2021-04",
+      "url": "https://database.lichess.org/standard/lichess_db_standard_rated_2021-04.pgn.zst",
+      "source_path": "../data/chess/stable_speed/source/2021-04.prefix370m.pgn.zst",
+      "source_sha256": "fb6c946ca33d2274852c20587829bc4e24e98189c8fef2e4fb12e32f3e17de90",
+      "out_dir": "../data/chess/stable_speed/prepared/2021-04"
+    },
+    {
+      "id": "2023-04",
+      "url": "https://database.lichess.org/standard/lichess_db_standard_rated_2023-04.pgn.zst",
+      "source_path": "../data/chess/stable_speed/source/2023-04.prefix370m.pgn.zst",
+      "source_sha256": "868ee027c27a370833b71fbbec3929b6758d2a110a868be97653692742607c91",
+      "out_dir": "../data/chess/stable_speed/prepared/2023-04"
+    },
+    {
+      "id": "2021-06",
+      "url": "https://database.lichess.org/standard/lichess_db_standard_rated_2021-06.pgn.zst",
+      "source_path": "../data/chess/stable_speed/source/2021-06.prefix370m.pgn.zst",
+      "source_sha256": "6ef1bc956523f30f98dc04f41ba1621b08b5ca605a7bdc20930512c8668cb577",
+      "out_dir": "../data/chess/stable_speed/prepared/2021-06"
+    }
+  ]
+}

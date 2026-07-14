@@ -1,3 +1,12 @@
+HISTORICAL PRE-FIX RESULT LOG. The cross-dataset claims and 0.89/0.74 scaling
+fit below are superseded by the leakage-fixed 24-cell replication in
+results/kt_replication_fixed_loader.{txt,json}: 22/24 significant D wins,
+7/8 dataset means favor D, signed Pearson 0.776 / Spearman 0.476. This file is
+retained for provenance. Its ASSISTments-2009 3114/149/278k metadata describes
+an older preprocessing artifact; the verified raw builder produces
+4163 users / 112 skills / 283105 responses and exactly reproduces the three
+fixed-loader n=500 effects in results/real_kt_rt.txt.
+
 REAL KT (ASSISTments 2009, preprocessed; 3114 students, 149 skills, 278k responses).
 Non-synthetic RQ5 + Milestone-F. item feature = per-skill empirical difficulty. Correctness
 channel only (no response time in this dataset). Cohort: 150 students, >=50 resp, capped 200.

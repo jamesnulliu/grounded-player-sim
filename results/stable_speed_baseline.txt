@@ -16,8 +16,12 @@ of closed-form MLE). It was already reported for E-C1 on the MOVE channel
 (results_ec.md: "dynamic > static-individual embedding, pooled -0.120") but
 never scored on TIMING -- this closes that gap.
 
-Data: cached g4_data/ec{2017,2019}/dataset.jsonl.gz (100 players each, same
-cohorts as the concentration/G4 experiments). session split, epochs=15.
+Initial data: cached g4_data/ec{2017,2019}/dataset.jsonl.gz (100 players each,
+same cohorts as the concentration/G4 experiments). Extension data: exact
+370,000,000-byte prefixes of the official 2021-04, 2023-04, and 2021-06
+Lichess archives, re-ingested under scripts/stable_speed_manifest.json (100
+players each, earliest 20 games, >=30 games and >=3 sessions). All runs use a
+session split, lognormal timing, static control, 15 epochs, and seeds 0--2.
 2026-07-13.
 
 2017-04 (3 seeds):
@@ -39,21 +43,35 @@ cohorts as the concentration/G4 experiments). session split, epochs=15.
      already captures most of what the evolving latent captures for THIS
      cohort's move choice.
 
-VERDICT: cohort-dependent, same qualitative pattern already disclosed for
-other controls on this pair of cohorts (see "E-C timing + cohort dependence"
-in project memory / results_ec.md's G4 co-fit section, where 2019-07 is
-consistently the weaker/noisier cohort -- its concentration decision-sd is
-also ~2x 2017-04's, see results/concentration_variance_controlled.txt).
-Report honestly as a cohort-dependent result, not a universal win: the
-evolving latent clears the "stable per-individual speed" bar on 2017-04 but
-not 2019-07. Do not claim this baseline is beaten unconditionally; scope the
-claim to "beats a stable-speed baseline on at least one real cohort,
-cohort-dependent like the other secondary controls," and keep the primary
-headline (D vs memoryless B) as the one that is robust across both cohorts.
+Frozen three-cohort extension (seed-averaged per-player D-B, then bootstrap
+over the 100 players; P below is bootstrap sign support, not a p-value):
+
+cohort    timing D-B   95% CI                P(D-B<0)   verdict
+2021-04   -0.0521      [-0.1068, -0.0014]    0.9784     significant D win
+2023-04   -0.0373      [-0.1158, +0.0511]    0.8080     null
+2021-06   -0.1370      [-0.1984, -0.0760]    1.0000     significant D win
+
+All nine seed point estimates favor D on timing. The pooled move channel is
+null in every extension cohort: +0.0034 [-0.0136,+0.0216] on 2021-04,
+-0.0139 [-0.0334,+0.0088] on 2023-04, and +0.0127
+[-0.0053,+0.0310] on 2021-06.
+
+VERDICT: the five-cohort pattern is 3 significant D wins (2017-04, 2021-04,
+2021-06) and 2 nulls (2019-07, 2023-04); all five timing point estimates favor
+D. This is materially stronger than the original 1-of-2 result, but remains
+cohort-dependent rather than universal. Report it as "usually significant
+across the tested cohorts (3/5), with directionally consistent point
+estimates," not as an unconditional win. The memoryless-B comparison remains
+the primary timing headline.
+
+Frozen extension artifacts:
+  protocol: scripts/stable_speed_manifest.json
+  aggregate: results/stable_speed_extension.json
+  resumable cells: runs/stable-speed-extension/<cohort>/seed-<seed>.json
 
 Reproduce:
-  from gps.data.store import load_dataset
-  from gps.experiments.ec import run_ec
-  ds = load_dataset("g4_data/ec2017/dataset.jsonl.gz")
-  r = run_ec(ds, control="static", split_mode="session", epochs=15, seed=0)
-  r.timing_ci  # BootstrapCI for D vs the stable-speed (B2) baseline
+  PYTHONPATH=src python scripts/prepare_stable_speed_cohorts.py --download
+  PYTHONPATH=src python scripts/run_stable_speed_replication.py --validate-only
+  PYTHONPATH=src python scripts/run_stable_speed_replication.py
+  PYTHONPATH=src python scripts/run_stable_speed_replication.py \
+    --aggregate-only --summary-out results/stable_speed_extension.json

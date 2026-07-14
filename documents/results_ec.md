@@ -287,14 +287,17 @@ memoryless one. The static-individual control (B2, `StaticIndividualInjector`
 — a per-player constant fed the same item/position features and lognormal
 timing head as D) was already implemented for the E-C1 *move* result above
 but never scored on *timing*; doing so is the neural analogue of that
-baseline. Result: D beats B2 on timing significantly on **2017-04** (3/3
-seeds, P≥0.996, every CI excludes 0) but is **null on 2019-07** (3/3 seeds,
-every CI crosses 0) — cohort-dependent, the same pattern already seen for
-other secondary controls on this cohort pair (2019-07 is consistently
-noisier here; its concentration decision-level stdev above is also ~2×
-2017-04's). Reported honestly as a partial, cohort-dependent result, not a
-universal win — the memoryless-B headline stays the one that is robust
-across both cohorts. Full numbers: `results/stable_speed_baseline.txt`.
+baseline. A frozen three-cohort extension (100 players × 3 seeds each,
+seed-averaged per-player bootstrap) finds significant timing wins on
+**2021-04** (D−B −0.052, CI [−0.107,−0.001]) and **2021-06** (−0.137,
+[−0.198,−0.076]), and a negative but **null** result on **2023-04** (−0.037,
+[−0.116,+0.051]). Together with the original significant 2017-04 result and
+2019-07 null, the pattern is **3 of 5 cohorts significant, with all five point
+estimates favoring D**. That is directionally consistent and usually
+significant, but still cohort-dependent rather than universal; the
+memoryless-B comparison remains the primary timing headline. Full numbers:
+`results/stable_speed_baseline.txt` and
+`results/stable_speed_extension.json`.
 
 ### ...and for **weaker players** (rating stratification)
 
@@ -515,6 +518,20 @@ self-paced clock a student strategically manages the way a chess clock (or
 the synthetic frustration process generating the synthetic-KT timing signal)
 is. Full numbers: `results/real_kt_rt.txt`.
 
+**EdNet-KT1 timing (frozen follow-up): same honest negative.** Before
+ingestion we froze field semantics, exclusions, cohort selection, and success
+criteria (`documents/ednet_protocol.md`). Because upstream issue #5 leaves
+KT1's bundle-time semantics unresolved, the primary analysis uses only the
+8,006 questions in singleton bundles. On 500 students × 3 seeds, response
+again significantly favors D (pooled D−B **−0.0159**, CI
+[−0.0202,−0.0118]), but timing is null (**−0.0004**,
+[−0.0059,+0.0059]) and one seed is wrong-sign. The preregistered timing and
+full when-not-what criteria both fail. This second real education timing null
+strengthens the scope boundary: the evolving latent transfers robustly for
+student responses, while the timing-over-choice pattern remains a real-chess
++ synthetic-KT result, not a real cross-domain law. Full numbers:
+`results/ednet_rt.txt` and `results/ednet_replication.json`.
+
 The effect is **robust to cohort definition**: a sweep over `n_students ∈
 {150, 300, 500} × min_resp ∈ {30, 50}` gives a negative D−B (D beats memoryless)
 in *all five* configurations, with P(D−B<0) ≥ 0.96 everywhere; the CI excludes 0
@@ -540,7 +557,8 @@ reproduces it on two further real KT datasets:
   seed**, D wins 77–81% — the *largest* effect of all (language has rich
   per-student variation); F Wasserstein **3.3× < average-person** (corr 0.96).
 
-So the real-KT finding holds across **8 datasets, multiple platforms, and 3
+**Historical pre-fix summary (superseded by the fixed-loader audit below).**
+The original runs said the real-KT finding held across **8 datasets, multiple platforms, and 3
 subject domains (math + language + engineering)** — ASSISTments 2009/2012/2015/
 2017, KDD-Cup Algebra and Bridge-to-Algebra, Spanish, and Statics — significant
 in every seed of every dataset; effect size varies with the domain (largest in
@@ -548,7 +566,8 @@ language, smallest on the high-accuracy set) but the sign and significance never
 do. Builder `scratchpad/assist17_rq5.py`; raw in `results/real_kt.txt`; all runs
 in W&B `gps-kt-scaling`.
 
-**What predicts the effect size? Population heterogeneity — a synthesis across
+**Historical pre-fix scaling synthesis (superseded below).** What appeared to
+predict the effect size was population heterogeneity — a synthesis across
 the four datasets.** The naive guess (harder datasets → bigger effect) is
 *wrong*: Spanish has a *high* accuracy yet the largest effect. What actually
 tracks the latent's advantage is the **per-student accuracy spread** (the same
@@ -569,7 +588,7 @@ student-to-student, the more an online per-individual latent can exploit — and
 predicts better). The evolving latent earns its keep where individuals differ
 most. (All eight datasets logged to W&B `gps-kt-scaling`.)
 
-**One principle unifies the KT and chess results.** "The latent's edge scales
+**Historical hypothesis.** "The latent's edge scales
 with behavioral heterogeneity" is not only a KT-across-datasets fact — it is the
 *same* thing the chess analyses show at two other granularities: the timing edge
 **concentrates ≈3× for the weakest (most variable) players** (rating
@@ -579,6 +598,27 @@ variable. Across *populations* (KT datasets), across *players* (chess rating),
 and across *contexts* (chess time pressure), the evolving latent buys the most
 where behaviour is least predictable from the average — one mechanism, three
 granularities.
+
+**Leakage-fixed eight-dataset re-verification (2026-07-13).** We recovered the
+exact seven upstream five-column exports from
+`theophilee/learner-performance-prediction` commit `a7ae193`, rebuilt
+ASSISTments 2009 from the corrected raw release, and ran the frozen 3-seed
+protocol through the fixed `load_kt_csv`. The broad response result remains
+strong but is **not universal**: 22/24 cells significantly favor D; Statics seed
+0 is null (+0.0010), and ASSISTments 2015 seed 2 significantly favors B
+(+0.0467). Both anomalies reproduce bit-for-bit. Seven of eight three-seed
+dataset means favor D; ASSISTments 2015 favors B on average (+0.0063).
+
+The scaling conclusion also weakens materially. For **signed latent advantage**
+`-mean(D-B)`, Pearson is **0.776** and Spearman **0.476**. The dataset-bootstrap
+95% intervals cross zero (Pearson [−0.364,0.977], Spearman [−0.447,1.000]), and
+omitting Spanish lowers Pearson to **0.138**. The historical absolute-effect
+definition still gives Pearson 0.876 / Spearman 0.667, but `abs(D-B)` converts
+ASSISTments 2015's control win into a positive magnitude and therefore cannot
+be called the latent's advantage. The fair conclusion is a **suggestive,
+Spanish-sensitive association**, not a scaling law. Full per-seed table,
+provenance, and sensitivity: `results/kt_replication_fixed_loader.txt`; machine
+artifact: `results/kt_replication_fixed_loader.json`.
 
 **Temporal-shuffle control — what drives the edge (an honest refinement).** To
 test whether D's advantage is an artifact of temporal autocorrelation in the

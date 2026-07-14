@@ -1,0 +1,133 @@
+{
+  "criteria": {
+    "full_when_not_what": false,
+    "response_ci_includes_zero": false,
+    "timing_transfer": false
+  },
+  "dataset_id": "ednet-kt1-singleton",
+  "generated_at": "2026-07-13T07:32:24.681722+00:00",
+  "manifest_path": "/project2/xiangren_1715/liuyanch/Projects/grounded-player-sim/scripts/ednet_manifest.json",
+  "manifest_sha256": "d433db69f9b5e62772b9609c6bf45166675aa7302e694d26f1f834fdf77304a4",
+  "n_students": 500,
+  "protocol": {
+    "preparation": {
+      "difficulty_key": "question_id",
+      "max_len": 200,
+      "min_responses": 50,
+      "n_students": 500,
+      "require_positive_elapsed_time": true,
+      "rt_clip_seconds": [
+        0.5,
+        300.0
+      ],
+      "singleton_bundle_only": true,
+      "user_order": "numeric_user_id"
+    },
+    "success_criteria": {
+      "full_when_not_what": "timing_transfer is true and the pooled response D-B CI includes zero",
+      "timing_transfer": "pooled timing D-B 95% player-bootstrap CI excludes zero below, and every seed point estimate is negative"
+    },
+    "training": {
+      "batch_size": 32,
+      "bootstrap_n": 2000,
+      "epochs": 60,
+      "hidden_dim": 32,
+      "latent_dim": 16,
+      "lr": 0.01,
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "timing_lambda": 0.5,
+      "train_frac": 0.7
+    }
+  },
+  "response": {
+    "ci": {
+      "confidence": 0.95,
+      "high": -0.011836268648505214,
+      "low": -0.02018079530894756,
+      "n_units": 500,
+      "p_below_zero": 1.0,
+      "point": -0.015921725074450176
+    },
+    "d_minus_b": -0.015921725074450176
+  },
+  "schema_version": 1,
+  "seed_results": [
+    {
+      "response_ci": {
+        "confidence": 0.95,
+        "high": -0.011254386056214575,
+        "low": -0.018970699509978293,
+        "n_units": 500,
+        "p_below_zero": 1.0,
+        "point": -0.015127795726060867
+      },
+      "seed": 0,
+      "timing_ci": {
+        "confidence": 0.95,
+        "high": 0.0036243019342422442,
+        "low": -0.00643380182981491,
+        "n_units": 500,
+        "p_below_zero": 0.7555,
+        "point": -0.0016638455390930176
+      }
+    },
+    {
+      "response_ci": {
+        "confidence": 0.95,
+        "high": -0.01618188370242715,
+        "low": -0.02726987945511937,
+        "n_units": 500,
+        "p_below_zero": 1.0,
+        "point": -0.021917268753051757
+      },
+      "seed": 1,
+      "timing_ci": {
+        "confidence": 0.95,
+        "high": 0.008694586682319637,
+        "low": -0.0076241504192352235,
+        "n_units": 500,
+        "p_below_zero": 0.527,
+        "point": -1.861143112182617e-05
+      }
+    },
+    {
+      "response_ci": {
+        "confidence": 0.95,
+        "high": -0.004806640261411669,
+        "low": -0.016911453402787446,
+        "n_units": 500,
+        "p_below_zero": 0.9995,
+        "point": -0.0107201107442379
+      },
+      "seed": 2,
+      "timing_ci": {
+        "confidence": 0.95,
+        "high": 0.007417488932609558,
+        "low": -0.005337712526321411,
+        "n_units": 500,
+        "p_below_zero": 0.4685,
+        "point": 0.0004600954055786133
+      }
+    }
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "timing": {
+    "ci": {
+      "confidence": 0.95,
+      "high": 0.005941712884108217,
+      "low": -0.005924036904176077,
+      "n_units": 500,
+      "p_below_zero": 0.5648,
+      "point": -0.0004074538548787441
+    },
+    "d_minus_b": -0.0004074538548787441
+  }
+}

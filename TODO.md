@@ -51,11 +51,13 @@ found by re-deriving them from the code directly. Work below, done this pass:
   clearly >1× 2.7–3.6×, across 2 cohorts × 2 seeds) — firms up the
   state-dependence reading rather than requiring it be softened.
   `results/concentration_variance_controlled.txt`.
-- **DONE (cohort-dependent) — stable per-individual-speed (van der Linden-style)
-  baseline.** The existing static-individual control (B2), scored on timing
-  for the first time: D beats it significantly on 2017-04 (3/3 seeds) but is
-  null on 2019-07 (3/3 seeds) — a genuine, honestly-reported partial result,
-  not a universal win. `results/stable_speed_baseline.txt`.
+- **DONE (usually significant, cohort-dependent) — stable per-individual-speed
+  (van der Linden-style) baseline.** A frozen three-cohort extension adds
+  significant D wins on 2021-04 (−0.052) and 2021-06 (−0.137), plus a
+  negative but null 2023-04 result (−0.037). With the existing 2017-04 win and
+  2019-07 null, the pattern is **3 significant / 2 null**, with all five point
+  estimates favoring dynamics. `results/stable_speed_baseline.txt` and
+  `results/stable_speed_extension.json`.
 - **DONE — manuscript corrections.** Elo-Disentangled misattribution fixed
   (base model drives the gain, not the embedding; its move near-null cited as
   convergent evidence); LATTE's evolving-vs-static matched comparison
@@ -70,13 +72,20 @@ found by re-deriving them from the code directly. Work below, done this pass:
   the raw NLL gap). Abstract's ambiguous "reproduced in a non-game domain"
   phrasing corrected to distinguish real-response vs synthetic-timing vs
   real-timing (negative).
-- **PARTIAL — reproducibility.** `scripts/prepare_kt_data.py` (new, committed)
-  + the `gps kt --data ... --response-time-col` CLI is now itself the
-  reproducible entry point for the real-KT-with-timing result. The 7
-  cross-dataset/platform KT replications (KDD-Cup, Spanish, Statics, etc.) in
-  `results_ec.md` still depend on scripts that were never committed
-  (`scratchpad/*.py`, not in this repo) — **not re-verified this pass**, only
-  the primary ASSISTments-2009 cohort was. Same gap for some LLM/SFT results.
+- **DONE (material correction) — fixed-loader KT replication.** The
+  missing scratchpad path has been replaced by a frozen eight-dataset manifest,
+  strict preparation + provenance hashes, resumable per-seed cells, and an
+  aggregate fit with dataset bootstrap and leave-one-out sensitivity:
+  `scripts/{prepare,run}_kt_replication*.py` and
+  `src/gps/experiments/kt_replication.py`. Exact inputs were recovered from the
+  raw ASSISTments 2009 mirror and theophilee commit `a7ae193`; all 24 cells ran.
+  D wins significantly in 22/24 cells and on 7/8 dataset means. Statics seed 0
+  is null; ASSISTments 2015 seed 2 significantly reverses and makes that dataset
+  favor B on average (both anomalies reproduce exactly). Signed spread-vs-edge
+  is Pearson 0.776 / Spearman 0.476 with wide sensitivity, so the old Pearson
+  0.89 “law” is demoted to a suggestive association. Full results:
+  `results/kt_replication_fixed_loader.{txt,json}`. Same provenance gap remains
+  for some LLM/SFT results.
 - **DISCLOSED — equal-capacity control's active-vs-declared parameters.**
   `persist=False` (arm B) zeroes the incoming hidden state every step, so
   `weight_hh` (≈2/3 of the injector's params) provably receives zero gradient
@@ -106,28 +115,42 @@ found by re-deriving them from the code directly. Work below, done this pass:
 | **A** — is the latent just history-conditioning? | **DONE.** Equal-capacity evolving-vs-memoryless control; E-A1 D−B=−0.006 P=1.00, capacity-robust; E-C on real chess. | `documents/milestone_a.md` |
 | **B** — make training real | **DONE.** Real SFT loop (move+λ·timing NLL, temporal-split eval), minibatched; board-native + KT + sglang/API backbones. | code + `documents/training.md` |
 | **C** — chess data pipeline | **DONE.** Lichess PGN ingestion (`gps ingest`), E-C1/C2/C3 headline (dynamic > static, > memoryless, future-sessions split), E-C6 timing. | `documents/results_ec.md` |
-| **D** — generality | **Go = honest negative** (no robust effect under a board-size control + power check). **KT generality DONE** on real students (8 datasets, 3 subjects). | `results_ec.md` (Go + KT) |
+| **D** — generality | **Go = honest negative.** Fixed-loader KT: 22/24 seed cells and 7/8 dataset means favor D; broad but not universal. | `results_ec.md` (Go + KT) |
 | **E** — verbal-vs-hidden (RQ6) | **DONE** (board-native): hidden richer than verbal (−0.069/−0.117, P=1.00). | `results_ec.md` |
 | **F** — population recovery/generation | **DONE** on real KT: recovers the accuracy distribution (W1 2× < average-person) + generates novel players (recall 1.00 vs 0.00). chess-F = future work. | `results_ec.md` |
 | **G** — LLM + released-SOTA benchmark | **DONE.** LLM is a secondary result (SFT probe; G3 hidden⊁verbal → backbone-dependent). **G4 LANDED:** latent adds think-time value over released models (Maia-2 ≈ ChessMimic Spearman; Allie's actual think-time 0.62–0.65). | `documents/milestone_g.md`, `results/g4_timing.txt` |
 
-Also landed: the **heterogeneity scaling law** (|D−B| vs population spread, Pearson
-0.89 across 8 KT datasets); concentration (timing edge 2–8× under time pressure,
-≈3× for weaker players); RQ2 probe + causal clamp on a synthetic hidden state.
+Also landed: concentration (timing edge 2–8× under time pressure, ≈3× for
+weaker players); RQ2 probe + causal clamp on a synthetic hidden state. The
+fixed-loader KT heterogeneity association is suggestive, not a law (signed
+Pearson 0.776 / Spearman 0.476; wide bootstrap and Spanish-sensitive).
+
+## Active paper critical path
+
+1. **KT verification — DONE.** The result package and manuscript framing now
+   use the fixed-loader summary; the “significant every seed” and “one law”
+   claims are retired.
+2. **Stable-speed extension — DONE.** Re-ingested and hash-froze 2021-04,
+   2023-04, and 2021-06; all 9 static-control cells completed under one frozen
+   protocol. Five-cohort result: 3 significant / 2 null, all point estimates
+   favor D.
+3. **EdNet decision — DONE, honest timing null.** Protocol was frozen before
+   ingestion and restricted to singleton bundles. Response replicates strongly
+   (−0.0159, CI excludes zero); timing is null (−0.0004, CI crosses zero) with
+   one wrong-sign seed. Two real education timing datasets now fail to transfer
+   the chess asymmetry.
+4. **Manuscript — sole active critical path.** Convert `paper_draft.md` from
+   synthesis to a submission structure. The empirical package is now frozen;
+   preserve the corrected KT scaling, 3-of-5 stable-speed result, and two real
+   education timing nulls.
 
 ## Remaining ideas / future work (kept — not scheduled)
 
-- **Real non-game timing, done differently** — the ASSISTments 2009
-  `ms_first_response` attempt was a clean negative (see Paper-readiness pass);
-  a domain where response time is under genuine strategic/self-paced control
-  (unlike an incidental UI timer) may be needed to reproduce the timing side
-  of when-not-what outside chess. EdNet (also has RT) is one candidate to try
-  before concluding the asymmetry is chess-specific.
-- **Commit the remaining KT-replication reproducibility scripts** — the 7
-  cross-dataset/platform replications (KDD-Cup, Spanish, Statics, etc.) in
-  `results_ec.md` still depend on uncommitted `scratchpad/*.py` scripts; only
-  the primary ASSISTments-2009 cohort was re-verified against the leakage fix
-  this pass. Re-derive + commit, mirroring `scripts/prepare_kt_data.py`.
+- **Real non-game timing, done differently** — ASSISTments 2009 and the frozen
+  singleton-bundle EdNet test are both clean timing negatives. A future domain
+  would need response time under genuine strategic/self-paced control rather
+  than another incidental UI timer. This is future work, not on the current
+  paper critical path.
 - **chess-F** — needs a *calibrated* per-individual timing head (the evolving
   injector is a state model, not an identity model; static embedding correlates
   0.61 but the log-think-time head is mis-scaled).

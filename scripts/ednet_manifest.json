@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "dataset": {
+    "id": "ednet-kt1-singleton",
+    "source_path": "../data/ednet/source/EdNet-KT1.zip",
+    "source_url": "https://drive.usercontent.google.com/download?id=1AmGcOs5U31wIIqvthn9ARqJMrMTFTcaw&export=download&confirm=t",
+    "source_sha256": "0d13933f90201c5101c7fe8659e44474fa049e3fb93181a8ba6fb3e63267b535",
+    "contents_path": "../data/ednet/source/contents.zip",
+    "contents_url": "https://drive.usercontent.google.com/download?id=117aYJAWG3GU48suS66NPaB82HwFj6xWS&export=download&confirm=t",
+    "contents_sha256": "aa910a0436d9dbac0ba232f55e27b37ad8d39da285fcf15f1c1eb5d064be98e7",
+    "questions_member": "contents/questions.csv",
+    "prepared_path": "../data/ednet/prepared/ednet_kt1_singletons.tsv",
+    "official_readme": "https://github.com/riiid/ednet/blob/27db572eeaf4455a1f6c029ba27e34f78bb49d73/README.md",
+    "official_readme_sha256": "4230e5fbcc5bda373f315d9cbb4a9eb55e9088225fd1aa5d91b3f628359f923b",
+    "elapsed_time_issue": "https://github.com/riiid/ednet/issues/5"
+  },
+  "preparation": {
+    "n_students": 500,
+    "min_responses": 50,
+    "max_len": 200,
+    "user_order": "numeric_user_id",
+    "singleton_bundle_only": true,
+    "require_positive_elapsed_time": true,
+    "difficulty_key": "question_id",
+    "rt_clip_seconds": [0.5, 300.0]
+  },
+  "training": {
+    "seeds": [0, 1, 2],
+    "train_frac": 0.7,
+    "latent_dim": 16,
+    "hidden_dim": 32,
+    "epochs": 60,
+    "lr": 0.01,
+    "batch_size": 32,
+    "bootstrap_n": 2000,
+    "timing_lambda": 0.5
+  },
+  "success_criteria": {
+    "timing_transfer": "pooled timing D-B 95% player-bootstrap CI excludes zero below, and every seed point estimate is negative",
+    "full_when_not_what": "timing_transfer is true and the pooled response D-B CI includes zero"
+  }
+}

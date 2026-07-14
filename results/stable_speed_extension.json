@@ -1,0 +1,212 @@
+{
+  "cohorts": [
+    {
+      "cohort": "2021-04",
+      "dataset_sha256": "13984fc26048ba2ea5394da399eff7a60f3408261bda826022bbe388f129c7d1",
+      "move": {
+        "ci": {
+          "confidence": 0.95,
+          "high": 0.021573288977146148,
+          "low": -0.013564272185166678,
+          "n_units": 100,
+          "p_below_zero": 0.3492,
+          "point": 0.003374483585357667
+        },
+        "d_minus_b": 0.003374483585357667,
+        "n_players": 100
+      },
+      "seed_timing": [
+        {
+          "confidence": 0.95,
+          "high": -0.002209994316101117,
+          "low": -0.11038032227754592,
+          "n_units": 100,
+          "p_below_zero": 0.98,
+          "point": -0.055395634174346925,
+          "seed": 0
+        },
+        {
+          "confidence": 0.95,
+          "high": 0.011313980996608694,
+          "low": -0.09034403729438781,
+          "n_units": 100,
+          "p_below_zero": 0.9365,
+          "point": -0.03837087631225586,
+          "seed": 1
+        },
+        {
+          "confidence": 0.95,
+          "high": -0.009713259637355816,
+          "low": -0.12199166691303251,
+          "n_units": 100,
+          "p_below_zero": 0.9925,
+          "point": -0.0624174690246582,
+          "seed": 2
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "timing": {
+        "ci": {
+          "confidence": 0.95,
+          "high": -0.0013897581497828357,
+          "low": -0.10680755710601804,
+          "n_units": 100,
+          "p_below_zero": 0.9784,
+          "point": -0.05206132650375367
+        },
+        "d_minus_b": -0.05206132650375367,
+        "n_players": 100
+      }
+    },
+    {
+      "cohort": "2023-04",
+      "dataset_sha256": "30b5bdc84bfc5971ca664ade7c6e99dd81e28e0390dfed6d919ba61cf76ac6ee",
+      "move": {
+        "ci": {
+          "confidence": 0.95,
+          "high": 0.008754496415456139,
+          "low": -0.03341331221659977,
+          "n_units": 100,
+          "p_below_zero": 0.9034,
+          "point": -0.01391084750493367
+        },
+        "d_minus_b": -0.01391084750493367,
+        "n_players": 100
+      },
+      "seed_timing": [
+        {
+          "confidence": 0.95,
+          "high": 0.02940348762273785,
+          "low": -0.13443877762556075,
+          "n_units": 100,
+          "p_below_zero": 0.896,
+          "point": -0.054478721618652345,
+          "seed": 0
+        },
+        {
+          "confidence": 0.95,
+          "high": 0.05745416361093518,
+          "low": -0.10095439803600308,
+          "n_units": 100,
+          "p_below_zero": 0.7225,
+          "point": -0.02231245517730713,
+          "seed": 1
+        },
+        {
+          "confidence": 0.95,
+          "high": 0.05556700485944737,
+          "low": -0.11728904443979263,
+          "n_units": 100,
+          "p_below_zero": 0.7995,
+          "point": -0.035172104835510254,
+          "seed": 2
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "timing": {
+        "ci": {
+          "confidence": 0.95,
+          "high": 0.051061656912167845,
+          "low": -0.1158372789422671,
+          "n_units": 100,
+          "p_below_zero": 0.808,
+          "point": -0.03732109387715658
+        },
+        "d_minus_b": -0.03732109387715658,
+        "n_players": 100
+      }
+    },
+    {
+      "cohort": "2021-06",
+      "dataset_sha256": "3a697bf8953c1cdbc0b7a591626dbc232446c08c371750c934841868815bbb19",
+      "move": {
+        "ci": {
+          "confidence": 0.95,
+          "high": 0.031028981626033778,
+          "low": -0.005312424172957736,
+          "n_units": 100,
+          "p_below_zero": 0.0784,
+          "point": 0.012699544032414753
+        },
+        "d_minus_b": 0.012699544032414753,
+        "n_players": 100
+      },
+      "seed_timing": [
+        {
+          "confidence": 0.95,
+          "high": -0.07551891285181048,
+          "low": -0.1951103383600712,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.13631864428520202,
+          "seed": 0
+        },
+        {
+          "confidence": 0.95,
+          "high": -0.07402175039052965,
+          "low": -0.19723665714263916,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.13365216732025145,
+          "seed": 1
+        },
+        {
+          "confidence": 0.95,
+          "high": -0.07668722164630898,
+          "low": -0.20701420158147812,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.14090838074684142,
+          "seed": 2
+        }
+      ],
+      "seeds": [
+        0,
+        1,
+        2
+      ],
+      "timing": {
+        "ci": {
+          "confidence": 0.95,
+          "high": -0.07601021895806001,
+          "low": -0.19843089862664537,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.1369597307840983
+        },
+        "d_minus_b": -0.1369597307840983,
+        "n_players": 100
+      }
+    }
+  ],
+  "generated_at": "2026-07-13T07:12:13.376249+00:00",
+  "manifest_sha256": "59b307252fc48f0711d5adc9f7abce5b00df40b99a6b2763f7f504a73c911670",
+  "schema_version": 1,
+  "training": {
+    "batch_size": 16,
+    "bootstrap_n": 2000,
+    "control": "static",
+    "epochs": 15,
+    "hidden_dim": 64,
+    "latent_dim": 16,
+    "lr": 0.01,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "split_mode": "session",
+    "timing_lambda": 0.5,
+    "timing_model": "lognormal",
+    "train_frac": 0.7,
+    "trunk": "mlp"
+  }
+}

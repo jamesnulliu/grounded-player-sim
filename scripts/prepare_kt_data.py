@@ -25,11 +25,19 @@ import csv
 import sys
 from collections import defaultdict
 
+CANONICAL_COLUMNS = (
+    "user_id",
+    "item_id",
+    "timestamp",
+    "correct",
+    "skill_id",
+)
+
 
 def prepare_assistments09(raw_path: str, out_path: str) -> None:
     seen_order_ids: set[str] = set()
-    rows: list[tuple[int, str, str, str, str, str, str]] = []
-    # (order_id_int, order_id_str, user_id, item_id, correct, skill_id, ms)
+    rows: list[tuple[int, str, str, str, str, str]] = []
+    # (order_id, user_id, item_id, correct, skill_id, ms)
 
     with open(raw_path, encoding="ISO-8859-1", newline="") as fh:
         reader = csv.DictReader(fh)
@@ -77,6 +85,51 @@ def prepare_assistments09(raw_path: str, out_path: str) -> None:
     print(
         f"{out_path}: {len(by_user)} students, {len(rows)} responses, "
         f"{len({r[4] for r in rows})} skills"
+    )
+
+
+def prepare_standard_kt(
+    raw_path: str, out_path: str, *, delimiter: str = "\t"
+) -> None:
+    """Canonicalize an existing standard five-column KT export.
+
+    The seven non-2009 datasets used by the original replication were already
+    reduced to the shared user/item/timestamp/correct/skill format. This
+    strict pass replaces the missing per-dataset copy scripts: it selects
+    columns by name, preserves row order, and rejects partially processed
+    inputs instead of silently changing their cohort.
+    """
+    n = 0
+    users: set[str] = set()
+    skills: set[str] = set()
+    with open(raw_path, encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source, delimiter=delimiter)
+        missing = set(CANONICAL_COLUMNS) - set(reader.fieldnames or [])
+        if missing:
+            raise ValueError(
+                f"{raw_path}: missing canonical columns: {sorted(missing)}"
+            )
+        with open(out_path, "w", encoding="utf-8", newline="") as target:
+            writer = csv.writer(target, delimiter="\t")
+            writer.writerow(CANONICAL_COLUMNS)
+            for line_number, row in enumerate(reader, start=2):
+                values = [row[column].strip() for column in CANONICAL_COLUMNS]
+                user_id, item_id, _timestamp, correct, skill_id = values
+                if not user_id or not item_id or not skill_id:
+                    raise ValueError(
+                        f"{raw_path}:{line_number}: user/item/skill is blank"
+                    )
+                if correct not in {"0", "1"}:
+                    raise ValueError(
+                        f"{raw_path}:{line_number}: correctness must be 0 or 1"
+                    )
+                writer.writerow(values)
+                users.add(user_id)
+                skills.add(skill_id)
+                n += 1
+    print(
+        f"{out_path}: {len(users)} students, {n} responses, "
+        f"{len(skills)} skills"
     )
 
 

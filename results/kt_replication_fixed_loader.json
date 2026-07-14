@@ -1,0 +1,637 @@
+{
+  "generated_at": "2026-07-13T06:06:27.625046+00:00",
+  "manifest_path": "/project2/xiangren_1715/liuyanch/Projects/grounded-player-sim/scripts/kt_replication_manifest.json",
+  "manifest_sha256": "ccf4efb19ff3ea38d6f3439bfbd52f93db562d07555fe7bbd085c50e6d340ebc",
+  "protocol": {
+    "batch_size": 32,
+    "bootstrap_n": 2000,
+    "epochs": 60,
+    "hidden_dim": 32,
+    "latent_dim": 16,
+    "lr": 0.01,
+    "max_len": 200,
+    "min_responses": 50,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "train_frac": 0.7
+  },
+  "scaling_fit": {
+    "historical_absolute_effect_fit": {
+      "bootstrap_n": 10000,
+      "bootstrap_seed": 0,
+      "leave_one_out": [
+        {
+          "omitted": "algebra05",
+          "pearson": 0.87940469521543,
+          "spearman": 0.7142857142857144
+        },
+        {
+          "omitted": "assist09",
+          "pearson": 0.9147692622903522,
+          "spearman": 0.6071428571428572
+        },
+        {
+          "omitted": "assist12",
+          "pearson": 0.876638183994668,
+          "spearman": 0.6785714285714287
+        },
+        {
+          "omitted": "assist15",
+          "pearson": 0.900287306506054,
+          "spearman": 0.7857142857142859
+        },
+        {
+          "omitted": "assist17",
+          "pearson": 0.8863849213807543,
+          "spearman": 0.7500000000000002
+        },
+        {
+          "omitted": "bridge06",
+          "pearson": 0.9026957414522088,
+          "spearman": 0.5714285714285715
+        },
+        {
+          "omitted": "spanish",
+          "pearson": 0.509614971079025,
+          "spearman": 0.5
+        },
+        {
+          "omitted": "statics",
+          "pearson": 0.8793932107839478,
+          "spearman": 0.642857142857143
+        }
+      ],
+      "leave_one_out_pearson_range": [
+        0.509614971079025,
+        0.9147692622903522
+      ],
+      "leave_one_out_spearman_range": [
+        0.5,
+        0.7857142857142859
+      ],
+      "linear_intercept": -0.02337234402842168,
+      "linear_slope": 0.23366419744726524,
+      "pearson": 0.8763207006026984,
+      "pearson_bootstrap_95": [
+        0.11131054853071586,
+        0.9803788705050999
+      ],
+      "spearman": 0.6666666666666669,
+      "spearman_bootstrap_95": [
+        -0.10526315789473686,
+        1.0
+      ],
+      "y_key": "effect_magnitude"
+    },
+    "n_datasets": 8,
+    "points": [
+      {
+        "cohort_fingerprint": "af204740a7da827821cf38fd8871843618091263e93227098b8135541d9417e2",
+        "dataset_id": "algebra05",
+        "effect_magnitude": 0.00862158530453841,
+        "mean_d_minus_b": -0.00862158530453841,
+        "n_students": 500,
+        "observed_spread": 0.123186727062,
+        "prepared_sha256": "0085e3c46b77810038451f2df72c7abfbd0830c0396493fe59be02cbe31dfaef",
+        "seed_d_minus_b": [
+          -0.008171711072325706,
+          -0.008965455204248428,
+          -0.008727589637041093
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.006246780545264485,
+              "low": -0.010112611237540842,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.008171711072325706
+            },
+            "d_minus_b": -0.008171711072325706,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.00678378248140216,
+              "low": -0.011087261539697647,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.008965455204248428
+            },
+            "d_minus_b": -0.008965455204248428,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.006884479326754809,
+              "low": -0.010648211376369,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.008727589637041093
+            },
+            "d_minus_b": -0.008727589637041093,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.00862158530453841
+      },
+      {
+        "cohort_fingerprint": "6ae1f94f0f8f0b55eee54f1662605da4227a429b4eba955a999fb0d00e59e761",
+        "dataset_id": "assist09",
+        "effect_magnitude": 0.012825742483139039,
+        "mean_d_minus_b": -0.012825742483139039,
+        "n_students": 500,
+        "observed_spread": 0.189676614118,
+        "prepared_sha256": "bb309ef6bbc3d2e23b3b6ab77d85ad5571580d96574e31ff6cfda0e0c7952f75",
+        "seed_d_minus_b": [
+          -0.009953109830617904,
+          -0.018783826708793642,
+          -0.00974029091000557
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.007477366887778045,
+              "low": -0.012485885059088469,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.009953109830617904
+            },
+            "d_minus_b": -0.009953109830617904,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.014236062355339528,
+              "low": -0.023416589291393754,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.018783826708793642
+            },
+            "d_minus_b": -0.018783826708793642,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.006981647058576345,
+              "low": -0.012704753413051367,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.00974029091000557
+            },
+            "d_minus_b": -0.00974029091000557,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.012825742483139039
+      },
+      {
+        "cohort_fingerprint": "9aca0e6b4697ce20a4f51ecbcce1542ef595f5263e2e05cd5480730a94fac74b",
+        "dataset_id": "assist12",
+        "effect_magnitude": 0.011029432078202565,
+        "mean_d_minus_b": -0.011029432078202565,
+        "n_students": 500,
+        "observed_spread": 0.153500850562,
+        "prepared_sha256": "03a68ff81928515e5cf8d50bb647ad71fbe1a6304bc77becbf5ebedf228840ad",
+        "seed_d_minus_b": [
+          -0.010247224897146225,
+          -0.010171709403395653,
+          -0.012669361934065818
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.007966294421628118,
+              "low": -0.012573655915632845,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.010247224897146225
+            },
+            "d_minus_b": -0.010247224897146225,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.0076235089179128405,
+              "low": -0.012831402660906316,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.010171709403395653
+            },
+            "d_minus_b": -0.010171709403395653,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.009243535388261082,
+              "low": -0.016839807176217438,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.012669361934065818
+            },
+            "d_minus_b": -0.012669361934065818,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.011029432078202565
+      },
+      {
+        "cohort_fingerprint": "362cb682ee69f3af5bd123d49bca72e4f934b610b7d9263f018d9a6597ba2ce6",
+        "dataset_id": "assist15",
+        "effect_magnitude": 0.006264027843872706,
+        "mean_d_minus_b": 0.006264027843872706,
+        "n_students": 500,
+        "observed_spread": 0.158283842944,
+        "prepared_sha256": "5f249a2fdaa82c2420c62130e2678541902704cc5bd5e9ee38e1fef3cd7ba199",
+        "seed_d_minus_b": [
+          -0.01201181149482727,
+          -0.015875114440917968,
+          0.04667900946736336
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.009274364788085222,
+              "low": -0.01478223974108696,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.01201181149482727
+            },
+            "d_minus_b": -0.01201181149482727,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.013018126887083054,
+              "low": -0.01872922080978751,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.015875114440917968
+            },
+            "d_minus_b": -0.015875114440917968,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": 0.05212188929840922,
+              "low": 0.04128395996242762,
+              "n_units": 500,
+              "p_below_zero": 0.0,
+              "point": 0.04667900946736336
+            },
+            "d_minus_b": 0.04667900946736336,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": -0.006264027843872706
+      },
+      {
+        "cohort_fingerprint": "aa4c8d6d0fe2ffe2f840bfaa266ec9555013c1471fae0a445bc3eea853c20ca9",
+        "dataset_id": "assist17",
+        "effect_magnitude": 0.015242580771446228,
+        "mean_d_minus_b": -0.015242580771446228,
+        "n_students": 500,
+        "observed_spread": 0.146812862509,
+        "prepared_sha256": "831e24691e87956de57c4877225410f3b41d15e258da192b5f28a66e1fe80ef7",
+        "seed_d_minus_b": [
+          -0.013125943183898927,
+          -0.013985257387161255,
+          -0.018616541743278505
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.010428174011409283,
+              "low": -0.016008973793685433,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.013125943183898927
+            },
+            "d_minus_b": -0.013125943183898927,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.010497935281693937,
+              "low": -0.017855354543030263,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.013985257387161255
+            },
+            "d_minus_b": -0.013985257387161255,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.015238222730159762,
+              "low": -0.021861321386694908,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.018616541743278505
+            },
+            "d_minus_b": -0.018616541743278505,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.015242580771446228
+      },
+      {
+        "cohort_fingerprint": "2712d6e218f4e8c6f0a72ca257921fa97ededed13b606a6fe918f0f23915bac5",
+        "dataset_id": "bridge06",
+        "effect_magnitude": 0.005669314987957478,
+        "mean_d_minus_b": -0.005669314987957478,
+        "n_students": 500,
+        "observed_spread": 0.095985325801,
+        "prepared_sha256": "37c1b8513382b8121ed916ef51c8b6ccebcdf1a580305361b8e7a3315cc4e031",
+        "seed_d_minus_b": [
+          -0.005878760427236557,
+          -0.005404213845729828,
+          -0.005724970690906048
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.004236932913586498,
+              "low": -0.007632612849026918,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.005878760427236557
+            },
+            "d_minus_b": -0.005878760427236557,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.003799816496297718,
+              "low": -0.007076816192269325,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.005404213845729828
+            },
+            "d_minus_b": -0.005404213845729828,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.004119593423977494,
+              "low": -0.007415645500458777,
+              "n_units": 500,
+              "p_below_zero": 1.0,
+              "point": -0.005724970690906048
+            },
+            "d_minus_b": -0.005724970690906048,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.005669314987957478
+      },
+      {
+        "cohort_fingerprint": "1d8918932ea09dc20239c7e45dad07df147f69915363055070552e161680ec11",
+        "dataset_id": "spanish",
+        "effect_magnitude": 0.04440281806720628,
+        "mean_d_minus_b": -0.04440281806720628,
+        "n_students": 150,
+        "observed_spread": 0.258117687772,
+        "prepared_sha256": "d2094adbb6f9089999ea2022e757a7164da2d90deacb2caf947664de8374db80",
+        "seed_d_minus_b": [
+          -0.04312108273307482,
+          -0.03831304336587588,
+          -0.051774328102668125
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.0344457477008303,
+              "low": -0.05198474081854025,
+              "n_units": 150,
+              "p_below_zero": 1.0,
+              "point": -0.04312108273307482
+            },
+            "d_minus_b": -0.04312108273307482,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.02944205554450552,
+              "low": -0.04716718848173817,
+              "n_units": 150,
+              "p_below_zero": 1.0,
+              "point": -0.03831304336587588
+            },
+            "d_minus_b": -0.03831304336587588,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.04249272411813339,
+              "low": -0.06184874655927221,
+              "n_units": 150,
+              "p_below_zero": 1.0,
+              "point": -0.051774328102668125
+            },
+            "d_minus_b": -0.051774328102668125,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.04440281806720628
+      },
+      {
+        "cohort_fingerprint": "f44db7b75b398716641f651f96eb96da5fb37a03125023e17bb38fab7a8807c7",
+        "dataset_id": "statics",
+        "effect_magnitude": 0.005088485678037008,
+        "mean_d_minus_b": -0.005088485678037008,
+        "n_students": 200,
+        "observed_spread": 0.141736525828,
+        "prepared_sha256": "32b87a1040c81ada5b956d292aecdc17ef8cb6eedf0ca064a617b933f8ac019a",
+        "seed_d_minus_b": [
+          0.0009925693646073341,
+          -0.008307991791516542,
+          -0.007950034607201815
+        ],
+        "seed_results": [
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": 0.006722815727815031,
+              "low": -0.004564525923691688,
+              "n_units": 200,
+              "p_below_zero": 0.348,
+              "point": 0.0009925693646073341
+            },
+            "d_minus_b": 0.0009925693646073341,
+            "seed": 0
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.004099770787637682,
+              "low": -0.012749550270847974,
+              "n_units": 200,
+              "p_below_zero": 1.0,
+              "point": -0.008307991791516542
+            },
+            "d_minus_b": -0.008307991791516542,
+            "seed": 1
+          },
+          {
+            "ci": {
+              "confidence": 0.95,
+              "high": -0.0038803761834278728,
+              "low": -0.0122480336856097,
+              "n_units": 200,
+              "p_below_zero": 1.0,
+              "point": -0.007950034607201815
+            },
+            "d_minus_b": -0.007950034607201815,
+            "seed": 2
+          }
+        ],
+        "seeds": [
+          0,
+          1,
+          2
+        ],
+        "signed_advantage": 0.005088485678037008
+      }
+    ],
+    "sign_audit": {
+      "datasets_mean_d_loses": [
+        "assist15"
+      ],
+      "n_datasets": 8,
+      "n_datasets_mean_d_wins": 7,
+      "n_seed_cells": 24,
+      "n_seed_cells_d_wins": 22,
+      "n_seed_cells_null": 1,
+      "n_seed_cells_significant_b_wins": 1,
+      "n_seed_cells_significant_d_wins": 22
+    },
+    "signed_advantage_fit": {
+      "bootstrap_n": 10000,
+      "bootstrap_seed": 0,
+      "leave_one_out": [
+        {
+          "omitted": "algebra05",
+          "pearson": 0.7864689500717237,
+          "spearman": 0.4642857142857144
+        },
+        {
+          "omitted": "assist09",
+          "pearson": 0.7987756702863096,
+          "spearman": 0.3214285714285715
+        },
+        {
+          "omitted": "assist12",
+          "pearson": 0.7762642310122286,
+          "spearman": 0.4642857142857144
+        },
+        {
+          "omitted": "assist15",
+          "pearson": 0.900287306506054,
+          "spearman": 0.7857142857142859
+        },
+        {
+          "omitted": "assist17",
+          "pearson": 0.7916487460949871,
+          "spearman": 0.5357142857142858
+        },
+        {
+          "omitted": "bridge06",
+          "pearson": 0.8139356101618943,
+          "spearman": 0.4642857142857144
+        },
+        {
+          "omitted": "spanish",
+          "pearson": 0.13849966898432095,
+          "spearman": 0.21428571428571433
+        },
+        {
+          "omitted": "statics",
+          "pearson": 0.7715201221983959,
+          "spearman": 0.5
+        }
+      ],
+      "leave_one_out_pearson_range": [
+        0.13849966898432095,
+        0.900287306506054
+      ],
+      "leave_one_out_spearman_range": [
+        0.21428571428571433,
+        0.7857142857142859
+      ],
+      "linear_intercept": -0.024953838513831955,
+      "linear_slope": 0.23376196447389827,
+      "pearson": 0.776473967865159,
+      "pearson_bootstrap_95": [
+        -0.36441634177699883,
+        0.9768540021616438
+      ],
+      "spearman": 0.4761904761904762,
+      "spearman_bootstrap_95": [
+        -0.44736842105263164,
+        1.0
+      ],
+      "y_key": "signed_advantage"
+    }
+  },
+  "schema_version": 2
+}

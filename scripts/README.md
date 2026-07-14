@@ -1,4 +1,78 @@
-# Scaling the E-C results across GPUs
+# Reproducible experiment scripts
+
+## Fixed-loader KT replication
+
+The eight-dataset response replication is frozen in
+`kt_replication_manifest.json`: seeds 0–2, 60 epochs, `train_frac=0.7`,
+`min_responses=50`, `max_len=200`, and the original cohort caps (500 except
+Spanish 150 and Statics 200). Data is not redistributed.
+
+Place the exact source exports at the manifest paths under
+`data/kt/source/`. ASSISTments 2009 starts from the corrected raw skill-builder
+CSV; the other seven inputs are the standard five-column exports used by the
+original replication. Then run:
+
+```bash
+PYTHONPATH=src python scripts/prepare_kt_replications.py
+PYTHONPATH=src python scripts/run_kt_replication.py --validate-only
+PYTHONPATH=src python scripts/run_kt_replication.py
+```
+
+Preparation writes canonical TSVs plus provenance receipts containing source,
+output, and frozen-manifest SHA-256 hashes. The run command writes one resumable
+cell per dataset/seed under `runs/kt-replication-fixed-loader/`; it refuses to
+fit the headline until all 24 cells exist and share the expected cohort hashes.
+Training still follows the project tracking policy and requires
+`WANDB_API_KEY`. To fan cells out, pass one `--dataset ID --seed N` pair per
+job, then aggregate only after all jobs finish:
+
+```bash
+PYTHONPATH=src python scripts/run_kt_replication.py --aggregate-only \
+  --summary-out results/kt_replication_fixed_loader.json
+```
+
+The summary records both signed latent advantage and the historical absolute
+effect definition, with Pearson/Spearman, dataset-bootstrap intervals, a sign
+audit, and leave-one-dataset-out ranges. Absolute value must not be described as
+latent advantage when a dataset mean reverses sign.
+
+## Stable-speed extension
+
+`stable_speed_manifest.json` freezes exact 370 MB Lichess source prefixes,
+source hashes, cohort selection, and the full static-control training protocol
+for 2021-04, 2023-04, and 2021-06. Reproduce with:
+
+```bash
+PYTHONPATH=src python scripts/prepare_stable_speed_cohorts.py --download
+PYTHONPATH=src python scripts/run_stable_speed_replication.py --validate-only
+PYTHONPATH=src python scripts/run_stable_speed_replication.py
+PYTHONPATH=src python scripts/run_stable_speed_replication.py \
+  --aggregate-only --summary-out results/stable_speed_extension.json
+```
+
+The runner writes one resumable cell per cohort/seed under
+`runs/stable-speed-extension/`. Pooling first averages each player's paired
+`D-B` across seeds, then bootstraps players within each cohort. Training follows
+the project tracking policy and requires `WANDB_API_KEY`.
+
+## EdNet real-timing test
+
+The primary EdNet-KT1 test is frozen in `ednet_manifest.json` and documented in
+`documents/ednet_protocol.md`. It restricts timing to singleton-question
+bundles because upstream issue #5 leaves bundle timing semantics unresolved.
+
+```bash
+PYTHONPATH=src python scripts/prepare_ednet.py --download
+PYTHONPATH=src python scripts/run_ednet_replication.py --validate-only
+PYTHONPATH=src python scripts/run_ednet_replication.py
+PYTHONPATH=src python scripts/run_ednet_replication.py --aggregate-only \
+  --summary-out results/ednet_replication.json
+```
+
+Cells are resumable under `runs/ednet-kt1-singleton/`. Pooling averages each
+student's paired `D-B` over seeds before bootstrapping students.
+
+## Scaling the E-C results across GPUs
 
 The per-player D-vs-B comparison is **embarrassingly parallel** — every
 (cohort, seed, trunk) cell is an independent run, so N GPUs give ~N× throughput.

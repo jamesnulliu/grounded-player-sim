@@ -2,7 +2,17 @@
 
 *Paper-skeleton synthesis of the landed results. Detailed tables +
 reproduction in `results_ec.md`; prior-art positioning in `design.md §8`;
-work plan in `TODO.md`.*
+active verification gates in `paper_readiness_plan.md`.*
+
+> **Verification status (2026-07-13).** The leakage-fixed 24-cell KT replication
+> is complete. D wins significantly in 22/24 seed cells and on 7/8 dataset
+> means; one Statics seed is null and ASSISTments 2015 seed 2 significantly
+> favors B. The signed spread-vs-advantage fit is Pearson 0.776 / Spearman 0.476
+> with wide bootstrap and leave-one-out sensitivity. The old 0.89 “law” framing
+> is superseded. The stable-speed extension is 3 significant / 2 null cohorts,
+> all directionally favoring dynamics. EdNet independently reproduces the real
+> response win but not timing (pooled timing CI crosses zero), so two real
+> education timing datasets are now negative. See the frozen result artifacts.
 
 ## Abstract
 
@@ -20,11 +30,13 @@ equal-capacity **memoryless** twin at predicting future think-time across a
 6-year era span (2017–2023), two backbones, and five seeds (P=1.00), and adds
 value over a near-SOTA Elo+clock+complexity baseline — while **move choice
 carries essentially no extra state-dependence.** The timing edge **concentrates**
-where behavior is least predictable from the average: under time pressure (2–8×),
-for weaker players (≈3×), and — across eight real knowledge-tracing datasets — in
-proportion to population heterogeneity (Pearson 0.89), one law tying the chess and
-non-game results together. The same latent **generates** a population that
-recovers real heterogeneity a "positive average person" cannot.
+where behavior is least predictable from the average: under time pressure
+(2–8×) and for weaker players (≈3×). Across eight knowledge-tracing datasets,
+population spread is descriptively associated with signed latent advantage
+(Pearson 0.78) but the rank relationship is weak (Spearman 0.48) and sensitive
+to the Spanish anchor, so we treat cross-population scaling as a hypothesis,
+not a law. The same latent **generates** a population that recovers real
+heterogeneity a "positive average person" cannot.
 
 The state's value lives in a **trained hidden latent, not a verbal persona
 prompt** (RQ6) — the bridge to LLM agents, where today's simulators (HumanLM,
@@ -43,9 +55,9 @@ per-decision oracle and a strict future split, an equal-capacity evolving latent
 beats a memoryless twin at predicting a specific person's *future think-time* —
 robust across a six-year era span, and the same timing-over-response asymmetry
 reproduces in a non-game domain on synthetic response-time data (real
-knowledge-tracing datasets reproduce the *response* side of the pattern —
-heterogeneity-scaling across all eight — but not yet the *timing* side: a first
-real-response-time run on ASSISTments is an honest negative, §Limitations) —
+knowledge-tracing datasets support the *response* side in 22/24 fixed-loader
+seed cells, but not the *timing* side: frozen real-response-time runs on both
+ASSISTments and EdNet are negative, §Limitations) —
 while move choice is a near-null; the same latent recovers population
 heterogeneity a "positive-average-person" cannot; and the hidden-vs-verbal
 channel ordering is **backbone-dependent** (hidden richer with no language
@@ -72,27 +84,23 @@ prior, verbal richer inside an LLM).
    time pressure (2–8×) and for weaker players (≈3×) — while the **move** edge is
    a flat near-null. The evolving state is legible in *when* a person acts, not
    *what* they play.
-5. A **unifying scaling law**: the latent's advantage grows with **behavioral
-   heterogeneity** at three granularities — across *populations* (the KT effect
-   size correlates **Pearson 0.89 across eight real datasets** with per-student
-   accuracy spread — a strong trend anchored by the extremes, noisier in the
-   middle band), across *players* (chess timing edge ≈3× larger for the
-   most-variable players), and across *contexts* (2–8× under time pressure). One
-   statement — *personalization pays off in proportion to how much individuals
-   differ* — ties the chess and KT results together and explains why the same
-   latent recovers population heterogeneity (Milestone F).
+5. A **multi-granularity heterogeneity analysis**: the chess timing advantage is
+   ≈3× larger for weaker/more-variable players and 2–8× larger under time
+   pressure. Across eight KT populations the signed advantage has Pearson 0.78
+   with accuracy spread, but Spearman is only 0.48, the dataset-bootstrap CI
+   crosses zero, and omitting Spanish drops Pearson to 0.14. This is suggestive
+   cross-population evidence for *personalization helps more where individuals
+   differ*, not a robust scaling law.
 6. **Generality** (RQ5) in a non-game oracle domain (KT) and a **heterogeneity-
    recovery** result (Milestone F) beating the "positive average person" — both
    confirmed on **real data** (ASSISTments 2009): the evolving latent beats the
-   memoryless twin on real student responses (500 students, D−B≈−0.010, P=1.00
-   in all 3 seeds, D wins 64–73%; robust across a 150–500-student cohort sweep,
-   **and replicated across 8 datasets / multiple platforms / 3 subject domains —
-   ASSISTments 2009/2012/2015/2017, KDD-Cup Algebra + Bridge-to-Algebra, Spanish
-   (language) and Statics (engineering), significant every seed; the effect size
-   **scales with population heterogeneity**, Pearson 0.89, n=8**), and — on the
-   same
-   500 students — recovers the real accuracy distribution (Wasserstein 2× better
-   than average-person, corr 0.96, recall 0.75 vs 0.00).
+   memoryless twin on real student responses (500 students, mean D−B=−0.0128,
+   significant in all 3 seeds). Across 8 datasets / multiple platforms / 3
+   subject domains, 22/24 fixed-loader seed cells significantly favor D; one
+   Statics seed is null and one ASSISTments 2015 seed significantly favors B,
+   leaving 7/8 dataset means in D's favor. On the same 500 ASSISTments 2009
+   students, the latent recovers the real accuracy distribution (Wasserstein
+   2× better than average-person, corr 0.96, recall 0.75 vs 0.00).
 7. A study of the same injection in an **actual LLM policy** (Qwen3, 2×A100):
    a *frozen* verbal state note is a negative control (≈ irrelevant filler), and
    *RL* (GRPO via slime) learns the task but its sparse reward can't resolve the
@@ -155,7 +163,7 @@ report P alongside as a directional-consistency summary.
 | §5 | concentration (**real timing**) | think-time edge **2–8× larger under time pressure** (robust 2 cohorts/2 seeds); flat for post-loss/fatigue |
 | §5 | concentration, **variance-controlled** (paper-readiness fix) | player-bootstrapped, normalized by within-bucket decision-level stdev: raw ratio 4.0–6.1× shrinks to **2.7–3.6×, still survives** (2 cohorts × 2 seeds) — not a pure variance artifact |
 | — | rating stratification | timing edge **≈3× larger for weakest vs strongest players** (high−low +0.027, P(high<low)=0.00, 480 players) |
-| — | dynamic **beats a stable per-individual speed baseline** (van der Linden-style; paper-readiness addition) | timing D−B significant on 2017-04 (3/3 seeds, P≥0.996) but **null on 2019-07** (3/3 seeds) — cohort-dependent, not a universal win |
+| — | dynamic **beats a stable per-individual speed baseline** (van der Linden-style; paper-readiness addition) | five-cohort result: significant on **2017-04, 2021-04, and 2021-06**, null on **2019-07 and 2023-04**; all point estimates favor D — usually significant (3/5), still cohort-dependent |
 | E-C6 | **timing** vs memoryless (zero-inflated head) | −0.026, P=1.00 (−0.069 log-normal) |
 | E-C6 | **timing** adds value over Elo+clock aggregate | (B4+z)−B4 = −0.043, P=1.00 |
 | E-C6 | ... and over a **position-aware** baseline (+ branching factor) | (B4+z)−B4 = −0.035, P=1.00; baseline Spearman 0.39 ≈ ChessMimic 0.41 |
@@ -164,9 +172,10 @@ report P alongside as a directional-consistency summary.
 | G4 | **move** channel vs Maia-2 (does state encode move-deviation?) | latent recovers Maia-deviation at **R²≈0.009** (≈null, vs 0.93 synthetic state) → move near-stateless even vs human-move SOTA |
 | RQ5 | **E-D1** knowledge tracing (non-game) | timing D−B=−0.050, P=1.00, D wins 100% |
 | RQ5 | **E-D1 real** (ASSISTments 2009, 500 students) | response D−B≈−0.010, P=1.00 in all 3 seeds, D wins 64–73% (robust across 150–500 cohort sweep) |
-| RQ5 | **E-D1 replication** (8 datasets, multi-platform, 3 subjects) | ASSISTments 09/12/15/17 + KDD Algebra/Bridge + Spanish (language) + Statics (engineering); D−B −0.004…−0.03, **significant every seed** — not dataset/platform/subject-specific |
+| RQ5 | **EdNet-KT1 real timing**, singleton bundles (500 students, frozen protocol) | response **−0.0159** [−0.0202,−0.0118]; timing **−0.0004** [−0.0059,+0.0059] — response replicates, timing null |
+| RQ5 | **E-D1 replication** (8 datasets, multi-platform, 3 subjects) | Fixed loader: 22/24 seed cells significantly favor D; Statics has 1 null, ASSISTments 2015 has 1 significant reversal and favors B on the 3-seed mean; 7/8 dataset means favor D |
 | E-D2 | **Go** timing (real OGS, oracle-free) | **no effect at any board size**: null on 13×13 & 19×19 (well-powered); mixed-cohort "positive" was a board-size confound; the one residual weak 9×9 signal (n=209, 2/3 seeds) **collapses to null on a 2.5× larger 9×9 cohort** (N=519, 1/3 seeds, mean ≈0) — small-cohort noise; Go = future work |
-| RQ5↔F | effect size **scales with population heterogeneity** | \|D−B\| vs accuracy-spread **Pearson 0.89** (n=8); strong linear trend anchored by the extremes, noisier middle (Spearman 0.74) — latent helps most where individuals differ most |
+| RQ5↔F | effect vs population heterogeneity | Fixed-loader signed advantage: Pearson 0.78 / Spearman 0.48 (n=8), bootstrap CI crosses zero and leave-one-out Pearson falls to 0.14 without Spanish — suggestive, not a law |
 | RQ6 | **E-E1** hidden vs verbal channel | hidden richer: −0.069 (synth) / −0.117 (real), P=1.00 |
 | F | **E-F2** population heterogeneity | W1 to observed 4–5× lower than average-person; corr 0.96 |
 | F | **E-F2 real** (ASSISTments 2009, 500 students) | W1 2.0× lower than average-person; corr 0.96; recall 0.75 vs 0.00 |
@@ -182,14 +191,12 @@ high-tilt decisions, but on **real** chess it is a flat near-null (no
 concentration by post-loss or time-pressure) — so we lead with timing and treat
 the real move channel as a genuine near-null, not a faint signal to amplify.
 
-And a single principle governs *where* it helps: **the latent's edge scales with
-behavioral heterogeneity**. This shows up at three granularities — across
-*populations* (the KT effect size correlates Pearson 0.89 with per-student
-accuracy spread across 8 real datasets), across *players* (the chess timing edge
-is ≈3× larger for the weakest, most-variable players), and across *contexts* (2–8×
-larger under time pressure). The evolving latent buys the most exactly where
-behaviour is least predictable from the average — which is also why it recovers
-population heterogeneity (Milestone F).
+The chess results support a clear principle about *where* the latent helps:
+the timing edge is ≈3× larger for weaker/more-variable players and 2–8× larger
+under time pressure. The fixed-loader KT synthesis points in the same direction
+in Pearson terms (0.78), but its weak rank correlation (0.48), wide bootstrap,
+one reversed dataset mean, and Spanish sensitivity prevent elevating that
+cross-population pattern to a law.
 
 ## Limitations (state these)
 
@@ -292,10 +299,14 @@ population heterogeneity (Milestone F).
   null, one wrong-sign-significant, one right-sign-significant) and doesn't
   stabilize with more training (`results/real_kt_rt.txt`). So the timing-vs-
   response asymmetry does **not** transfer to real ASSISTments response times —
-  it stays supported by real chess + synthetic KT only, not claimed as a
-  cross-domain law on real data. Plausible reason: ASSISTments' response time is
-  an incidental UI timer, not a self-paced clock the student strategically
-  manages the way a chess clock (or the synthetic frustration process) is.
+  and a frozen EdNet-KT1 test reaches the same conclusion on 500 students:
+  response significantly favors D (pooled −0.0159, CI [−0.0202,−0.0118]) but
+  timing is null (−0.0004, [−0.0059,+0.0059]). The EdNet primary analysis uses
+  singleton bundles to avoid its unresolved bundle-time ambiguity. Thus the
+  asymmetry stays supported by real chess + synthetic KT only, not claimed as
+  a cross-domain law on real data. A plausible, unproven reason is that these
+  education fields are incidental UI timers rather than a strategically
+  managed self-paced clock.
 - **What the edge *is*, mechanistically (dynamics vs. individualization).** On
   synthetic players with a *known* hidden state the latent provably encodes and
   causally uses it (RQ2, probe + clamp). On **real** data the evolving-vs-
@@ -385,7 +396,9 @@ form:
    its form here — an *evolving within-session behavioral state*
    (tilt/fatigue/time-pressure), measured against a *per-decision engine oracle*,
    validated on a *strict future split*, robust across a six-year era span, and
-   reproduced in a non-game oracle domain — with move choice a near-null.
+   reproduced on synthetic KT — with move choice a near-null. Frozen real-time
+   tests on ASSISTments and EdNet are null, so this is not presented as a real
+   cross-domain timing law.
 2. **The equal-capacity evolving-vs-memoryless control on a real future split.**
    Evolving-vs-memoryless is a routine seqrec ablation; our differentiator is
    running it as an *equal-capacity, same-input* control on a per-decision oracle
