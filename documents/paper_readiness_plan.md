@@ -1,7 +1,32 @@
 # Paper readiness plan
 
-Status as of 2026-07-13. This is the active gate list; `TODO.md` remains the
-broader project index.
+Status as of 2026-07-19 (was 2026-07-13). This is the active gate list;
+`TODO.md` remains the broader project index.
+
+## 0. Idea-forge validation verdict (2026-07-19) — one contained unfreeze
+
+An independent dedup + adversarial-critic run
+(`idea-forge/grounded-player-sim/`, idea I1) ruled: novelty gate **pass**
+(no head-on collision; ChessMimic/LATTE close-range, carved at full-text
+level), bands S2/F4/V3 → overall **C (reshape)**, ICLR cog-sci venue fit
+defensible with TMLR as fallback. The named lethal flank: the choice
+near-null (probe R² = 0.009, deviation-from-Maia-2) is measured against
+small from-scratch move backbones — a strong released move backbone could
+make choice state-legible and dissolve the when-not-what headline.
+
+**User-approved disposition (full reshape): the empirical freeze is lifted
+for exactly ONE experiment** — the state→choice probe / move D−B re-run
+against a strong *released* move backbone (Maia-3/Chessformer,
+arXiv:2605.19091; verify weight availability first; Maia-2 fallback is
+already in hand). If choice stays near-null, the asymmetry is
+backbone-robust and the limitations sentence "move-channel ceiling remains
+open" is replaced by this result (expected post-reshape banding S3/F4/V4 →
+B). If choice becomes legible, the headline must be recut before
+submission — surface that immediately. The freeze stays in force for
+everything else. Also completed under this disposition: the
+arXiv:2606.25176 mis-citation (actual paper: Matilda) is fixed in
+`paper.md` §2 + references, flagged in `related_work.md`; §4.4's scope note
+now states the asymmetry survives either mechanism reading.
 
 ## 1. Fixed-loader KT replication — complete
 
@@ -50,7 +75,22 @@ when-not-what criteria fail. Artifacts: `documents/ednet_protocol.md`,
 
 ## 4. Manuscript — active
 
-Convert `paper_draft.md` from a synthesis into a paper structure now. The
+First full paper-structure draft landed as `documents/paper.md`
+(2026-07-19, from the outline + frozen artifacts; claim–evidence mapping in
+`documents/claim_evidence_map.md`). `paper_draft.md` remains the internal
+synthesis. Five-dimension review completed and revision applied same day:
+citation corrections (Maia author list, van der Linden venue; Allie/Maia-2
+metadata verified), §4.1↔§4.2 move-gap reconciliation added, synthetic
+players now constructed in §3 + Table 1, claim calibration aligned across
+abstract/contributions/conclusion, tables renumbered sequentially 1–8 with
+CIs added to Table 3, cadence de-telling pass, Reproducibility + Ethics
+statement stubs added. Remaining before submission: figures 1–3; resolve
+all reference-list TODOs (tooling + dataset cites, re-add Player-Specific /
+Mixture-of-Masters with verified IDs); the four verification items in
+`claim_evidence_map.md` (rating-tercile balance, static-arm params, re-run
+shuffle on fixed loader, 2013 protocol check); page-budget trim at LaTeX
+time (~0.5–1 page over; demotion candidates noted in the draft preamble).
+The
 empirical package is frozen: preserve the corrected KT association, the
 3-of-5 stable-speed result, the two real education timing nulls, and the
 Allie+static-vs-evolving result (significant on 2017/2021, null on 2019). Do

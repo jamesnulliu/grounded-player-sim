@@ -1,5 +1,16 @@
 # Related work (draft — corrected positioning, 2026-07-13)
 
+> **Correction (2026-07-19, idea-forge validation run):** arXiv:2606.25176
+> resolves to "Matilda: Engine-Agnostic Search with Human Policy Guidance"
+> (Carlson), NOT "Elo-Disentangled Player-Style Embeddings" as labeled
+> throughout this file. The substance attributed to it (static per-player
+> style conditioning, no timing, no per-individual future split) is true of
+> Matilda and of Maia4All (arXiv:2507.21488), so the positioning stands, but
+> every "Elo-Disentangled" mention below carries the wrong paper title and
+> its ¶2 claims (27–37% over Maia-3 etc.) are unverified for the actual
+> paper at this ID. `paper.md` §2 is already corrected; fix this file before
+> reusing its text.
+
 *Replaces the internal comparison in `design.md §8` for the paper. Rewritten
 after a 2026-07 prior-art sweep that surfaced three uncited chess papers and the
 psychometric response-time literature. Key change: we no longer claim the
