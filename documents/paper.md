@@ -620,6 +620,16 @@ raw gap: the timing head is a proper likelihood, so the gap is a held-out
 log-likelihood improvement, and the population result (§4.6) is a capability
 an average-person model lacks at any gap size.
 
+The two channels are also not measured on a common scale. The timing and
+move heads have different output spaces and entropies, so the raw
+cross-channel comparison (−0.021 to −0.033 nats timing versus ≈0 to −0.018
+move) illustrates the asymmetry but cannot by itself quantify its
+magnitude. The when-not-what claim therefore rests on scale-free contrasts:
+the same linear probe that recovers a known synthetic hidden state at
+R² = 0.93 recovers deviation-from-Maia-2 at 0.009 (§4.2), and the timing
+edge concentrates 2.7–3.6× under time pressure while the move edge stays ≈0
+in the same buckets (§4.4).
+
 The when-not-what asymmetry holds on real chess and synthetic knowledge
 tracing; it does not transfer to the two real education timers tested
 (§4.5). The boundary condition we propose, and have not yet tested, is that

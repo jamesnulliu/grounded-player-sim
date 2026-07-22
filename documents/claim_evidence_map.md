@@ -57,6 +57,18 @@ sequential scheme: 1–8).
 - λ = 0 move control (§4.1 reconciliation): −0.0001 → −0.0066 ns, from
   `results_ec.md` (2017-04, single-condition test).
 
+## Post-check edits (2026-07-22)
+
+- §5 gains a cross-channel comparability limitation: raw timing-vs-move nat
+  gaps are not scale-comparable across heads, so the asymmetry claim anchors
+  to the probe contrast (R² 0.009 vs 0.93, §4.2/§4.4) and the concentration
+  pattern (timing 2.7–3.6× under pressure, move ≈0 in the same buckets), not
+  the raw nat comparison. No claim-row artifacts change.
+- `summary.md` finding 4 and contribution 4 reworded: the education response
+  edge is stated as order-invariant individualization (shuffle control), not
+  state dynamics — closes the mirror-image misreading that state shows up in
+  education *actions*. `summary.pdf` is now stale relative to `summary.md`.
+
 ## Review to-confirm items (checks against existing data, no new experiments)
 
 1. Rating-tercile decision-count balance (possible data-quantity confound on

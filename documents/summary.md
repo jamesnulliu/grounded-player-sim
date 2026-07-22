@@ -1,31 +1,63 @@
 # Project Summary: When, Not What
 
-*One-page explainer. Numbers match the frozen artifacts in `results/` and
-the manuscript `documents/paper.md` (2026-07-19). Target venue: ICLR,
-cognitive-science area.*
+## The main contribution, directly
 
-## The idea in one sentence
+**The finding.** A person's current mental state (tilt, fatigue, clock
+panic) shows up in **when** they act — how long they think — and almost
+not at all in **what** they choose. This **when-not-what asymmetry** is
+robust across 6 years of real chess, survives released state-of-the-art
+baselines, and nobody has reported it on real humans.
 
-A person's current mental state (tilt, fatigue, clock panic) shows up in
-**when** they act — how long they think — and almost not at all in **what**
-they choose.
+**The control that makes it believable.** Today's models of specific
+people freeze the person (a rating, a fixed embedding, a persona
+paragraph). We instead carry a small state that updates as the person
+acts — and we test it the honest way almost nobody does: against a
+**twin model identical in every way** (same size, same inputs, same
+optimizer) except it is forbidden to remember anything across steps,
+scored on the person's **future** games only. When the evolving model
+wins, the win is attributable to **accumulating a state** — not to
+seeing recent context, and not to extra capacity.
 
-## The idea, plainly
+The latent model itself is deliberately small and standard — it is the
+instrument, not the contribution. The contribution is the finding plus
+the control that makes the finding attributable.
 
-- People do not behave the same way twice. A chess player who just lost
-  plays the next game differently. A student who struggled through ten
-  problems answers the eleventh differently.
-- Today's models of specific people **freeze** the person: a rating, a
-  fixed embedding, a persona paragraph. They cannot track this drift.
-- We carry a small **state** that updates as the person acts (a recurrent
-  latent, fed by simple history features: time pressure, post-loss,
-  fatigue, momentum).
-- The honest test almost nobody runs: compare against a **twin model that
-  is identical in every way** — same size, same inputs, same optimizer —
-  except it is forbidden to remember anything across steps. Score both on
-  the person's **future** games only.
-- If the evolving model wins, the win is attributable to **accumulating a
-  state**, not to seeing recent context, and not to extra capacity.
+## The model: input, output, and the twin
+
+One task: given everything a player did so far, predict their next
+action — both the move and how long they will think.
+
+**Input, per decision point** (both arms see exactly the same thing):
+
+- the position (12×64 board planes for the from-scratch backbone; text
+  for the LLM arm);
+- the clock (time remaining);
+- four engineered history features summarizing the session so far:
+  `time_pressure` (0→1 as the clock drains), `post_loss` (spikes after
+  a loss, decays over ~3 games), `fatigue` (ramps with games played
+  this session), `momentum` (signed win rate over the last 5 games).
+
+**The model (D, evolving).** A small GRU folds those features, step by
+step, into a latent state `z_t`, updated after every action. `z_t` is
+injected into a swappable backbone — the from-scratch board CNN
+(headline results) or Qwen3 (as a hidden prefix or a verbal note).
+
+**The twin (B, memoryless).** The same network, same parameter count,
+same inputs — but the recurrence is reset before every step, so it sees
+the same instantaneous features and cannot accumulate them. This
+contrast is the whole experiment.
+
+**Output, two heads** — scored by held-out NLL (lower = better) on a
+strict per-player future split:
+
+- **what:** a distribution over the player's legal next moves;
+- **when:** a distribution over think-time — a zero-inflated log-normal
+  (a learned probability of an instant premove, plus a log-normal over
+  the rest). The timing head reads *only* the latent, which is why the
+  timing result is backbone-independent by construction.
+
+In the education arm the same machinery reads a student's exercise
+stream and predicts response correctness instead of moves.
 
 ## What we found
 
@@ -39,10 +71,14 @@ they choose.
 3. **The edge lives where behavior is least average.** It is ~3× larger
    under time pressure (after variance control) and ~3× larger for the
    weakest players.
-4. **It transfers to education — for responses, not for timing.** The same
-   model wins student-response prediction on 8 real datasets, and it can
-   reconstruct (and generate) the diversity of a real student population,
-   which an "average person" model cannot.
+4. **It generalizes to education — as individualization, not state
+   dynamics.** The same model wins student-response prediction on 8 real
+   datasets, but a temporal-shuffle control identifies that edge as
+   order-invariant individualization (accumulating who the student is),
+   not tracking of an evolving state — and the timing result does not
+   transfer to either real education dataset. It can still reconstruct
+   (and generate) the diversity of a real student population, which an
+   "average person" model cannot.
 5. **How you inject the state depends on the backbone.** A hidden vector
    beats a text note in a from-scratch model; inside an LLM, that advantage
    disappears (the LLM reads the note semantically).
@@ -60,8 +96,9 @@ they choose.
    hidden state, the latent provably encodes it (probe R² 0.93 vs 0.65)
    and causally uses it (clamp → monotone response).
 4. **Generality + utility:** response-channel wins on 8 real education
-   datasets; population recovery and generation an average-person model
-   structurally cannot do.
+   datasets (an individualization effect, per the shuffle control);
+   population recovery and generation an average-person model structurally
+   cannot do.
 5. **The channel result:** hidden vs verbal injection ordering flips with
    the backbone's language prior.
 
@@ -131,21 +168,10 @@ player-bootstrap CI excludes zero.
 | State helps moves | Null under LoRA at ≥4B; small (−0.007/−0.008) under full fine-tuning → timing ≈ 1.5× move |
 | Hidden vs verbal channel | Board-native: hidden wins by 0.07–0.12 nats; inside the LLM: advantage disappears |
 
-### Honest negatives (we report these, and they set the scope)
+### Honest negatives
 
 | Negative | What it means |
 |---|---|
 | Real education response *times*: ASSISTments inconsistent, EdNet null | The timing result does not transfer to incidental UI timers; we hypothesize it needs a strategically managed clock |
 | Go: null at every board size once board size is controlled | The naive mixed-cohort "positive" was a regime confound |
 | KT temporal shuffle: edge undiminished | The education *response* edge is individualization, not order-tracking |
-
-## Status and the one open experiment
-
-- Empirical package frozen; manuscript drafted (`documents/paper.md`);
-  five-dimension review passed and applied.
-- Independent novelty check (2026-07-19): **no head-on collision**; closest
-  work carved at full-text level.
-- **One experiment pending** (approved unfreeze): re-run the state→choice
-  probe against a strong *released* move backbone (Maia-3/Chessformer). If
-  choice stays null, the asymmetry is backbone-robust — the last open flank
-  before submission.
