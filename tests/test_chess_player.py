@@ -316,7 +316,11 @@ def test_g4_external_and_pure_external_modes(offline_wandb):
 
     # (a) external prediction as one more FITTED baseline feature.
     ext = run_timing_vs_aggregate(
-        ds, split_mode="fraction", epochs=20, seed=0, bootstrap_n=200,
+        ds,
+        split_mode="fraction",
+        epochs=20,
+        seed=0,
+        bootstrap_n=200,
         external_pred=True,
     )
     assert ext.mode == "external"
@@ -327,7 +331,11 @@ def test_g4_external_and_pure_external_modes(offline_wandb):
     # (b) pure-external: baseline mu is log(released pred) LOCKED (+intercept);
     # B+z adds the latent as the only extra predictor.
     pure = run_timing_vs_aggregate(
-        ds, split_mode="fraction", epochs=20, seed=0, bootstrap_n=200,
+        ds,
+        split_mode="fraction",
+        epochs=20,
+        seed=0,
+        bootstrap_n=200,
         pure_external=True,
     )
     assert pure.mode == "pure_external"
@@ -349,6 +357,24 @@ def test_g4_external_and_pure_external_modes(offline_wandb):
     assert static.latent_control == "static"
     assert len(static.b4z_per_player) == len(static.player_ids) == 8
     assert math.isfinite(static.b4z_nll)
+
+    # (d) the same locked external baseline with the hand-designed
+    # structured-memory control (no gradient training; lstsq readout only).
+    memory = run_timing_vs_aggregate(
+        ds,
+        split_mode="fraction",
+        epochs=20,
+        seed=0,
+        bootstrap_n=200,
+        pure_external=True,
+        latent_control="memory",
+    )
+    assert memory.latent_control == "memory"
+    assert len(memory.b4z_per_player) == len(memory.player_ids) == 8
+    assert math.isfinite(memory.b4z_nll)
+    assert math.isnan(memory.d_nll)  # no trained D model in this arm
+    # Same players, same held-out steps as the learned arms.
+    assert memory.player_ids == pure.player_ids
 
 
 def test_g4_missing_external_pred_fails_loudly(offline_wandb):

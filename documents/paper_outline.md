@@ -1,14 +1,33 @@
 # Paper outline (concise draft)
 
+> **Superseded framing note (2026-07-22).** The project reframed around the
+> story "user policy = static attribute + evolving state; static-persona
+> simulation cannot represent the person" — `documents/paper.md` is now the
+> canonical text for title, abstract, §1, §2, the §4.3 structured-memory
+> control (Table 5b), §5, and §6. This outline's abstract/contributions below
+> predate the reframe; use them for section budgeting and the claim-mapping
+> table only, and read numbers from `results/` as always. New results since
+> this outline: `results/memory_baseline.txt` (memory beats static 3/3
+> cohorts; matches/beats the 4-feature evolving GRU),
+> `results/memory_gru_arm.txt` (input-matched learned control),
+> `results/kt_memory_arm.txt` (KT memory arm, 7/8 datasets),
+> `results/kt_static_arm.txt` (frozen fitted profile fails 8/8), and
+> `results/g5_persona_ladder.txt` (LLM persona ladder: fitted info
+> ≈ −0.010 significant; updating-vs-frozen tie; text > vector).
+> Submission levers (downstream-utility demo, figures, story spine) are
+> tracked at the top of `TODO.md`.
+
 *Working draft toward the submission manuscript. Numbers are taken verbatim
 from the frozen artifacts in `results/` and `documents/results_ec.md`; every
 claim below carries a landing point (mapping table at the end). No figures
 yet; figure slots are marked TODO.*
 
 **Working title (pick one):**
-1. *When, Not What: An Evolving Per-Individual State Predicts a Person's
+1. *Beyond Static Personas: Simulated Humans Need an Evolving State —
+   Legible in When They Act, Not What They Choose* (reframe, current pick)
+2. *When, Not What: An Evolving Per-Individual State Predicts a Person's
    Future Think-Time, Not Their Choices*
-2. *Modeling When a Person Acts: Evolving Latent State Beats Memoryless
+3. *Modeling When a Person Acts: Evolving Latent State Beats Memoryless
    History-Conditioning on Future Human Behavior*
 
 Throughout: **D** = evolving latent, **B** = equal-capacity memoryless twin;

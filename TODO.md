@@ -4,6 +4,112 @@ Work plan for `grounded-player-sim`, consolidated after the core results landed
 (2026-07). Detailed results live in the dedicated docs; this file is now a
 **status + remaining-ideas** index, not a task checklist.
 
+## Submission levers (2026-07-23 assessment) — the path to ICLR
+
+Frank calibration: borderline at ICLR main (~35–45% with strong
+execution); the science is done, acceptance hinges on execution. In
+priority order:
+
+1. **Downstream-utility demo (the single biggest lever).** Nothing yet
+   shows the −0.01 NLL changing a decision anyone cares about. Candidate:
+   use the population generator to stress-test an adaptive tutoring/item-
+   selection policy and show the average-person simulator picks a
+   measurably worse policy than the state-carrying one. Converts "small
+   effect" into "consequential effect."
+2. **Figures — all three are still TODO in paper.md.** The ladder diagram,
+   concentration bars, and the drift-speed 2×2 ARE the argument.
+3. **9-page story discipline.** Spine: decomposition → ladder →
+   when-not-what → freezing/drift law → population. Everything else to
+   appendix.
+4. Read DASKT (2502.10396) in full; fill release/ethics TODO sentences.
+5. Optional: median-scorecard G5 rerun (3 cells, bounds the mean-vs-median
+   wart); deep full-text dedup on "LLM memory vs latent head-to-head"
+   (sweep was abstract-level).
+6. Routing: ICLR cog-sci/applications primary area; TMLR is the honest
+   high-probability fallback.
+
+## Reframe + memory control (2026-07-22) — status
+
+The project reframed around the founding story: **user policy = static
+attribute + evolving state**; static-persona simulation cannot represent the
+person (emotion as motivation, "dynamic behavioral state" as the measured
+claim). `documents/paper.md` (title/abstract/§1/§2/§4.3/§5/§6),
+`summary.md`, `README.md`, `related_work.md`, `paper_outline.md` (header
+note), and `claim_evidence_map.md` all updated.
+
+- **DONE — structured-memory control (the "just a memory" objection).**
+  New `latent_control="memory"` arm (`_memory_latents`, 15 causal running
+  stats incl. raw think-time history + Allie residuals; zero trained
+  params) under the exact G4 locked-Allie protocol. Memory beats static
+  3/3 cohorts (pooled −0.0276) — the dynamic term confirmed by a
+  training-free second instrument, including on 2019-07 where the learned
+  arm was null. Richer-input memory matches/beats the 4-feature evolving
+  GRU (pooled +0.0150): the claim is *carrying dynamic state*, not the
+  GRU. `results/memory_baseline.txt`, `scripts/memory_vs_learned.py`.
+- **DONE — input-matched learned control** (GRU over the same 15 memory
+  features, 3 seeds × 3 cohorts): pooled GRU−memory = +0.0096
+  [−0.0032, +0.0237] (tie, linear nominally ahead), GRU−evolving = −0.0054
+  ns, GRU−static = −0.0180 [−0.0316, −0.0038] significant. Given equal
+  information, learned and hand-designed dynamics coincide; every dynamic
+  arm beats static. `scripts/memory_gru_arm.py`,
+  `results/memory_gru_arm.txt`.
+- **DONE — prior-art full-text digest** (Ailed = hand-tuned
+  personality+psyche, engine-vs-engine, no human validation, no timing —
+  conceptual neighbor, not an empirical threat; 2606.25176 v1
+  "Elo-Disentangled" retitled v2 "Matilda", quote v2 numbers only; UniMaia
+  "move delay" is an aux objective, never evaluated as held-out timing;
+  LaRT = arXiv 2512.07019, static traits, van der Linden lineage).
+  Scratchpad `prior_art_digest.md`.
+- **DONE — novelty sweep (24 rows).** The *premise* (static personas
+  insufficient, users carry evolving emotion) is now common in 2025–26
+  LLM-agent papers (TWICE, AnnaAgent, Customer-R1); no paper runs the
+  controlled quantitative demonstration (twin + released-SOTA/static/
+  memory ladder + future splits + timing + population generation).
+  Closest single competitor: **DASKT (arXiv 2502.10396)** — hand-engineered
+  affect pipeline for KT; cite + read in full before submission.
+  Scratchpad `novelty_report.md`.
+- **DONE — KT-side memory arm** (2026-07-22, `scripts/kt_memory_arm.py`,
+  paired against the frozen fixed-loader cells, fingerprints verified):
+  M−B significantly negative 7/8 datasets (same profile as D−B), D−M ties
+  5/8 with M winning 2 (incl. REPAIRING the ASSISTments-15 training
+  reversal: D−B +0.0063 but M−B −0.0058) and D winning 1 (assist17).
+  "Memory suffices" is CROSS-DOMAIN; per the shuffle control the KT
+  instrument confirms the individualization term specifically.
+  `results/kt_memory_arm.txt`. Docs updated (paper.md Table 6 + §4.5 ¶,
+  abstract clause; summary/README/related_work/claim map).
+- **DONE — four-axis LLM-agent contrast** (2026-07-22): §1 hook + dedicated
+  §2 paragraph "Emotion-dynamic LLM user simulators"
+  (mechanism/evidence/attribution/grounding) against AnnaAgent,
+  Customer-R1, TWICE, prompted-appraisal agents.
+- **DONE — "asserted, never measured" emphasis** (user-directed): abstract,
+  §1, §6, summary.md one-line pitch.
+- **DONE — KT fitted-static-profile arm** (2026-07-22, user question "does
+  a static profile suffice on KT?"): S = frozen per-student train-split
+  accuracy in the same logistic as the memory arm. ANSWER: NO — updating
+  memory beats the frozen profile 8/8 (−0.011…−0.098, biggest where
+  students drift most: Spanish), and S loses even to the memoryless twin
+  6/8. "Order-invariant individualization" (shuffle) ≠ freezable — a
+  running mean is order-invariant yet still updates, and the updating is
+  load-bearing. KT scoping sharpened in paper.md §4.5 + abstract.
+  `scripts/kt_static_arm.py`, `results/kt_static_arm.txt`.
+- **DONE — G5 persona ladder inside the LLM** (2026-07-23,
+  `scripts/g5_persona_ladder.py`, 12 cells, 99 eval players, paired
+  player bootstrap): fitted person-info is what the LLM probe resolves —
+  static−none −0.0104 and memory−none −0.0096, both significant (largest
+  LLM person-effect in the project; upper-bounds hand-written-persona
+  practice). Frozen-vs-updating is a TIE in this channel (+0.0009, CI
+  spans 0): the board-native dynamic increment (−0.0126 over static) sits
+  at/below this probe's resolution, and one-month blitz speed is the
+  low-drift regime (contrast KT, where frozen failed 8/8). Channel
+  ordering replicates G3 on fresh data: text beats the soft vector
+  (hidden−memory +0.0045 sig). Practical line for the paper: fit the
+  persona from data, keep it updating when the person drifts, deliver as
+  text. Known wart: scorecard uses mean (premove-dragged) vs persona's
+  median — a median-scorecard rerun (3 cells) would bound the tie; low
+  priority. `results/g5_persona_ladder.txt`, paper.md §4.7 + Table 8.
+- **DONE — `paper.md` placeholders filled** with the landed GRU-arm
+  numbers (abstract, contribution 1, §4.3 third finding).
+
 **North star — three results that stand on their own** (design.md §8,
 `documents/related_work.md`):
 1. **when-not-what** — evolving state is legible in *timing*, near-null in *move

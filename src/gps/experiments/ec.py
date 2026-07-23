@@ -780,6 +780,110 @@ def _b4_features(
     return feats
 
 
+MEMORY_FEATURE_NAMES = (
+    "mem_fill",  # log-saturating count of remembered decisions
+    "mean_log_time",  # running mean of past log think-times
+    "std_log_time",  # running std of past log think-times
+    "ewma_log_time",  # recency-weighted past log think-time (alpha=0.1)
+    "recent10_log_time",  # mean log think-time over the last 10 decisions
+    "lag1_log_time",  # previous decision's log think-time
+    "mean_resid",  # running mean of (actual - released-model) log residual
+    "ewma_resid",  # recency-weighted residual (alpha=0.1)
+    "lag1_resid",  # previous decision's residual
+    "premove_frac",  # running fraction of instant (premove) decisions
+    "has_memory",  # 1 once at least one decision is remembered
+    "time_pressure",  # current-step engineered features (GRU input parity)
+    "post_loss",
+    "fatigue",
+    "momentum",
+)
+
+
+def _memory_latents(trajectories) -> list[list[list[float]]]:
+    """Hand-designed running-memory features, the structured-memory control.
+
+    The reviewer objection this arm answers: "an evolving learned latent is
+    just a memory -- a structured memory module storing running summary
+    statistics of the person's history would do the same." So ``z_t`` here is
+    exactly what such a memory would store, computed **strictly causally**
+    (steps ``t' < t`` only) and read out by the same linear fit as the other
+    ``latent_control`` arms. Deliberately *stronger-input* than the learned
+    arms: it reads the raw past think-times and the released model's past
+    errors, which the GRU never sees (its input is only the four engineered
+    history features). If the learned evolving latent still beats this arm,
+    the win is learned state dynamics, not history access.
+
+    Residual features use ``context["external_time_pred"]`` when present on a
+    past decision and contribute zero otherwise, so the arm runs with or
+    without a cached released model (the G4 protocol has it on every step).
+
+    Returns ``lat[t][b]`` padded with zero vectors to the longest trajectory,
+    matching the shape contract of the learned-latent extraction path.
+    """
+    import math
+
+    from gps.latent.structured import DIMENSIONS as _DIMS
+    from gps.latent.structured import history_features
+
+    t_max = max(len(t.decisions) for t in trajectories)
+    width = len(MEMORY_FEATURE_NAMES)
+    lat = [[[0.0] * width for _ in trajectories] for _ in range(t_max)]
+    for b, traj in enumerate(trajectories):
+        n = 0
+        sum_y = 0.0
+        sumsq_y = 0.0
+        ewma_y = 0.0
+        recent: list[float] = []
+        lag1_y = 0.0
+        n_resid = 0
+        sum_r = 0.0
+        ewma_r = 0.0
+        lag1_r = 0.0
+        n_premove = 0
+        for t, (dp, obs) in enumerate(zip(traj.decisions, traj.observations)):
+            feats = history_features(dp)
+            std_y = (
+                math.sqrt(max(0.0, sumsq_y / n - (sum_y / n) ** 2))
+                if n >= 2
+                else 0.0
+            )
+            row = [
+                math.log1p(n) / 6.0,
+                (sum_y / n) if n else 0.0,
+                std_y,
+                ewma_y,
+                (sum(recent) / len(recent)) if recent else 0.0,
+                lag1_y,
+                (sum_r / n_resid) if n_resid else 0.0,
+                ewma_r,
+                lag1_r,
+                (n_premove / n) if n else 0.0,
+                1.0 if n else 0.0,
+            ] + [feats[d] for d in _DIMS]
+            lat[t][b] = row
+            # Fold the *current* step into memory only after emitting z_t.
+            spent = obs.time_spent or 0.0
+            y = math.log(max(spent, 1e-3))
+            n += 1
+            sum_y += y
+            sumsq_y += y * y
+            ewma_y = y if n == 1 else 0.9 * ewma_y + 0.1 * y
+            recent.append(y)
+            if len(recent) > 10:
+                recent.pop(0)
+            lag1_y = y
+            if spent <= 0.05:
+                n_premove += 1
+            pred = dp.context.get("external_time_pred")
+            if pred is not None:
+                r = y - math.log(max(float(pred), 1e-3))
+                n_resid += 1
+                sum_r += r
+                ewma_r = r if n_resid == 1 else 0.9 * ewma_r + 0.1 * r
+                lag1_r = r
+    return lat
+
+
 def _corr(pred, actual):
     """(Pearson, Spearman) of two equal-length sequences; 0 if degenerate."""
     import numpy as np
@@ -843,6 +947,12 @@ def run_timing_vs_aggregate(
     player, held constant over the trajectory. This supports a paired
     Allie+static-individual vs Allie+evolving test without changing the Allie
     offset, split, timing likelihood, or downstream linear readout.
+    ``"memory"`` swaps in the hand-designed running-memory features of
+    :func:`_memory_latents` (the structured-memory control) with no gradient
+    training at all -- only the shared linear readout is fit -- so the
+    Allie+memory vs Allie+evolving pair asks whether *learned* state dynamics
+    beat what a summary-statistic memory module could store. ``d_nll`` and the
+    D-model fields are NaN/zero for this arm (there is no trained D model).
     """
     import math
 
@@ -855,56 +965,64 @@ def run_timing_vs_aggregate(
             dataset.trajectories, train_frac
         )
 
-    if latent_control == "evolving":
-        injector = NeuralInjector(
-            kind=InjectionKind.HIDDEN,
-            latent_dim=latent_dim,
-            seed=seed,
-            persist=True,
-        )
-    elif latent_control == "static":
-        from gps.latent.static_individual import StaticIndividualInjector
-
-        injector = StaticIndividualInjector(
-            [trajectory.player_id for trajectory in dataset.trajectories],
-            kind=InjectionKind.HIDDEN,
-            latent_dim=latent_dim,
-            seed=seed,
-        )
-    else:
-        raise ValueError(
-            "latent_control must be 'evolving' or 'static', got "
-            f"{latent_control!r}"
-        )
-    cfg = TrainConfig(
-        epochs=epochs,
-        lr=lr,
-        seed=seed,
-        batch_size=16,
-        experiment=f"E-C6-timing-{latent_control}",
-        extra={"timing_lambda": 0.5, "arm": latent_control},
-    )
-    inj, backbone, *_ = _train_arm(
-        injector, latent_dim, hidden_dim, dataset, splits, cfg
-    )
-
     half_log2pi = 0.5 * math.log(2 * math.pi)
 
-    # --- our model's per-step latent + mu on the full grid --------------
-    import torch
+    if latent_control == "memory":
+        # Structured-memory control: hand-designed causal running statistics,
+        # no gradient training; the shared lstsq readout below is the only
+        # fitted component. There is no trained D model for this arm.
+        lat = _memory_latents(dataset.trajectories)
+        mu_d = None
+        sig_d = 1.0
+    else:
+        if latent_control == "evolving":
+            injector = NeuralInjector(
+                kind=InjectionKind.HIDDEN,
+                latent_dim=latent_dim,
+                seed=seed,
+                persist=True,
+            )
+        elif latent_control == "static":
+            from gps.latent.static_individual import StaticIndividualInjector
 
-    device = next(backbone.parameters()).device
-    backbone._build().eval()
-    inj._build().eval()
-    batch = backbone.encode_batch(dataset.trajectories).to(device)
-    with torch.no_grad():
-        latent = inj.latent_trajectory(
-            batch.feats, player_ids=batch.player_ids
+            injector = StaticIndividualInjector(
+                [trajectory.player_id for trajectory in dataset.trajectories],
+                kind=InjectionKind.HIDDEN,
+                latent_dim=latent_dim,
+                seed=seed,
+            )
+        else:
+            raise ValueError(
+                "latent_control must be 'evolving', 'static', or 'memory', "
+                f"got {latent_control!r}"
+            )
+        cfg = TrainConfig(
+            epochs=epochs,
+            lr=lr,
+            seed=seed,
+            batch_size=16,
+            experiment=f"E-C6-timing-{latent_control}",
+            extra={"timing_lambda": 0.5, "arm": latent_control},
         )
-        mu_d, sig_d = backbone.timing_mu_sigma(latent)
-    lat = latent.cpu().tolist()  # [T][B][L]
-    mu_d = mu_d.cpu().tolist()
-    sig_d = float(sig_d)
+        inj, backbone, *_ = _train_arm(
+            injector, latent_dim, hidden_dim, dataset, splits, cfg
+        )
+
+        # --- our model's per-step latent + mu on the full grid ----------
+        import torch
+
+        device = next(backbone.parameters()).device
+        backbone._build().eval()
+        inj._build().eval()
+        batch = backbone.encode_batch(dataset.trajectories).to(device)
+        with torch.no_grad():
+            latent = inj.latent_trajectory(
+                batch.feats, player_ids=batch.player_ids
+            )
+            mu_d, sig_d = backbone.timing_mu_sigma(latent)
+        lat = latent.cpu().tolist()  # [T][B][L]
+        mu_d = mu_d.cpu().tolist()
+        sig_d = float(sig_d)
 
     # --- fit baseline B and B+z (baseline + evolving latent) ------------
     # B+z is the value-add test: does the latent help *beyond* the baseline?
@@ -965,15 +1083,16 @@ def run_timing_vs_aggregate(
             bf, bo, wf, wo = _rows(traj.decisions[t], lat[t][b])
             mb = _mu(w4, bf, bo)
             mbz = _mu(w4z, wf, wo)
-            dn.append(_nll(yt, mu_d[t][b], sig_d))
+            if mu_d is not None:
+                dn.append(_nll(yt, mu_d[t][b], sig_d))
             bn.append(_nll(yt, mb, sig4))
             bzn.append(_nll(yt, mbz, sig4z))
             b4pred.append(math.exp(mb))
             bzpred.append(math.exp(mbz))
             act.append(traj.observations[t].time_spent or 0.0)
-        if not dn:
+        if not bzn:
             continue
-        d_pp.append(sum(dn) / len(dn))
+        d_pp.append(sum(dn) / len(dn) if dn else float("nan"))
         b4_pp.append(sum(bn) / len(bn))
         b4z_pp.append(sum(bzn) / len(bzn))
         player_ids.append(traj.player_id)

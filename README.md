@@ -1,47 +1,64 @@
 # grounded-player-sim (`gps`)
 
-Personalized human game-play simulation built around an **LLM policy
-augmented with a trainable, per-individual dynamic latent state**.
+Grounded evidence that **simulated humans need an evolving state, not just a
+static profile** — built as a per-individual dynamic latent injected into a
+swappable (board-native or LLM) policy.
 
-**Thesis — model *when* a person acts, not only *what* they choose.** A learned
-latent `z_t` that evolves over a player's own action+timing trajectory predicts
-that specific person's **think-time** far better than their **move choice** —
-robustly, concentrating under time pressure and for weaker players. A
-fixed-loader eight-dataset KT rerun finds a suggestive, but not robust,
-association with population heterogeneity (signed Pearson 0.78, Spearman 0.48).
-Validated against the player's
-*future* behavior on a strict temporal split, on real Lichess chess and real
-knowledge-tracing *responses*. The state's value lives in a *trained hidden*
-latent, not a verbal persona prompt (RQ6) — and it adds think-time value even
-over a **released SOTA think-time model** (Allie, ICLR'25; Milestone G4).
+**Thesis — user policy = static attribute + evolving state.** Today's user
+simulators freeze the person (a persona prompt, a rating, a fixed
+embedding), so the simulated policy is *attribute + reasoning* and
+within-person drift (tilt, fatigue, clock panic — the emotion-like state) is
+unrepresentable by construction. We test the opposite decomposition where it
+is cleanly measurable — chess and knowledge tracing, discrete actions,
+logged per-decision timing, strict per-player *future* splits — and find the
+dynamic term is real, separately measurable, and concentrated exactly where
+an emotion-like state should matter. (We never claim to measure emotion; no
+emotion labels exist. The claim is the decomposition.)
 
-**Three things we lead with** (each axis has prior art — dynamic emotional chess,
-per-individual style, timing>choice in psychometrics; our contribution is the
-*controlled synthesis on real humans*, not standalone-axis novelty. Full cited
-positioning in `documents/related_work.md`; superseded framing in `design.md §8`):
-1. **The when-not-what finding.** Evolving state is legible in *timing*,
-   near-null in *move choice* — robust across a 6-year era span in real chess
-   and reproduced on synthetic KT timing. Frozen real-time tests on both
-   ASSISTments and EdNet are honest negatives; real KT supports the
-   response/individualization result, not a real cross-domain timing law. That
-   timing reveals latent state better than
-   choice is old in response-time psychometrics; what is new is its form here — an
-   *evolving within-session behavioral state* against a *per-decision oracle* on
-   a *strict future split*, with move choice a near-null.
-2. **The equal-capacity evolving-vs-memoryless control on a strict future
-   split.** Isolates *dynamics* from *habit* and raw *individualization* — the
-   #1 reviewer objection ("isn't this just history-conditioning?"), settled.
-   Evolving-vs-memoryless is a routine seqrec ablation; the differentiator is
-   the *equal-capacity, same-input* form on a per-decision **oracle** domain
-   with a real future split — which no behavior-simulation competitor runs.
-3. **The hidden-vs-verbal channel ordering is backbone-dependent** (measured,
-   not assumed). With *no* language prior (board-native, RQ6) the trained
-   *hidden* latent beats the verbal note (−0.069/−0.117). But *inside an actual
-   LLM* (G3, Qwen3-1.7B, 3 seeds) the ordering **flips**: the verbal note wins
-   (hidden−verbal ≈ +0.003), because the LLM reads "tilt"/"time pressure"
-   *semantically* — while injected state still **helps** think-time (verbal−none
-   ≈ −0.005, all 3 seeds). So we show *when* the verbal channel today's LLM
-   simulators (HumanLM) use is right, and when the hidden vector is. `results/g3_llm.txt`.
+**What we lead with** (the *premise* — users drift, static personas can't —
+is now common in 2025–26 LLM-agent papers; the *controlled quantitative
+demonstration* is ours. Full cited positioning in
+`documents/related_work.md`):
+1. **The dynamic term survives every control.** Beats an equal-capacity
+   memoryless twin in all 8 clocked era×backbone conditions (2017–2023);
+   still adds think-time value over **Allie** (released ICLR'25 think-time
+   model, Spearman 0.62–0.65) on 3/3 cohorts and over Allie + a **static
+   per-player embedding** on 2/3 (pooled −0.0126). A training-free
+   **structured-memory arm** (running stats of raw history, linear readout)
+   beats the static profile on **3/3** cohorts at 2–3× that margin
+   (pooled −0.0276) — dynamics confirmed under a second instrument with
+   zero trained parameters. The same memory arm matches/beats the
+   4-feature learned GRU, and an input-matched GRU over the same 15
+   statistics ties the linear readout while still beating static → the
+   claim is *carrying dynamic state* and the information it carries, not
+   the specific mechanism. The KT memory arm transfers the verdict:
+   beats the twin 7/8 datasets (same profile as the learned latent), ties
+   D on 5, repairs the ASSISTments-15 training reversal
+   (`results/memory_baseline.txt`, `results/memory_gru_arm.txt`,
+   `results/kt_memory_arm.txt`).
+2. **When, not what.** The state is legible in *timing* (think-time),
+   near-null in *move choice* (probe to deviation-from-Maia-2 R² = 0.009);
+   the edge concentrates 2.7–3.6× under time pressure (variance-controlled)
+   and ≈3× for the weakest players. Real education response *times* are
+   honest negatives (ASSISTments, EdNet); real KT *responses* replicate
+   (22/24 seed cells over 8 datasets).
+3. **Only a state model generates populations.** Sampling the latent prior
+   recovers a real population's accuracy distribution (W1 2× closer than
+   average-person; generated recall 1.00 vs 0.00) — an operation no static
+   persona library and no memory store defines.
+4. **The hidden-vs-verbal channel ordering is backbone-dependent.**
+   Board-native: hidden beats verbal (−0.069/−0.117). Inside Qwen3 the
+   ordering flips (the LLM reads "tilt" semantically) while injected state
+   still helps think-time on all seeds. `results/g3_llm.txt`.
+5. **The persona ladder inside the LLM (G5).** none / frozen fitted
+   persona / updating text scorecard / soft vector, one loop, 99 players:
+   fitted person-info is worth ≈ −0.010 (both text arms significant);
+   updating-vs-frozen is a **tie** on the one-month low-drift horizon
+   (contrast KT, where the frozen fitted profile fails 8/8 — the freezing
+   law: *frozen descriptions fail in proportion to how fast the person
+   drifts*); text beats vector, replicating G3. Practical rule: fit the
+   persona from data, keep it updating when the person drifts, deliver as
+   text. `results/g5_persona_ladder.txt`, `results/kt_static_arm.txt`.
 
 See **`documents/paper_draft.md`** for the landed-results synthesis (abstract +
 contributions + headline table), `documents/results_ec.md` for the detailed

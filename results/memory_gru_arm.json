@@ -1,0 +1,144 @@
+{
+  "cohorts": {
+    "2017-04": {
+      "cis": {
+        "gru_minus_evolving": {
+          "confidence": 0.95,
+          "high": 0.02099412695864204,
+          "low": -0.028819517191779238,
+          "n_units": 100,
+          "p_below_zero": 0.6556,
+          "point": -0.004599233769992959
+        },
+        "gru_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.020580682219496913,
+          "low": -0.03232003805936686,
+          "n_units": 100,
+          "p_below_zero": 0.698,
+          "point": -0.0067652561308377
+        },
+        "gru_minus_static": {
+          "confidence": 0.95,
+          "high": 0.0041390822704146105,
+          "low": -0.04582535150848098,
+          "n_units": 100,
+          "p_below_zero": 0.9556,
+          "point": -0.021601204741574512
+        }
+      },
+      "means": {
+        "allie_plus_evolving": 2.5190939127441445,
+        "allie_plus_gru_mem": 2.5144946789741516,
+        "allie_plus_memory": 2.521259935104989,
+        "allie_plus_static": 2.536095883715726
+      }
+    },
+    "2019-07": {
+      "cis": {
+        "gru_minus_evolving": {
+          "confidence": 0.95,
+          "high": 0.010236629648713922,
+          "low": -0.0431149041956137,
+          "n_units": 100,
+          "p_below_zero": 0.87,
+          "point": -0.015304320903880517
+        },
+        "gru_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.040964909453709945,
+          "low": -0.003731083823368922,
+          "n_units": 100,
+          "p_below_zero": 0.0504,
+          "point": 0.01829849644745315
+        },
+        "gru_minus_static": {
+          "confidence": 0.95,
+          "high": 0.009367750188967516,
+          "low": -0.043706938392824884,
+          "n_units": 100,
+          "p_below_zero": 0.898,
+          "point": -0.016739940976487785
+        }
+      },
+      "means": {
+        "allie_plus_evolving": 2.3171883321327598,
+        "allie_plus_gru_mem": 2.3018840112288794,
+        "allie_plus_memory": 2.2835855147814264,
+        "allie_plus_static": 2.318623952205367
+      }
+    },
+    "2021-06": {
+      "cis": {
+        "gru_minus_evolving": {
+          "confidence": 0.95,
+          "high": 0.023269723780438626,
+          "low": -0.016642580143169168,
+          "n_units": 100,
+          "p_below_zero": 0.4126,
+          "point": 0.002849588517059778
+        },
+        "gru_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.03649552216110565,
+          "low": -0.0031273963523090215,
+          "n_units": 100,
+          "p_below_zero": 0.0454,
+          "point": 0.016191116466424835
+        },
+        "gru_minus_static": {
+          "confidence": 0.95,
+          "high": 0.003261023968570082,
+          "low": -0.03493760976041669,
+          "n_units": 100,
+          "p_below_zero": 0.9528,
+          "point": -0.016529495228997472
+        }
+      },
+      "means": {
+        "allie_plus_evolving": 2.2725731424255073,
+        "allie_plus_gru_mem": 2.275422730942567,
+        "allie_plus_memory": 2.259231614476142,
+        "allie_plus_static": 2.291952226171565
+      }
+    }
+  },
+  "comparison": "GRU over memory features vs linear memory readout",
+  "generated_at": "2026-07-22T22:22:37.430340+00:00",
+  "overall": {
+    "gru_minus_evolving": {
+      "ci": {
+        "confidence": 0.95,
+        "high": 0.009144567633175976,
+        "low": -0.019584500244185146,
+        "n_units": 299,
+        "p_below_zero": 0.7632,
+        "point": -0.005405670075321995
+      },
+      "n_unique_players": 299
+    },
+    "gru_minus_memory": {
+      "ci": {
+        "confidence": 0.95,
+        "high": 0.023743266683181337,
+        "low": -0.0032047744746392733,
+        "n_units": 299,
+        "p_below_zero": 0.073,
+        "point": 0.009622040369804772
+      },
+      "n_unique_players": 299
+    },
+    "gru_minus_static": {
+      "ci": {
+        "confidence": 0.95,
+        "high": -0.0038076736613658533,
+        "low": -0.03159641830620128,
+        "n_units": 299,
+        "p_below_zero": 0.995,
+        "point": -0.018011506004448487
+      },
+      "n_unique_players": 299
+    }
+  },
+  "schema_version": 1
+}

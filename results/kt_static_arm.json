@@ -1,0 +1,279 @@
+{
+  "comparison": "frozen fitted per-student profile vs memoryless / memory / evolving arms, fixed-loader KT replication",
+  "datasets": {
+    "algebra05": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.008416750375869,
+          "low": -0.015616614744118374,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.011916091305054355
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.007230298859401958,
+          "low": -0.014677190003157915,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.010842933875338044
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.007464649740224828,
+          "low": -0.0008064952839169352,
+          "n_units": 500,
+          "p_below_zero": 0.056,
+          "point": 0.003294506000515949
+        }
+      },
+      "means": {
+        "b_memoryless": 0.46289453394214314,
+        "d_evolving": 0.4542729486376047,
+        "memory": 0.455346106067321,
+        "static_profile": 0.4661890399426591
+      }
+    },
+    "assist09": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.018407917499446848,
+          "low": -0.029522160201675616,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.023848607342239547
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01822152360605718,
+          "low": -0.02936331176797438,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.023608768679120023
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.017479291129794253,
+          "low": 0.004721558151636815,
+          "n_units": 500,
+          "p_below_zero": 0.0002,
+          "point": 0.011022864859100511
+        }
+      },
+      "means": {
+        "b_memoryless": 0.5749212325314681,
+        "d_evolving": 0.562095490048329,
+        "memory": 0.5623353287114485,
+        "static_profile": 0.5859440973905686
+      }
+    },
+    "assist12": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01504053831739957,
+          "low": -0.027893342026212308,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.020864957371205493
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01559544147148184,
+          "low": -0.026464396951919808,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.0207453037601709
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.017192024102283043,
+          "low": 0.0034581401629426144,
+          "n_units": 500,
+          "p_below_zero": 0.0006,
+          "point": 0.009835525293002923
+        }
+      },
+      "means": {
+        "b_memoryless": 0.5700774302085241,
+        "d_evolving": 0.5590479981303215,
+        "memory": 0.5591676517413561,
+        "static_profile": 0.579912955501527
+      }
+    },
+    "assist15": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.0047555231056414906,
+          "low": -0.014946467620005531,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.009689694046155143
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01692870892158569,
+          "low": -0.027227969130281814,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.02179141096898644
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.022140171373830855,
+          "low": 0.010284470468222593,
+          "n_units": 500,
+          "p_below_zero": 0.0,
+          "point": 0.015953721890027847
+        }
+      },
+      "means": {
+        "b_memoryless": 0.5389853516320388,
+        "d_evolving": 0.5452493794759115,
+        "memory": 0.5331476625530802,
+        "static_profile": 0.5549390735220666
+      }
+    },
+    "assist17": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01143174057212399,
+          "low": -0.01633092440031197,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.013836677863819513
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.00809153958796471,
+          "low": -0.013123256834619741,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.010594093035172164
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.002458698687854188,
+          "low": -0.0052592399032443775,
+          "n_units": 500,
+          "p_below_zero": 0.7688,
+          "point": -0.0014059029076267126
+        }
+      },
+      "means": {
+        "b_memoryless": 0.6356677214503288,
+        "d_evolving": 0.6204251406788825,
+        "memory": 0.6236677255075299,
+        "static_profile": 0.6342618185427021
+      }
+    },
+    "bridge06": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.009611711793496893,
+          "low": -0.01594886263315096,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.012683640042322798
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.008643718900830674,
+          "low": -0.015031657787385834,
+          "n_units": 500,
+          "p_below_zero": 1.0,
+          "point": -0.011689870908288335
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.010934714994279842,
+          "low": 0.0032424739588570732,
+          "n_units": 500,
+          "p_below_zero": 0.0,
+          "point": 0.007014325054365321
+        }
+      },
+      "means": {
+        "b_memoryless": 0.39444031565388044,
+        "d_evolving": 0.38877100066592296,
+        "memory": 0.38976476979995744,
+        "static_profile": 0.40145464070824577
+      }
+    },
+    "spanish": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.06111979230006076,
+          "low": -0.09645599179260979,
+          "n_units": 150,
+          "p_below_zero": 1.0,
+          "point": -0.07796691270969741
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.07936881792235581,
+          "low": -0.11838494711701589,
+          "n_units": 150,
+          "p_below_zero": 1.0,
+          "point": -0.09819496372617675
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.055503015390077605,
+          "low": 0.013447127744253624,
+          "n_units": 150,
+          "p_below_zero": 0.0004,
+          "point": 0.033564094642491125
+        }
+      },
+      "means": {
+        "b_memoryless": 0.5060894509487682,
+        "d_evolving": 0.4616866328815619,
+        "memory": 0.4414585818650826,
+        "static_profile": 0.5396535455912593
+      }
+    },
+    "statics": {
+      "cis": {
+        "d_minus_static": {
+          "confidence": 0.95,
+          "high": -0.01667491773821273,
+          "low": -0.03094183428820471,
+          "n_units": 200,
+          "p_below_zero": 1.0,
+          "point": -0.02358747199168849
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.015291860700058923,
+          "low": -0.028623734304913502,
+          "n_units": 200,
+          "p_below_zero": 1.0,
+          "point": -0.02160677249120492
+        },
+        "static_minus_b": {
+          "confidence": 0.95,
+          "high": 0.02798877648209643,
+          "low": 0.009455148558321634,
+          "n_units": 200,
+          "p_below_zero": 0.0,
+          "point": 0.018498986313651482
+        }
+      },
+      "means": {
+        "b_memoryless": 0.5679247863714894,
+        "d_evolving": 0.5628363006934524,
+        "memory": 0.5648170001939359,
+        "static_profile": 0.5864237726851409
+      }
+    }
+  },
+  "generated_at": "2026-07-22T23:32:05.126430+00:00",
+  "schema_version": 1
+}

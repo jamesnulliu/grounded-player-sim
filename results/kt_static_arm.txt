@@ -1,0 +1,71 @@
+KT FITTED-STATIC-PROFILE ARM: DOES A FROZEN PROFILE SUFFICE? (2026-07-22)
+
+Question: the KT shuffle control identified the response-channel gain as
+order-invariant individualization. The sharpest objection that invites:
+"then a STATIC profile also works -- the updating state is unnecessary on
+KT." This arm measures that claim directly.
+
+Arm S = logistic regression over [1, item_difficulty, student_profile],
+where student_profile is ONE FROZEN NUMBER per student: their accuracy over
+their own training split (>=35 observed answers; leakage-safe). This is the
+strongest static profile constructible -- a fitted summary of real observed
+behavior, far better than any hand-written persona sentence -- and it never
+updates during evaluation. Same IRLS fit, same split, same frozen cohorts
+(fingerprint-verified) as the memory arm; paired per student against the
+cached B (memoryless twin), M (updating memory), D (evolving latent).
+
+RESULTS (held-out response NLL; for contrasts, negative favors first-named)
+
+dataset    B(twin)  S(frozen) M(memory) D(evolving)  S-B          M-S          D-S
+assist09   0.5749   0.5859    0.5623    0.5621       +0.0110 sig  -0.0236 sig  -0.0238 sig
+assist12   0.5701   0.5799    0.5592    0.5590       +0.0098 sig  -0.0207 sig  -0.0209 sig
+assist15   0.5390   0.5549    0.5331    0.5452       +0.0160 sig  -0.0218 sig  -0.0097 sig
+assist17   0.6357   0.6343    0.6237    0.6204       -0.0014 ns   -0.0106 sig  -0.0138 sig
+algebra05  0.4629   0.4662    0.4553    0.4543       +0.0033 ns   -0.0108 sig  -0.0119 sig
+bridge06   0.3944   0.4015    0.3898    0.3888       +0.0070 sig  -0.0117 sig  -0.0127 sig
+spanish    0.5061   0.5397    0.4415    0.4617       +0.0336 sig  -0.0982 sig  -0.0780 sig
+statics    0.5679   0.5864    0.5648    0.5628       +0.0185 sig  -0.0216 sig  -0.0236 sig
+
+Tallies: S-B significantly POSITIVE (frozen profile WORSE than the twin)
+6/8, never significantly better. M-S: memory beats the frozen profile
+8/8. D-S: evolving latent beats it 8/8. The M-S margins (-0.011..-0.098)
+are 1.5-2x LARGER than the headline D-B gaps themselves.
+
+VERDICT: a frozen per-student profile is NOT enough on KT -- it is beaten
+by the updating memory on every dataset and usually loses even to the
+memoryless twin. The clean same-model-class pair is M vs S (identical
+logistic fit; only frozen-profile vs updating-stats differ): 8/8,
+decisively. Why: students DRIFT (they learn; Spanish vocabulary, the
+strongest-drift dataset, is the extreme case at -0.098) and the last 30% of
+a sequence sits at a different level than the first 70%, so a confidently
+frozen estimate mis-calibrates where an updating one keeps tracking.
+
+INTERPRETATION FIX this result forces: "order-invariant individualization"
+(the shuffle control) does NOT mean "freezable individualization." A
+running mean is order-invariant yet still updates -- and updating is
+load-bearing. The KT scoping sentence becomes: the gain is a
+CONTINUOUSLY-UPDATED estimate of who the student is (order-invariant, NOT
+freezable); what KT does not show is the fast emotion-like flavor of the
+state, which remains a chess-timing result.
+
+KT now has its own complete mini-ladder, all instrument-verified:
+  frozen fitted profile (S)  <  memoryless twin (B)  <  updating memory (M)
+  ~= evolving latent (D)
+i.e. even on the channel where the state converges toward a stable fact,
+FREEZING the person fails; the simulator must keep estimating.
+
+Caveats: S-vs-B is not same-model-class (B is the trained GRU twin whose
+inputs include recent-window features; S is a logistic with no recency) --
+read S-B as "a frozen profile even loses to a crude recent-window model,"
+and rely on M-vs-S for the clean frozen-vs-updating contrast. M updates
+through the evaluation period (teacher-forced filtering), which is exactly
+the deployment difference being measured: "write a profile once" vs "keep
+watching."
+
+Artifacts:
+  results/kt_static_arm.json
+  runs/kt-static-arm/<dataset>.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/kt_static_arm.py
+  (requires runs/kt-memory-arm/<dataset>.json from scripts/kt_memory_arm.py)

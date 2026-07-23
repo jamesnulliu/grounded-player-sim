@@ -1,0 +1,76 @@
+STRUCTURED-MEMORY CONTROL VS LEARNED LATENTS OVER LOCKED ALLIE (2026-07-22)
+
+Question: is the evolving learned latent "just a memory"? A reviewer-fair
+answer needs the memory built and raced, not defined away: if an explicit
+structured memory does the same work, the claim must change.
+
+Protocol (identical to G4 static-vs-evolving, results/
+g4_allie_static_vs_evolving.txt): cohorts 2017-04 / 2019-07 / 2021-06 (100
+players each), session split (train_frac 0.7), locked Allie offset + global
+intercept, same lstsq linear readout, player-bootstrap CIs. New arm
+latent_control="memory" (gps.experiments.ec._memory_latents): a 15-dim
+hand-designed vector of STRICTLY CAUSAL running statistics per decision --
+running mean/std, EWMA (alpha=0.1), recent-10 mean, and lag-1 of the raw log
+think-time; running mean / EWMA / lag-1 of the residual (actual - Allie
+prediction) in log space; running premove fraction; a memory-fill and
+has-memory indicator; plus the four current-step engineered history features
+(GRU input parity). ZERO trained parameters; only the shared linear readout
+is fit. The arm is deliberately STRONGER-INPUT than the learned arms: it
+reads raw past think-times and Allie's past errors, which the learned GRU
+never sees (its input is only the 4 engineered features). Deterministic
+given the dataset, so it runs once per cohort and pairs per player against
+each cached G4 seed cell (learned arms averaged over seeds 0-4).
+
+RESULTS (held-out timing NLL; negative favors the first-named arm)
+
+cohort    Allie    +static  +memory  +evolving  (mem)-Allie          memory-static          evolving-memory
+2017-04   2.5421   2.5361   2.5213   2.5191     -0.0208 [-.028,-.014] -0.0148 [-.021,-.009]  -0.0022 [-.011,+.010] ns
+2019-07   2.3349   2.3186   2.2836   2.3172     -0.0513 [-.073,-.036] -0.0350 [-.058,-.020]  +0.0336 [+.016,+.059] MEM WINS
+2021-06   2.3054   2.2920   2.2592   2.2726     -0.0462 [-.060,-.034] -0.0327 [-.043,-.024]  +0.0133 [+.004,+.024] MEM WINS
+
+Pooled unique players (n=299):
+  memory - static   = -0.0276, 95% CI [-0.0365, -0.0210], P(<0)=1.000
+  evolving - memory = +0.0150, 95% CI [+0.0070, +0.0254], P(<0)=0.000
+
+VERDICT (two findings, both load-bearing):
+
+1. THE DYNAMIC TERM IS CONFIRMED BY A SECOND, TRAINING-FREE INSTRUMENT --
+   AND IT IS BIGGER THAN THE LEARNED INSTRUMENT MEASURED. Memory beats the
+   learned static per-player embedding on 3/3 cohorts (the G4 evolving arm
+   managed 2/3), at 2-3x the margin, INCLUDING 2019-07 where the learned
+   evolving-vs-static contrast was null. The "2019 null" was a failure of
+   the 4-feature GRU to extract the dynamics, not an absence of dynamics.
+   This is the strongest evidence yet for the decomposition
+   policy = static attribute + evolving state.
+
+2. THE RICHER-INPUT MEMORY MATCHES/BEATS THE 4-FEATURE LEARNED EVOLVING
+   LATENT (tie on 2017-04, memory significantly better on 2019-07 and
+   2021-06, pooled +0.0150). Honest reading: what matters is CARRYING
+   dynamic state, and the INFORMATION the state carries (raw timing
+   history, the released model's errors) matters more than whether the
+   update rule is learned. The comparison is input-asymmetric by design
+   (conservative, skeptic-favoring); the input-matched learned control (a
+   GRU over the same 15 memory features) is in results/memory_gru_arm.txt.
+
+Framing consequence for the paper: the memory objection is ANSWERED, not
+dodged -- "an evolving latent is just a memory" concedes exactly our claim,
+that the person must be carried by a dynamic state; the memory arm is a
+second instrument for the same decomposition. What the learned state alone
+retains: end-to-end trainability, operation from impoverished inputs, and
+the population-generation capability (a memory of one person's events
+defines no distribution over individuals to sample).
+
+Caveats: (a) filtering evaluation -- the memory reads realized past
+think-times including the held-out prefix (teacher forcing); in closed-loop
+rollout it would consume its own generated times, a deployment gap the
+latent does not share in the same form. (b) The premove/zero-inflation mass
+is handled by the shared floor at log(1e-3), same as all lstsq arms.
+
+Artifacts:
+  results/memory_baseline.json
+  runs/memory-vs-learned/<cohort>.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/memory_vs_learned.py            # all cohorts
+  PYTHONPATH=src python scripts/memory_vs_learned.py --cohort 2017-04
+  (requires the cached G4 cells in runs/g4-allie-static-vs-evolving/)

@@ -1,5 +1,12 @@
 # Grounded player simulation with a dynamic per-individual latent state
 
+> **SUPERSEDED (2026-07-22).** `paper.md` is the canonical manuscript and now
+> carries the reframed story (user policy = static attribute + evolving
+> state; static personas structurally insufficient) plus the new
+> structured-memory control (§4.3, Table 5b; `results/memory_baseline.txt`).
+> This file predates both and is kept for history — do not edit framing
+> here.
+
 *Paper-skeleton synthesis of the landed results. Detailed tables +
 reproduction in `results_ec.md`; prior-art positioning in `design.md §8`;
 active verification gates in `paper_readiness_plan.md`.*

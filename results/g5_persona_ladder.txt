@@ -1,0 +1,94 @@
+G5 - THE PERSONA LADDER INSIDE THE LLM (2026-07-23)
+
+Question: today's LLM user simulators condition on a STATIC persona prompt.
+Inside the LLM channel itself, does a dynamically-updated state beat a
+frozen one, at matched information access?
+
+Protocol: scripts/g5_persona_ladder.py. Real Lichess 2017-04 G4 cohort
+(100 players), per-player 70/30 future split, think-time completion NLL
+(" 2.0" after "\nThink time (s):"), Qwen3-1.7B + LoRA r16, chat template,
+2 epochs, one fixed 5000/1000 example subsample shared by every condition
+and seed (data seed 0), 3 model seeds, both A100s. Four conditions, one
+loop:
+  none    position + clock only
+  static  + frozen per-player persona sentence, fitted from the player's
+          TRAIN split only (rating, median think-time, premove %) --
+          leakage-safe, and far stronger than any hand-written persona
+  memory  + per-decision causal text scorecard (moves seen, avg/last
+          think-time, last-game result, recent win rate, session position,
+          premove % so far)
+  hidden  none prompt + the SAME scorecard numbers as a trained soft
+          prefix (near-zero init, n_prefix=4) -- input parity with memory
+
+RESULTS (held-out completion NLL; per-seed then seed-averaged paired
+player-bootstrap over the 99 evaluated players, 5000 resamples)
+
+  cond     s0      s1      s2      mean
+  none    0.5326  0.5279  0.5275  0.5294
+  static  0.5206  0.5196  0.5193  0.5198
+  memory  0.5241  0.5206  0.5177  0.5208
+  hidden  0.5307  0.5222  0.5217  0.5248
+
+  static - none  = -0.0104 [-0.0152,-0.0056] P(<0)=1.000  SIG
+  memory - none  = -0.0096 [-0.0149,-0.0044] P(<0)=1.000  SIG
+  hidden - none  = -0.0050 [-0.0074,-0.0027] P(<0)=1.000  SIG
+  memory - static = +0.0009 [-0.0036,+0.0052] P(<0)=0.355  TIE
+  hidden - memory = +0.0045 [+0.0002,+0.0089] P(<0)=0.021  text wins
+  hidden - static = +0.0054 [+0.0011,+0.0095] P(<0)=0.007  text wins
+
+VERDICT (three findings):
+
+1. PERSON-INFORMATION IS WHAT THE LLM PROBE RESOLVES. Both fitted
+   arms -- frozen persona and updating scorecard -- beat no-info clearly
+   (~ -0.010), the largest LLM person-effect measured in this project
+   (G3 verbal-none was -0.005 with a state-note-only prompt).
+
+2. FROZEN vs UPDATING IS A TIE IN THIS CHANNEL (+0.0009, CI spans 0).
+   Reconciliation with the rest of the ladder, honestly stated:
+   (a) Resolution: board-native, the dynamic increment over static was
+       -0.0126 (over locked Allie, exact linear readout). The LLM probe's
+       per-seed noise is +-0.003-0.005 on a total person-effect of -0.010
+       -- the dynamic increment sits at/below this instrument's floor.
+   (b) Stability: a blitz player's typical speed barely drifts within a
+       one-month cohort, so the frozen persona does not go stale here --
+       unlike KT, where students LEARN and the frozen profile failed 8/8
+       (results/kt_static_arm.txt). Freezing fails where people drift;
+       chess-timing-in-a-month is the low-drift regime.
+   (c) Design wart favoring static: the persona carries the MEDIAN train
+       think-time (robust to premove zeros); the scorecard carries the
+       running MEAN (dragged toward zero by premoves). A median-based
+       scorecard rerun would bound this; the tie may understate memory.
+   NOTE what the static arm is NOT: it is fitted from ~500 observed moves.
+   Practice hand-writes personas ("this user is impatient") with no data
+   at all; G5's static arm is an upper bound on that practice, not a
+   vindication of it.
+
+3. THE CHANNEL ORDERING REPLICATES G3 ON FRESH DATA: the same numbers are
+   significantly better as LANGUAGE than as a projected soft vector
+   (hidden loses to both text arms, still beats none). Inside an
+   instruction-tuned LLM, text is the efficient carrier.
+
+Placement in the paper: extends §4.7/Table 8 (LLM arm). Adds the fifth
+"lost bet" to the it's-obvious objection: "just prompt dynamically" is NOT
+supported in this channel at this scale -- the LLM-probe-visible gain is
+individualization; the dynamic increment needs either a drifting person
+(KT) or a sharper instrument (board-native) to surface.
+
+Caveats: single cohort (2017-04); 1.7B + LoRA scale (full-FT or larger
+models could sharpen resolution -- the 8B full-FT SFT trend suggests
+effects grow); v1 scorecard uses mean-not-median think-time; premove mass
+handled identically in all arms via the shared label format.
+
+Artifacts:
+  results/g5_persona_ladder.json  (per-cell means)
+  runs/g5-persona-ladder/<cond>-seed<s>.json (per-example NLLs + players)
+  runs/g5-persona-ladder/gpu{0,1}.log
+
+Reproduce:
+  CUDA_VISIBLE_DEVICES=0 PYTHONPATH=src python scripts/g5_persona_ladder.py \
+      full --cond none,static
+  CUDA_VISIBLE_DEVICES=1 PYTHONPATH=src python scripts/g5_persona_ladder.py \
+      full --cond memory,hidden
+  (paired bootstrap: see the analysis snippet in results/g5_persona_ladder.txt's
+   provenance -- per-player aggregation of per_example_nll, seed-averaged,
+   bootstrap over the 99 unique eval players)

@@ -1,0 +1,133 @@
+{
+  "cohorts": {
+    "2017-04": {
+      "cis": {
+        "evolving_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.009731918076313031,
+          "low": -0.011340586265420848,
+          "n_units": 100,
+          "p_below_zero": 0.686,
+          "point": -0.0021660223608447413
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.009231515027286303,
+          "low": -0.021191067636416653,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.014835948610736808
+        }
+      },
+      "means": {
+        "allie": 2.542068806591505,
+        "allie_plus_evolving": 2.5190939127441445,
+        "allie_plus_memory": 2.5212599351049896,
+        "allie_plus_static": 2.536095883715726
+      },
+      "memory_add_over_allie": {
+        "confidence": 0.95,
+        "high": -0.014059092628680056,
+        "low": -0.028407294351814355,
+        "n_units": 100,
+        "p_below_zero": 1.0,
+        "point": -0.02080887148651573
+      }
+    },
+    "2019-07": {
+      "cis": {
+        "evolving_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.05859355124629605,
+          "low": 0.015782701788576377,
+          "n_units": 100,
+          "p_below_zero": 0.0,
+          "point": 0.033602817351333664
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.020066724719405286,
+          "low": -0.05767606963404281,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.03503843742394094
+        }
+      },
+      "means": {
+        "allie": 2.3349146914125156,
+        "allie_plus_evolving": 2.3171883321327598,
+        "allie_plus_memory": 2.283585514781426,
+        "allie_plus_static": 2.318623952205367
+      },
+      "memory_add_over_allie": {
+        "confidence": 0.95,
+        "high": -0.03612326624264136,
+        "low": -0.0730946817473565,
+        "n_units": 100,
+        "p_below_zero": 1.0,
+        "point": -0.051329176631089525
+      }
+    },
+    "2021-06": {
+      "cis": {
+        "evolving_minus_memory": {
+          "confidence": 0.95,
+          "high": 0.024428996558555287,
+          "low": 0.004241086405639095,
+          "n_units": 100,
+          "p_below_zero": 0.0012,
+          "point": 0.013341527949365058
+        },
+        "memory_minus_static": {
+          "confidence": 0.95,
+          "high": -0.02365214300693289,
+          "low": -0.04271038162930008,
+          "n_units": 100,
+          "p_below_zero": 1.0,
+          "point": -0.03272061169542231
+        }
+      },
+      "means": {
+        "allie": 2.3054446682404874,
+        "allie_plus_evolving": 2.2725731424255073,
+        "allie_plus_memory": 2.259231614476142,
+        "allie_plus_static": 2.291952226171565
+      },
+      "memory_add_over_allie": {
+        "confidence": 0.95,
+        "high": -0.0343222436028772,
+        "low": -0.06032436618181741,
+        "n_units": 100,
+        "p_below_zero": 1.0,
+        "point": -0.04621305376434531
+      }
+    }
+  },
+  "comparison": "structured-memory control vs learned static/evolving latents over locked Allie",
+  "generated_at": "2026-07-22T22:06:14.943862+00:00",
+  "overall": {
+    "evolving_minus_memory": {
+      "ci": {
+        "confidence": 0.95,
+        "high": 0.02543813173838299,
+        "low": 0.006954945544552639,
+        "n_units": 299,
+        "p_below_zero": 0.0,
+        "point": 0.015027710445126767
+      },
+      "n_unique_players": 299
+    },
+    "memory_minus_static": {
+      "ci": {
+        "confidence": 0.95,
+        "high": -0.021045777651575212,
+        "low": -0.03653369701873833,
+        "n_units": 299,
+        "p_below_zero": 1.0,
+        "point": -0.027633546374253262
+      },
+      "n_unique_players": 299
+    }
+  },
+  "schema_version": 1
+}

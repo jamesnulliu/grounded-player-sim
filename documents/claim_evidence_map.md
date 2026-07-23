@@ -3,7 +3,10 @@
 Every abstract and contribution-list claim, its landing point, and the frozen
 artifact behind the number. Checked against `results/` on 2026-07-19; updated
 after the five-dimension review revision (table numbers are the new
-sequential scheme: 1–8).
+sequential scheme: 1–8). **2026-07-22 reframe update:** abstract/intro now
+lead with the decomposition (static attribute + evolving state, user-sim
+framing); new §4.3 memory-control block (Table 5b) and §2 memory-modules
+paragraph added; rows below extended accordingly.
 
 ## Abstract
 
@@ -11,6 +14,14 @@ sequential scheme: 1–8).
 |---|---|---|---|
 | Timing win in all 8 era×backbone conditions, every CI excludes zero | Table 3, §4.2 | `results/tier1_pooled.txt` (CIs now shown in-table) | ✓ |
 | Improves over Allie in the direct add-on test on all 3 cohorts (2/3 under strictest controls) | Tables 4–5, §4.3 | `results/g4_timing.txt`, `results/g4_allie_static_vs_evolving.txt` | ✓ — scoping now in the abstract itself |
+| Structured memory (training-free dynamics) beats the static profile 3/3 cohorts, pooled −0.0276 | Table 5b, §4.3 | `results/memory_baseline.txt` (+ `.json`) | ✓ |
+| Richer-input memory matches/beats the 4-feature evolving latent (pooled +0.0150) — mechanism claim scoped to "carrying dynamic state" | Table 5b, §4.3 + §5 | `results/memory_baseline.txt` | ✓ — stated as honest finding, not spun |
+| Input-matched learned control: GRU over the same memory features ties linear memory (+0.0096, CI crosses 0), beats static (−0.0180) | §4.3 third finding | `results/memory_gru_arm.txt` (+ `.json`) | ✓ landed 2026-07-22 |
+| KT memory arm: M−B significant 7/8 datasets (same profile as D−B); D−M ties 5/8, M repairs ASSISTments-15 reversal; abstract "7 of 8" clause | Table 6 (last two cols), §4.5 ¶ after shuffle control | `results/kt_memory_arm.txt` (+ `.json`) | ✓ landed 2026-07-22; cohort fingerprints + reproduced D−B verified against frozen cells |
+| Four-axis contrast vs emotion-dynamic LLM user simulators (mechanism/evidence/attribution/grounding) | §1 ¶2 end, §2 "Emotion-dynamic LLM user simulators" | prior-art digest + novelty sweep (scratchpad), refs flagged verify-at-bib | ✓ positioning claim, no numbers |
+| KT frozen fitted profile fails: M−S 8/8 (−0.011…−0.098), S−B worse 6/8; "order-invariant ≠ freezable"; abstract "fails on every dataset" clause | §4.5 "Can the profile at least be frozen?" ¶ | `results/kt_static_arm.txt` (+ `.json`) | ✓ landed 2026-07-22; fingerprint-verified vs frozen cohorts |
+| G5 persona ladder in the LLM: static−none −0.0104 / memory−none −0.0096 (sig); memory−static +0.0009 tie; hidden−memory +0.0045 (text > vector) | §4.7 final ¶, Table 8 last 3 rows | `results/g5_persona_ladder.txt` (+ `.json`, per-example NLLs in runs/g5-persona-ladder/) | ✓ landed 2026-07-23; 99-player paired bootstrap |
+| Population generation is the capability memory/persona stores lack | §4.6, §2 memory ¶ | `results/real_kt.txt`, `results_ec.md` E-F1 | ✓ — structural argument + measured recall |
 | Move: almost no state dependence; deviation-from-Maia-2 probe R²=0.009 | Table 3, §4.2 probe paragraph | `results/g4_timing.txt`, `results/tier1_pooled.txt` | ✓ — "almost no", not absolute |
 | Concentration 2.7–3.6× under time pressure (variance-controlled; raw player-level 4.0–6.1×) | §4.4, Figure 2 | `results/concentration_variance_controlled.txt` | ✓ — single pipeline now (player-bootstrap raw → normalized) |
 | ≈3× for weakest players | §4.4 | `results/rating_stratification.txt` | ✓ — "to confirm" from review: check per-player decision counts balanced across terciles |

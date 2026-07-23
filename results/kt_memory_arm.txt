@@ -1,0 +1,82 @@
+KT-SIDE STRUCTURED-MEMORY ARM, 8-DATASET FIXED-LOADER REPLICATION (2026-07-22)
+
+Question: chess timing found a training-free structured memory carries the
+non-static term as well as the learned latent (results/memory_baseline.txt).
+Does that transfer to the knowledge-tracing RESPONSE channel, or is
+"memory suffices" chess-timing-specific?
+
+Protocol: same frozen cohorts as the fixed-loader replication
+(runs/kt-replication-fixed-loader/; cohort_fingerprint + prepared_sha256
+verified per dataset, student order matched, reproduced D-B equals the
+frozen cells' numbers, e.g. assist09 -0.0128). Arm M = logistic regression
+P(correct) = sigmoid(w . [1, item_difficulty, 14 memory features]) fit by
+exact IRLS on each student's train steps (same 70% fraction split as
+run_kt), evaluated on held-out steps. Memory features (strictly causal,
+scripts/kt_memory_arm.py): running/EWMA/recent-10 accuracy, lag-1
+correctness, signed streak, running/EWMA/lag-1 residual vs the
+item-difficulty prediction, memory-fill + has-memory indicators, the 4
+engineered history features (GRU input parity). ZERO trained parameters
+beyond the logistic readout; deterministic. Like the chess arm it is
+deliberately stronger-input than the GRU (reads raw past correctness +
+difficulty-baseline errors; the GRU reads only the 4 engineered features).
+Learned arms (D evolving / B memoryless twin) seed-averaged (0-2) per
+student from the frozen cells; paired bootstrap over students.
+
+RESULTS (held-out response NLL; negative favors the first-named arm)
+
+dataset    B(twin)  M(mem)   D(evolving)  D-M                      M-B
+assist09   0.5749   0.5623   0.5621       -0.0002 ns               -0.0126 sig
+assist12   0.5701   0.5592   0.5590       -0.0001 ns               -0.0109 sig
+assist15   0.5390   0.5331   0.5452       +0.0121 M WINS           -0.0058 sig
+assist17   0.6357   0.6237   0.6204       -0.0032 D wins           -0.0120 sig
+algebra05  0.4629   0.4553   0.4543       -0.0011 ns (P=0.96)      -0.0075 sig
+bridge06   0.3944   0.3898   0.3888       -0.0010 ns               -0.0047 sig
+spanish    0.5061   0.4415   0.4617       +0.0202 M WINS           -0.0646 sig
+statics    0.5679   0.5648   0.5628       -0.0020 ns               -0.0031 ns
+
+Tallies: M-B significantly negative 7/8 (statics ns -- also D-B's weakest
+dataset). D-M: 5/8 ties, 1/8 D significantly better (assist17), 2/8 M
+significantly better (assist15, spanish).
+
+VERDICT -- the chess pattern TRANSFERS; "memory suffices" is cross-domain:
+
+1. The non-static term is INSTRUMENT-ROBUST on KT too: the training-free
+   memory beats the memoryless twin on 7/8 datasets, the same 7/8 profile
+   as the learned D-B result it mirrors. (Scoping: per the KT shuffle
+   control the response edge is order-invariant INDIVIDUALIZATION, so on
+   this channel the memory instrument confirms the identity term carried
+   by running statistics -- not order-dynamics, unlike chess timing where
+   the static-embedding rung isolates dynamics proper.)
+2. Memory >= learned latent where learning is fragile. On ASSISTments 15
+   -- the replication's known anomaly, where D-B is significantly POSITIVE
+   (+0.0063, a seed-2 training reversal) -- the memory arm still beats the
+   twin (-0.0058, every-CI-excludes-zero): the anomaly was GRU training
+   instability, not an absent effect. Mirrors chess 2019-07. On Spanish
+   (the most heterogeneous population) memory crushes: -0.0646 vs D's
+   -0.0444 -- running-accuracy statistics carry identity better than the
+   4-feature GRU.
+3. Cross-domain synthesis (chess timing + KT response): a per-person state
+   carried as causal running statistics of the raw history matches or
+   beats the learned latent on BOTH channels; the learned mechanism is
+   never the differentiator; and both "learned-arm null/reversal" anomalies
+   (chess 2019-07, assist15) are repaired by the training-free instrument.
+   The paper's claim stays: what matters is CARRYING per-person state and
+   the INFORMATION it carries -- not the update mechanism. The learned
+   form's unique retained value: end-to-end training from impoverished
+   inputs, and population sampling (E-F1).
+
+Caveats: same filtering-evaluation caveat as chess (memory reads realized
+past correctness including the held-out prefix; so do the learned arms'
+history features via recent_outcomes). No static-embedding rung exists in
+the KT protocol, so M-B conflates identity + any order effects (the shuffle
+control resolves this in favor of identity). Logistic readout is shared
+across students (like the learned arms' shared backbone).
+
+Artifacts:
+  results/kt_memory_arm.json
+  runs/kt-memory-arm/<dataset>.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/kt_memory_arm.py
+  PYTHONPATH=src python scripts/kt_memory_arm.py --dataset assist09
+  (requires the frozen cells in runs/kt-replication-fixed-loader/)

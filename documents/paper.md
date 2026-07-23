@@ -1,53 +1,81 @@
-# When, Not What: An Evolving Per-Individual Latent State Predicts a Person's Future Think-Time, Not Their Choices
+# Beyond Static Personas: Simulated Humans Need an Evolving State — Legible in When They Act, Not What They Choose
 
-*Manuscript draft (markdown, pre-LaTeX). Target: ICLR, primary area
-applications to neuroscience & cognitive science. All numbers are taken
-verbatim from the frozen artifacts in `results/`; the claim–evidence mapping
-lives in `documents/claim_evidence_map.md`. Figure slots are marked TODO.*
+*Manuscript draft (markdown, pre-LaTeX). Target: ICLR. Primary-area choice
+re-opened by the 2026-07-22 reframe (user-simulation-first): candidates are
+"applications to neuroscience & cognitive science" (cognitive finding) vs a
+general applications/agents area (user simulation); decide at submission.
+All numbers are taken verbatim from the frozen artifacts in `results/`; the
+claim–evidence mapping lives in `documents/claim_evidence_map.md`. Figure
+slots are marked TODO.*
 
 *Draft-scaffolding notes (strip at LaTeX translation): (1) appendix-demotion
-candidates if the page budget requires: Table 5 (static-vs-evolving over
-Allie), the scale-sweep rows of Table 8. (2) Before submission, state
-definitively why the E-C3 move gap on 2013-01 (−0.067, 3 seeds, 15 epochs)
-exceeds the at-scale tier-1 2013-01 move gap (−0.0027 mlp / −0.0149 conv):
-the documented causes (joint-objective suppression + era differences) cover
-the clocked cohorts, but the 2013 protocol difference needs one verified
-sentence. (3) Title uses "Not Their Choices"; the body claim is calibrated
-to "almost no state dependence" — confirm the title's rhetorical compression
-is acceptable or soften to "More Than Their Choices."*
+candidates if the page budget requires: the scale-sweep rows of Table 8
+(Table 5, static-vs-evolving over Allie, is now headline-load-bearing and
+stays in the body). (2) Before submission, state definitively why the E-C3
+move gap on 2013-01 (−0.067, 3 seeds, 15 epochs) exceeds the at-scale tier-1
+2013-01 move gap (−0.0027 mlp / −0.0149 conv): the documented causes
+(joint-objective suppression + era differences) cover the clocked cohorts,
+but the 2013 protocol difference needs one verified sentence. (3) Title uses
+"Not What They Choose"; the body claim is calibrated to "almost no state
+dependence" — confirm the title's rhetorical compression is acceptable or
+soften.*
 
 ## Abstract
 
 People do not behave the same way twice. A chess player who just lost plays
 the next game differently, and a student who struggled through ten problems
-answers the eleventh differently. Systems that simulate specific humans
-represent them statically, as a persona, a rating, or a fixed embedding, so
-they cannot track this drift. History-conditioned models could track it, but
-they cannot say whether their gains come from accumulated state or from
-merely seeing recent context. We model the drift with a per-individual
-latent state that evolves over a person's own action-and-timing trajectory,
-and we isolate its value with an equal-capacity, same-input **memoryless
-twin** evaluated on strict future splits of that person's data. Our central
-finding is an asymmetry: the evolving state is far more legible in *when* a
-person acts than in *what* they choose. On real Lichess chess the evolving
-latent beats the twin at predicting future think-time in all eight
+answers the eleventh differently. Yet systems that simulate specific humans
+freeze the person into a static profile — a persona paragraph, a rating, a
+fixed embedding — so the simulated policy reduces to static attributes plus
+reasoning over the current context, and within-person drift is
+unrepresentable by construction. That this is a defect is by now widely
+*asserted*: a wave of recent user simulators equips agents with evolving
+emotional states. It has never been *measured*: no controlled comparison
+isolates what a dynamic state adds beyond identity, context, and model
+capacity. We measure it. We decompose a person's policy into a
+static attribute and an evolving behavioral state, and test the
+decomposition where it is cleanly measurable: grounded domains with discrete
+action spaces and logged per-decision timing. A per-individual latent state
+evolves over the person's own action-and-timing trajectory, and its value is
+isolated by an equal-capacity, same-input **memoryless twin** evaluated on
+strict future splits of that person's data — and, beyond the twin, by the
+controls the decomposition demands: a learned *static* per-player embedding
+(the profile term alone) and a hand-designed *structured memory* of running
+history statistics (dynamics without learning). On real Lichess chess the
+evolving state beats the twin at predicting future think-time in all eight
 era-by-backbone conditions from 2017 to 2023, every confidence interval
-excluding zero, and it improves held-out think-time likelihood over Allie, a
-released think-time model, in the direct add-on test on all three cohorts
-tested (two of three under the strictest controls). Move choice, by
-contrast, shows almost no state dependence. A probe recovers deviation from
-Maia-2, a released human-move model, at R² = 0.009. The timing edge
-concentrates where behavior is least predictable from the average, 2.7–3.6×
-under time pressure after variance control and about 3× for the weakest
-players. On eight real knowledge-tracing datasets the evolving latent wins
-on responses in 22 of 24 dataset-seed cells and recovers the population's
-accuracy distribution at half the Wasserstein distance of an average-person
-baseline. Response *times* do not transfer on the two education datasets
-tested; we hypothesize the timing channel requires time to be a
-strategically managed resource. Finally, which injection channel carries the
-state is backbone-dependent: a trained hidden vector beats a verbal note on
-a board-native backbone, and that advantage disappears inside an
-instruction-tuned LLM. [TODO: code + frozen-protocol release sentence.]
+excluding zero; it still adds value on top of Allie, a released think-time
+model, on all three cohorts tested, and on top of Allie *plus* the static
+embedding on two of three (pooled −0.0126, CI excluding zero) — so the
+dynamic term is separately measurable, not identity in disguise.
+The memory control answers the "an evolving latent is just a memory"
+objection by conceding its premise and testing it: a training-free running
+summary of the person's raw history beats the static profile on **all
+three** cohorts, at 2–3× the learned arm's margin (pooled −0.0276) —
+including the cohort where the learned contrast was null — and an
+input-matched learned control ties it, so the dynamic term is
+instrument-robust and its value is set by the information the state
+carries, not by whether its update rule is learned. Our central empirical
+characterization is an asymmetry: the state is far more legible in *when* a person acts than in
+*what* they choose. Move choice shows almost no state dependence (a probe
+recovers deviation from Maia-2, a released human-move model, at R² = 0.009),
+and the timing edge concentrates exactly where an evolving state should
+matter, 2.7–3.6× under time pressure after variance control and about 3×
+for the weakest players. On eight real knowledge-tracing datasets the same
+latent wins on responses in 22 of 24 dataset-seed cells; the training-free
+memory instrument reproduces the effect on 7 of 8 (repairing the one
+dataset where the learned arm's training reversed); and a fitted *frozen*
+per-student profile fails on every dataset — the per-person estimate must
+keep updating. The same latent then does what no static persona library
+can: it recovers the population's accuracy distribution at half the
+Wasserstein distance of an average-person baseline and generates novel,
+diverse, plausible individuals from its prior. Response *times* do not transfer on
+the two education datasets tested; we hypothesize the timing channel
+requires time to be a strategically managed resource. Finally, which
+injection channel carries the state is backbone-dependent: a trained hidden
+vector beats a verbal note on a board-native backbone, and that advantage
+disappears inside an instruction-tuned LLM. [TODO: code + frozen-protocol
+release sentence.]
 
 ---
 
@@ -62,19 +90,45 @@ player's games through April, predict how long they will think and what they
 will play in May; given a named student's first hundred answers, predict the
 hundred-and-first.
 
-Current approaches to modeling a specific person fail at a specific step:
-they freeze the person. Rating-conditioned and per-player-embedding chess
-models fix each player as a static vector, and persona-conditioned LLM
-simulators fix them as a static text profile, so none of them can track the
-within-session drift that human behavior visibly exhibits. A player tilts
-after a loss, fatigues late in a session, and reprioritizes under a ticking
-clock. Models that condition on recent history could in principle track this
-drift, but they confound two different capabilities: *accumulating* a state
-over a person's trajectory and merely *seeing* recent context. To our
-knowledge, no prior line separates the two with a capacity-matched,
-same-input control on real human behavior with a timing target (§2), so even
-where history-conditioning wins, the win cannot be attributed to accumulated
-state.
+Current approaches to modeling a specific person share one structural
+assumption: the person can be frozen. Rating-conditioned and
+per-player-embedding chess models fix each player as a static vector, and
+persona-conditioned LLM simulators fix them as a static text profile ("this
+user is impatient") over which the model then reasons. Under that design the
+simulated policy decomposes as *static attribute + reasoning about the
+current context* — and everything a real person carries *between* decisions
+is unrepresentable by construction. A player tilts after a loss, fatigues
+late in a session, and reprioritizes under a ticking clock; a static profile
+cannot drift, however good the reasoning on top of it. We take the opposite
+decomposition as our hypothesis: a person's policy is a static attribute
+*plus an evolving behavioral state*, the slow-moving, emotion-like component
+that the environment writes into and the next decision reads out of. The
+claim is not that we measure emotion — no emotion labels exist in any of our
+data — but that the decomposition's dynamic term exists, is separately
+measurable, and improves prediction of real individuals' future behavior.
+By 2026 the premise itself is widely shared: an LLM-agent line equips
+simulated clients, customers, and social-media users with evolving
+emotional states precisely because static personas fall short (§2). But
+that line *builds the premise in* — the state is prompted, scripted, or
+stored as text, and evaluation asks whether the simulator *seems* human.
+The premise has, to our knowledge, never been measured: no experiment
+isolates what the dynamic state contributes, on real individuals, against
+controls that could falsify it. That measurement is this paper.
+
+Testing that hypothesis on open-ended interaction is hopeless: with
+free-form text there is no fixed action space over which two models can be
+scored likelihood-against-likelihood. So we test it where it is cleanly
+measurable — grounded domains with discrete action spaces, logged
+per-decision timing, and years of per-individual public data (online chess,
+knowledge tracing). If the dynamic term is real anywhere, it must be
+demonstrable here; and a decomposition validated here is a design
+requirement any user simulator must answer, whatever its backbone.
+Attribution is the hard part. Models that condition on recent history
+confound two capabilities: *accumulating* a state over a person's trajectory
+and merely *seeing* recent context. To our knowledge, no prior line
+separates the two with a capacity-matched, same-input control on real human
+behavior with a timing target (§2), so even where history-conditioning wins,
+the win cannot be attributed to accumulated state.
 
 Our starting point is that if a person carries an evolving behavioral state,
 that hypothesis makes three testable predictions. The state should be most
@@ -98,32 +152,65 @@ design lets one injector and one trainer run unchanged on chess and
 knowledge tracing (KT), and it makes the control exact: the memoryless twin
 is identical in everything but state accumulation.
 
+A fair objection is that the premise, once stated, sounds self-proving —
+*of course* tracking a user helps. The data disagrees with every
+comfortable version of that intuition. The state avoids the channel folk
+psychology predicts: tilt barely touches *which* move a player chooses
+(probe R² = 0.009) and lives almost entirely in how long they think.
+Updating does not help everywhere: it fails outright in Go and on both
+real education timers — boundaries a truly obvious claim could not have. A
+*fitted* frozen profile, far stronger than any persona sentence, is worse
+than no profile at all on six of eight education datasets. The learned
+state mechanism the field keeps building adds nothing over hand-designed
+running statistics at equal information. And inside the LLM channel
+itself, a dynamically-updated persona ties a frozen fitted one on a
+low-drift horizon — the gap that matters there is fitted-versus-guessed,
+not frozen-versus-updating (§4.7). What survives measurement is not
+a slogan but a structure: which channel carries the state, where its value
+concentrates, what information it needs, and what only a distributional
+state model can do.
+
 Our contributions, each tied to the experiment that supports it:
 
-1. **An equal-capacity evolving-vs-memoryless control on strict future
-   splits.** Identical parameters, inputs, and optimizer; only state
-   accumulation differs. The evolving latent wins future think-time in all 8
-   clocked era-by-backbone conditions (Table 3) and survives the twin at
-   twice its latent width (single-seed sweep) (§4.1–4.2).
+1. **A controlled test of the decomposition: static attribute + evolving
+   state.** The dynamic term is isolated by an equal-capacity, same-input
+   **memoryless twin** on strict future splits (identical parameters,
+   inputs, and optimizer; only state accumulation differs) and then by the
+   two controls the decomposition demands: a learned **static per-player
+   embedding** (the attribute term alone) and a training-free **structured
+   memory** of running history statistics (dynamics without learning). The
+   evolving latent wins future think-time in all 8 clocked era-by-backbone
+   conditions (Table 3), survives the twin at twice its latent width, adds
+   value over Allie on 3/3 cohorts and over Allie+static on 2/3 (pooled
+   −0.0126, CI excluding zero) — and the structured-memory arm beats the
+   static profile on **3/3** cohorts at 2–3× that margin, so the dynamic
+   term is real under two entirely different instruments, one of which has
+   no trained parameters at all (§4.1–4.3, Tables 2–5). An input-matched
+   learned control — a GRU over the same memory statistics — ties the
+   linear memory readout (pooled +0.0096, CI crossing zero) while still
+   beating the static profile (−0.0180, CI excluding zero): the dynamic
+   term is instrument-robust, and its value is set by the information the
+   state carries rather than by the update mechanism (§4.3).
 2. **The when-not-what asymmetry on real humans.** Move choice is a
    near-null, small at best and backbone-sensitive, and a probe from the
    latent to deviation-from-Maia-2 reaches only R² = 0.009. The timing edge,
    by contrast, survives baselines at or above the best published think-time
-   rank correlation on Lichess, including Allie's released think-time head:
-   the add-on is significant on all three cohorts in the direct test and on
-   two of three under the strictest co-fit and identity controls (§4.2–4.3,
-   Tables 3–5).
+   rank correlation on Lichess, including Allie's released think-time head
+   (§4.2–4.3, Tables 3–5).
 3. **A mechanism account.** The timing edge concentrates 2.7–3.6× under time
    pressure after variance control and about 3× for the weakest players; on
    a synthetic player with a known hidden state the latent encodes that
    state (probe R² = 0.93 vs 0.65) and clamping it moves predictions
    monotonically (§4.4).
-4. **Generality and utility beyond games.** On eight real knowledge-tracing
-   datasets the evolving latent wins responses in 22 of 24 dataset-seed
-   cells; the same latent recovers real population heterogeneity at half the
-   Wasserstein distance of an average-person baseline and generates diverse,
-   plausible synthetic students (recall 1.00 vs the matched average-person's
-   0.00). Two real education response-time tests are negative and set the
+4. **Generality, and the capability that separates a state model from a
+   persona library.** On eight real knowledge-tracing datasets the evolving
+   latent wins responses in 22 of 24 dataset-seed cells; the same latent
+   recovers real population heterogeneity at half the Wasserstein distance
+   of an average-person baseline and generates diverse, plausible synthetic
+   students from its prior (recall 1.00 vs the matched average-person's
+   0.00) — an operation no static persona set and no text-memory store
+   supports, because neither carries a distribution over individuals one can
+   sample. Two real education response-time tests are negative and set the
    timing claim's scope (§4.5–4.6, Tables 6–7).
 5. **The injection-channel ordering is backbone-dependent.** The trained
    hidden vector beats the verbal note by 0.07–0.12 nats on a board-native
@@ -152,24 +239,61 @@ per-individual *future* split, and none isolate within-session dynamics from
 static individualization. We use their strongest released artifacts, Maia-2
 and Allie, as the baselines our evolving latent must add value over (§4.3).
 
-**Dynamic psychological state in games.** Closest in spirit is Ailed
-(arXiv:2603.05352), a psyche-driven chess engine that modulates move
-selection and latency by an evolving emotional state. It shares our premise
-that play is state-dependent, but it is a *generative* construct: by its
-authors' own account it has no human-subject validation, so its state
-dynamics are asserted rather than measured against real players. We make the
-corresponding claim falsifiable. The evolving state is fit to, and scored
-against, specific players' held-out future games, and its value is
-established by an equal-capacity control rather than by construction.
+**Dynamic psychological state in games and tutoring.** Closest in spirit is
+Ailed (arXiv:2603.05352), a psyche-driven chess engine that decomposes an
+engine's behavior into a static hand-designed *personality* preset and a
+dynamic *psyche* scalar updated move-to-move from positional factors —
+structurally the same attribute-plus-state decomposition we test. But Ailed
+is a *generative* construct: every modulation parameter is hand-tuned, the
+evaluation is engine-vs-engine, and by its authors' own account it has no
+human-subject validation, so its state dynamics are asserted rather than
+measured against real players; it models no clock and no individual. DASKT
+(arXiv:2502.10396) brings "dynamic affect" to knowledge tracing, but its
+affect states are a hand-engineered pipeline (feature clustering plus graph
+smoothing), with no static-vs-dynamic ablation and no future-split
+per-individual validation. We make the shared premise falsifiable: the evolving state is
+*learned* from, fit to, and scored against specific real players' held-out
+future games, and its value is established by an equal-capacity control and
+a static-embedding control rather than by construction.
+
+**Emotion-dynamic LLM user simulators.** A 2025–26 LLM-agent line argues
+our premise for us: static personas make user simulators unrealistic
+because a real user's emotional state evolves. AnnaAgent
+(arXiv:2506.00551) maintains an evolving emotional and complaint state for
+simulated counseling clients; Customer-R1 (arXiv:2510.07230) simulates
+customer behavior with dynamic state; TWICE (arXiv:2602.22222) models the
+temporal evolution of social-media users with an event-driven *textual
+memory*; and prompted-appraisal agents refine a persona's emotion turn by
+turn (arXiv:2607.07824). We differ on the four axes that turn the shared
+premise from a design choice into a finding. *Mechanism:* their state is
+prompted, scripted, or stored as text; ours is a latent learned end-to-end
+from the person's real behavior. *Evidence:* they evaluate the simulator's
+plausibility (LLM-judge or human ratings of realism); we evaluate held-out
+predictive likelihood of specific real individuals' future behavior.
+*Attribution:* none isolates the dynamic term against controls — an
+equal-capacity memoryless twin, a static profile, a structured memory — so
+"the evolving state helped" cannot be separated from "the prompt carried
+more context"; our §4.3 ladder is exactly that isolation, and its memory
+arm quantifies the very mechanism class (a running store of the person's
+history) this line deploys. *Grounding:* free-form dialogue has no fixed
+action space over which two simulators can be scored
+likelihood-against-likelihood, which is why we test the decomposition in
+discrete grounded domains. Read together, that line supplies the demand
+and we supply the measurement: a validated, sampleable dynamic-state
+carrier such simulators could adopt.
 
 **Timing as a readout of latent state.** That latency reveals latent
 cognitive state more richly than accuracy is a settled result in
 response-time psychometrics: van der Linden's hierarchical speed-accuracy
 model (2006; 2007) combines a *stable* per-person latent speed with item
-time-intensity, and later dynamic extensions and change-point models
+time-intensity, later dynamic extensions and change-point models
 (e.g. arXiv:2605.29182) report response times out-predicting accuracy-only
-item-response models. The bar this literature sets is therefore not "timing
-beats choice" but "an *evolving* state beats a *stable* per-person speed
+item-response models, and Latency-Response Theory (arXiv:2512.07019)
+recently carried the same hierarchical framework to LLM evaluation, proving
+latency strictly adds trait information whenever it correlates with the
+latent. Every model in this lineage, classical and recent, keeps the
+per-person trait *static*. The bar it sets is therefore not "timing beats
+choice" but "an *evolving* state beats a *stable* per-person speed
 calibration." We test that bar directly. A per-player constant fed the same
 features and timing head as the evolving latent, the neural analogue of the
 stable-speed term, is beaten on three of five real cohorts, with all five
@@ -186,12 +310,33 @@ states aligned to real users, and history-aware verbal student profiles have
 been RL-trained on tutoring dialogues (Duan et al., arXiv:2605.30051).
 UniMaia (arXiv:2605.27767) steers a chess policy with natural-language
 descriptions of desired play, a controllability result that motivates
-comparing injection channels. What none of these run is an *equal-capacity,
-same-input* memoryless twin on a per-decision oracle domain with a timing
-target, the control that isolates accumulated state from
+comparing injection channels; its auxiliary "move delay" objective is the
+nearest published touchpoint to our timing channel, but it serves as a
+training signal for move prediction and is never evaluated as calibrated
+held-out per-player timing likelihood. What none of these run is an
+*equal-capacity, same-input* memoryless twin on a per-decision oracle domain
+with a timing target, the control that isolates accumulated state from
 history-conditioning. And each commits to a single injection channel, verbal
 text or a single soft vector; we compare the two head-to-head and find the
 ordering backbone-dependent (§4.7).
+
+**Memory modules.** The nearest architectural alternative to an evolving
+latent is a *memory*: agent frameworks append episodic records and retrieve
+them as text (MemGPT, arXiv:2310.08560; the memory streams of generative
+agents, Park et al., 2023), and recent student and user simulators carry
+exactly such modules (e.g. The Imperfect Learner, arXiv:2511.05903;
+ContextSim, arXiv:2604.09549). A memory in this sense also updates with the
+person's history, so "your evolving latent is just a memory" is a fair
+objection — and we answer it with an experiment rather than a definition. We
+instantiate the strongest summary-statistic memory this task admits (running
+and recency-weighted statistics of the person's raw past think-times, of a
+released model's per-decision errors on them, and of their recent outcomes,
+optimally linearly read out; §4.3) and compare it, per player, against both
+the static profile and the learned evolving state. Two properties still
+separate the learned state from any text or statistic store: it is trained
+end-to-end for behavior prediction, and it induces a *distribution over
+individuals* that can be sampled to generate a population (§4.6), an
+operation a memory of one person's events does not define.
 
 ## 3 Method
 
@@ -421,6 +566,52 @@ seeds, evolving − static, in nats; 95% player-bootstrap CIs).**
 | 2021-06 | −0.0194 | [−0.0300, −0.0088] | 5/5 favor evolving |
 | Pooled unique players (n=299) | −0.0126 | [−0.0188, −0.0061] | P(<0)=1.00 |
 
+**The structured-memory control.** If an evolving latent is "just a memory,"
+then an explicit memory should do the same work — so we built the strongest
+one this task admits and let it compete under the identical protocol (same
+locked Allie offset, session split, and linear readout as Table 5). The
+memory arm's per-step state is a hand-designed vector of causal running
+statistics of the player's history: running, recency-weighted, and lagged
+summaries of their raw past think-times, of Allie's per-decision errors on
+them, their premove rate, recent outcomes, and session position. It has no
+trained parameters at all, and it deliberately reads *richer* inputs than
+the learned arms (the GRU never sees a raw think-time; its input is only the
+four engineered history features). Three results follow (Table 5b). First,
+the memory arm beats the static profile on all three cohorts
+(memory − static = −0.0148 / −0.0350 / −0.0327, every CI excluding zero;
+pooled −0.0276, CI [−0.0365, −0.0210], n=299) — including 2019-07, the
+cohort where the learned evolving arm was null. The dynamic term of the
+decomposition is therefore real under a second, training-free instrument,
+and larger than the learned instrument measures. Second, the same memory
+beats the four-feature learned evolving latent overall (evolving − memory =
++0.0150, CI [+0.0070, +0.0254]): given richer history access, hand-designed
+dynamics outrun learned dynamics over poorer inputs. Third, the
+input-matched control closes the loop: a GRU whose per-step input is
+exactly the same 15 memory statistics (3 seeds, same split and scoring)
+lands within noise of the linear memory readout (pooled GRU − memory =
++0.0096, CI [−0.0032, +0.0237]), matches the four-feature evolving arm
+(−0.0054, CI crossing zero), and still beats the static profile
+(−0.0180, CI [−0.0316, −0.0038]). Given equal information, learned and
+hand-designed dynamics coincide.
+The reading we take is deliberately modest and story-first: what matters is
+*carrying a dynamic state* — any faithful carrier of within-person history
+beats the static profile — and the informational content of that state
+(raw timing history, a released model's errors) matters more than whether
+its update rule is learned. The learned latent remains the only arm that is
+trainable end-to-end, works from impoverished inputs, and supports the
+population sampling of §4.6.
+
+**Table 5b — the structured-memory arm over locked Allie (paired per
+player; learned arms averaged over their 5 seeds; memory arm deterministic;
+95% player-bootstrap CIs).**
+
+| Cohort | Allie | +static | +memory | +evolving | memory − static | evolving − memory |
+|---|---:|---:|---:|---:|---:|---:|
+| 2017-04 | 2.5421 | 2.5361 | 2.5213 | 2.5191 | −0.0148 [−0.0212, −0.0092] | −0.0022 [−0.0113, +0.0097] |
+| 2019-07 | 2.3349 | 2.3186 | 2.2836 | 2.3172 | −0.0350 [−0.0577, −0.0201] | +0.0336 [+0.0158, +0.0586] |
+| 2021-06 | 2.3054 | 2.2920 | 2.2592 | 2.2726 | −0.0327 [−0.0427, −0.0237] | +0.0133 [+0.0042, +0.0244] |
+| Pooled (n=299) | — | — | — | — | −0.0276 [−0.0365, −0.0210] | +0.0150 [+0.0070, +0.0254] |
+
 ### 4.4 Where does the edge live, and what does the latent encode?
 
 If the latent tracks a real behavioral state, its advantage should
@@ -487,20 +678,61 @@ student's response order (single seed), leaves the edge undiminished
 response-channel gain is order-invariant individualization, the reading
 §4.4's scope note relies on.
 
-**Table 6 — fixed-loader KT replication (8 datasets, 3 seeds, response D−B
-in nats; negative favors the evolving latent). Spread is each dataset's
-per-student accuracy standard deviation.**
+The structured-memory instrument of §4.3 transfers, and repeats its chess
+verdict here (Table 6, last two columns). The KT memory arm — running,
+recency-weighted, and lagged statistics of the student's own past answers
+and of their residuals against the item-difficulty baseline, read out by a
+logistic fit with zero other trained parameters — beats the memoryless
+twin on 7 of 8 datasets, the same 7-of-8 profile as the learned latent it
+mirrors. Head-to-head, memory and the learned latent tie on five datasets,
+the latent wins one (ASSISTments 17), and memory wins two — including
+ASSISTments 15, the replication's known anomaly: where the learned arm
+significantly *loses* to the twin (+0.0063, a training reversal), the
+training-free memory still wins (−0.0058, CI excluding zero), so the
+anomaly was optimization instability, not an absent effect (the KT
+counterpart of chess's 2019-07 cohort). On Spanish, the most heterogeneous
+population, memory outruns the latent outright (−0.0646 vs −0.0444). The
+cross-domain synthesis is the same sentence as §4.3: what matters is
+carrying per-person state and the information it carries — raw answer
+history here, raw timing history in chess — not whether the update rule is
+learned.
 
-| Dataset | Spread | Mean D−B | Seed cells favoring D |
-|---|---:|---:|---|
-| Bridge-to-Algebra 06 | 0.096 | −0.0057 | 3/3 |
-| Algebra 05 | 0.123 | −0.0086 | 3/3 |
-| Statics | 0.142 | −0.0051 | 2/3 (one null) |
-| ASSISTments 17 | 0.147 | −0.0152 | 3/3 |
-| ASSISTments 12 | 0.154 | −0.0110 | 3/3 |
-| ASSISTments 15 | 0.158 | +0.0063 | 2/3 (one significant reversal) |
-| ASSISTments 09 | 0.190 | −0.0128 | 3/3 |
-| Spanish | 0.258 | −0.0444 | 3/3 |
+Can the profile at least be *frozen*? The shuffle control's
+"order-invariant individualization" reading invites exactly that
+objection, so we measured it. A fitted static profile — one frozen number
+per student, their accuracy over their own ≥35 training answers, a far
+stronger profile than any written persona — is beaten by the updating
+memory on **8 of 8** datasets under the identical logistic fit
+(memory − static −0.011 to −0.098), and on 6 of 8 it loses even to the
+memoryless twin. The failure is largest exactly where students change most
+(Spanish vocabulary, −0.098): the last third of a learning sequence sits
+at a different level than the first two-thirds, and a confidently frozen
+estimate mis-calibrates where an updating one keeps tracking.
+Order-invariant is therefore not freezable: a running mean ignores order
+yet still updates, and the updating is load-bearing. The KT scoping is
+accordingly sharpened — the gain is a *continuously updated* estimate of
+who the student is; what this channel does not show is the fast
+emotion-like flavor of the state, which remains a chess-timing result
+(§4.3–4.4).
+
+**Table 6 — fixed-loader KT replication (8 datasets, 3 seeds, response
+NLL gaps in nats; negative favors the first-named arm). Spread is each
+dataset's per-student accuracy standard deviation. M is the structured
+memory of §4.3 in its KT form (causal running statistics of the student's
+answers, logistic readout, zero trained parameters beyond it;
+deterministic, paired per student against the seed-averaged learned
+arms).**
+
+| Dataset | Spread | Mean D−B | Seed cells favoring D | M−B | D−M |
+|---|---:|---:|---|---:|---:|
+| Bridge-to-Algebra 06 | 0.096 | −0.0057 | 3/3 | −0.0047 ✓ | −0.0010 ns |
+| Algebra 05 | 0.123 | −0.0086 | 3/3 | −0.0075 ✓ | −0.0011 ns |
+| Statics | 0.142 | −0.0051 | 2/3 (one null) | −0.0031 ns | −0.0020 ns |
+| ASSISTments 17 | 0.147 | −0.0152 | 3/3 | −0.0120 ✓ | −0.0032 ✓ |
+| ASSISTments 12 | 0.154 | −0.0110 | 3/3 | −0.0109 ✓ | −0.0001 ns |
+| ASSISTments 15 | 0.158 | +0.0063 | 2/3 (one significant reversal) | −0.0058 ✓ | +0.0121 (M wins) |
+| ASSISTments 09 | 0.190 | −0.0128 | 3/3 | −0.0126 ✓ | −0.0002 ns |
+| Spanish | 0.258 | −0.0444 | 3/3 | −0.0646 ✓ | +0.0202 (M wins) |
 
 Across datasets, the signed advantage is descriptively associated with each
 population's per-student accuracy spread (Pearson 0.776, Spearman 0.476;
@@ -589,6 +821,9 @@ with-state − no-state.**
 | Qwen3-1.7B LoRA SFT, 3 seeds | hidden − verbal (timing) | +0.0034 (hidden advantage absent) |
 | Qwen3 0.6B→8B LoRA SFT | timing Δ | −0.0107 to −0.0136 at every scale |
 | Qwen3 4B/8B full-param SFT | timing Δ / move Δ | −0.0110/−0.0128 timing; −0.0072/−0.0083 move |
+| Persona ladder, Qwen3-1.7B, 99 players, 3 seeds | static − none / memory − none | −0.0104 / −0.0096, both CIs exclude zero |
+| Persona ladder | memory − static (updating vs frozen persona) | +0.0009, CI [−0.0036, +0.0052] — tie |
+| Persona ladder | hidden − memory / hidden − static | +0.0045 / +0.0054, text beats vector |
 
 Two negative results shaped the LLM probe. A frozen LLM given the verbal
 state is no better than one given irrelevant filler text, so persona-style
@@ -606,6 +841,27 @@ so the clean move-null is an adapter-capacity artifact rather than a
 property of scale. Under full fine-tuning the timing effect exceeds the move
 effect by about 1.5× at every seed and both scales; the adaptation-invariant
 claim is the think-time benefit.
+
+Finally, the *persona ladder* runs the paper's field-facing comparison
+inside the LLM itself (Table 8, last three rows): the same prompt skeleton
+carries either nothing, a *frozen* fitted persona sentence (rating, median
+think-time, premove rate, from the training split only), a per-decision
+*updating* text scorecard, or the scorecard's numbers as a soft prefix.
+Fitted person-information is what the probe resolves: both fitted text
+arms beat no-information clearly (≈ −0.010, every CI excluding zero) —
+note this is an upper bound on practice, which hand-writes personas from
+no data at all. Frozen versus updating is a tie in this channel (+0.0009,
+CI spanning zero): the within-player dynamic increment that the
+board-native ladder measures at −0.0126 over a static profile sits at or
+below this probe's resolution, and a blitz player's typical speed barely
+drifts within a one-month cohort — the low-drift regime where §4.5 showed
+freezing costs least (in the high-drift regime, education, the frozen
+profile failed on every dataset). And the channel ordering replicates G3
+on fresh data: the same numbers help significantly more as language than
+as a projected vector. The practical reading for LLM user simulators:
+*fit the persona from the person's data* (that alone is worth ≈ −0.010
+here), keep it updating when the person can drift, and deliver it as
+text.
 
 ## 5 Limitations
 
@@ -636,9 +892,22 @@ tracing; it does not transfer to the two real education timers tested
 the timing channel requires time to be a strategically managed resource.
 
 Dynamics and individualization are fully separable only on synthetic data,
-where the probe and clamp identify the state directly. On real data the
-dynamics reading rests on the concentration signature; the KT response edge
+where the probe and clamp identify the state directly. On real chess timing
+the dynamics reading now rests on two independent instruments — the
+static-vs-evolving contrast over locked Allie (2/3 cohorts) and the
+training-free structured-memory arm, which beats the static profile on 3/3
+cohorts — together with the concentration signature; the KT response edge
 is identified as individualization by the shuffle control.
+
+The structured-memory comparison is deliberately input-asymmetric: the
+memory arm reads the person's raw past think-times and the released model's
+past errors, which the learned arms never see, so its win over the
+four-feature evolving latent conflates information access with mechanism
+(§4.3 reports the input-matched learned control). Both dynamic arms are
+evaluated in the filtering setting, conditioning on the realized past; in a
+closed-loop rollout the memory arm would have to consume its own generated
+think-times, a deployment gap the latent does not share in the same form
+because it never reads the raw target variable.
 
 We ran no live human study. Held-out prediction of 480+ real players'
 future games over a six-year span and interactive human judgment answer
@@ -647,16 +916,25 @@ report the one we ran and regard live evaluation as complementary.
 
 ## 6 Conclusion
 
-An evolving per-individual latent state, isolated by an equal-capacity
-memoryless twin on strict future splits, shows that a person's current state
-is far more legible in *when* they act than in *what* they choose, robustly
-across six years of real chess and against released think-time models. The
-same latent wins student-response prediction in 22 of 24 dataset-seed cells
-across eight real KT datasets and recovers the population heterogeneity that
-average-person simulators lose, and the best channel for injecting it
-depends on whether the backbone can read language. For human simulation, the
-practical lesson is concrete: model when people act, not only what they do,
-and carry a state that accumulates.
+Simulated humans are built today from static profiles, so the simulated
+policy is an attribute plus reasoning, and everything a person carries
+between decisions is lost by construction. The field increasingly says so —
+and saying is where it has stopped: the dynamic state's contribution had
+not been measured. We decomposed the policy into a static attribute and an
+evolving behavioral state and tested the decomposition where it is
+measurable. The dynamic term is real: it survives
+an equal-capacity memoryless twin, a released think-time model, a learned
+static per-player profile, and it reappears — larger — under a training-free
+structured memory, on every cohort including the one where the learned
+instrument was null. It is legible far more in *when* a person acts than in
+*what* they choose, it concentrates exactly where an emotion-like state
+should (under time pressure, in the least disciplined players), and,
+unlike any static persona set or memory store, its learned form carries a
+distribution over individuals that can be sampled into a realistic
+population. For user simulation the design requirement is concrete: a
+simulator of a specific person must carry a per-individual state that
+updates as the person acts — a static profile, however good the reasoning
+on top of it, structurally cannot represent the person it simulates.
 
 ## Reproducibility Statement
 
@@ -687,22 +965,71 @@ pseudonymous handles; discuss simulation-of-individuals dual use briefly.]
 - Yiming Zhang, Athul Paul Jacob, Vivian Lai, Daniel Fried, Daphne
   Ippolito. *Human-Aligned Chess With a Bit of Search.* ICLR 2025 (Allie).
   arXiv:2410.03893. — verified in review 2026-07-19
-- ChessMimic. arXiv:2606.04473. — verified 2026-07-13
-- Matilda: Engine-Agnostic Search with Human Policy Guidance (Carlson).
-  arXiv:2606.25176. — re-verified 2026-07-19: this ID resolves to Matilda,
-  NOT the previously listed "Elo-Disentangled Player-Style Embeddings"
-  (which does not exist under this ID; the mislabel is corrected in §2)
+- ChessMimic: *Per-Rating Transformer Models for Human Move, Clock, and
+  Outcome Prediction in Online Blitz Chess.* arXiv:2606.04473. — verified
+  2026-07-13; full title confirmed 2026-07-22
+- Jason Carlson. *Matilda: Engine-Agnostic Search with Human Policy
+  Guidance.* arXiv:2606.25176. — retitle history verified 2026-07-22: v1
+  (2026-06-23) was titled "Elo-Disentangled Player-Style Embeddings for
+  Human Chess via Rating-Conditioned Residual Move Model"; v2 (2026-07-13)
+  retitled to Matilda with substantially revised numbers. Cite v2; quote v2
+  numbers only (+2.53% rel NLL over Maia-3 at 2500+, rising to +21.9% at
+  3000+; style embedding is static 32-d per player). Claims code release
+  but contains no URL; nothing findable on GitHub/HF as of 2026-07-22.
 - Maia4All. arXiv:2507.21488. — added 2026-07-19, **verify at bib time**
-- Ailed. arXiv:2603.05352. — verified 2026-07-13; **re-check the
-  no-human-subject-validation statement at submission; pin to a section or
-  quote**
-- UniMaia. arXiv:2605.27767. — verified 2026-07-13
+- Diego Armando Resendez Prado. *Ailed: A Psyche-Driven Chess Engine with
+  Dynamic Emotional Modulation.* arXiv:2603.05352, March 2026. — full-text
+  verified 2026-07-22: static personality preset + dynamic psyche scalar
+  ψ∈[−100,+100], all modulation hand-tuned; evaluation is 12,414
+  engine-vs-engine games vs Maia2-1100; paper explicitly states no
+  human-subject validation; no timing model, no per-player modeling.
+  Partial code (signal chain only): github.com/chrnx-dev/ailed-chess.
+- Sherman Siu, Lesley Istead. *UniMaia: Steering Chess Policies with
+  Language for Human-like Play.* arXiv:2605.27767, May 2026. — verified
+  2026-07-22 (also Siu's Waterloo Master's thesis); UniMaia-Aux predicts
+  "move delay" as an auxiliary objective, never evaluated as held-out
+  per-player timing likelihood; no per-player embeddings; no code release.
 - LATTE. arXiv:2605.26612. — verified 2026-07-13
 - HumanLM. arXiv:2603.03303. — verified 2026-07-13
 - Duan et al. *Who Am I? History-Aware Profiles for Student Simulation in
   Tutoring Dialogues.* arXiv:2605.30051. — verified 2026-07-13
 - Latent-variable RT models with individual change-points.
   arXiv:2605.29182. — verified 2026-07-13
+- Zhiyu Xu, Jia Liu, Yixin Wang, Yuqi Gu. *Latency-Response Theory Model:
+  Evaluating Large Language Models via Response Accuracy and
+  Chain-of-Thought Length.* arXiv:2512.07019. — verified 2026-07-22; builds
+  explicitly on van der Linden (2007); static per-model traits; code
+  released (github.com/Toby-X/Latency-Response-Theory-Model)
+- DASKT: *Dynamic Affect Simulation for Knowledge Tracing.*
+  arXiv:2502.10396. — added 2026-07-22 (novelty sweep: closest single
+  competitor); affect states are hand-engineered
+  (feature clustering + graph smoothing), no static-vs-dynamic ablation,
+  no per-individual future-split validation. **Read in full before
+  submission.**
+- AnnaAgent. arXiv:2506.00551. — added 2026-07-22 (LLM dynamic-emotion
+  user simulation line; prompt/scheduler-based, qualitative evaluation),
+  **verify at bib time**
+- Customer-R1. arXiv:2510.07230. — added 2026-07-22 (same line), **verify
+  at bib time**
+- TWICE: *Modeling the Temporal Evolution of Personalized User Behavior
+  via Event-Driven Agents.* arXiv:2602.22222. — added 2026-07-22; states
+  our exact premise ("static personas cannot capture how behavior
+  evolves") and fixes it with an event-driven **textual memory module** —
+  the mechanism class our §4.3 memory arm races; qualitative evaluation
+  only. **verify at bib time**
+- *From Triggers to Emotions: A CPM-Grounded Appraisal Multi-Agent for
+  Dynamic Emotional Evolution in Persona-Based Dialogue.* arXiv:2607.07824.
+  — added 2026-07-22 (same premise, prompted appraisal mechanism,
+  qualitative evaluation), **verify at bib time**
+- Charles Packer et al. *MemGPT: Towards LLMs as Operating Systems.*
+  arXiv:2310.08560. — memory-module line, **verify at bib time**
+- Joon Sung Park et al. *Generative Agents: Interactive Simulacra of Human
+  Behavior.* UIST 2023. arXiv:2304.03442. — memory streams, **verify at
+  bib time**
+- The Imperfect Learner. arXiv:2511.05903. — student simulator with memory
+  module, added 2026-07-22, **verify at bib time**
+- ContextSim. arXiv:2604.09549. — user simulator with memory module, added
+  2026-07-22, **verify at bib time**
 - Wim J. van der Linden. *A lognormal model for response times on test
   items.* Journal of Educational and Behavioral Statistics, 31(2), 2006.
   — venue corrected in review 2026-07-19

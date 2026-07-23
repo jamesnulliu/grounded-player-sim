@@ -1,0 +1,59 @@
+INPUT-MATCHED LEARNED CONTROL: GRU OVER THE MEMORY FEATURES (2026-07-22)
+
+Question: results/memory_baseline.txt found the hand-designed structured
+memory beats the 4-feature learned evolving latent on chess timing -- but
+that comparison is input-asymmetric (memory reads raw past think-times and
+Allie's past errors; the GRU reads only 4 engineered features). Does the
+memory win because of its richer INFORMATION or because learning adds
+nothing? This control matches the inputs: a GRU whose per-step input is
+exactly the same 15 memory statistics (gps.experiments.ec._memory_latents),
+linear head predicting the log think-time residual over the locked Allie
+offset, trained on each player's train steps (same session split), scored
+with the identical homoscedastic-Gaussian NLL treatment as the lstsq arms
+(sigma from train residuals). 3 seeds x 3 cohorts; inputs standardized with
+train-step statistics; hidden_dim=16 (parity with latent_dim), 300 epochs
+full-batch Adam lr=1e-2, CPU.
+
+RESULTS (held-out timing NLL; learned arms seed-averaged per player)
+
+cohort    +static  +memory  +evolving(4f)  +gru(mem)  gru-memory              gru-evolving            gru-static
+2017-04   2.5361   2.5213   2.5191         2.5145     -0.0068 [-.032,+.021]   -0.0046 [-.029,+.021]   -0.0216 [-.046,+.004]
+2019-07   2.3186   2.2836   2.3172         2.3019     +0.0183 [-.004,+.041]   -0.0153 [-.043,+.010]   -0.0167 [-.044,+.009]
+2021-06   2.2920   2.2592   2.2726         2.2754     +0.0162 [-.003,+.037]   +0.0028 [-.017,+.023]   -0.0165 [-.035,+.003]
+
+Pooled unique players (n=299):
+  gru - memory   = +0.0096, 95% CI [-0.0032, +0.0237], P(<0)=0.073  TIE
+  gru - evolving = -0.0054, 95% CI [-0.0196, +0.0091], P(<0)=0.763  TIE
+  gru - static   = -0.0180, 95% CI [-0.0316, -0.0038], P(<0)=0.995  SIG
+
+VERDICT: given EQUAL information, learned recurrence and the hand-designed
+linear memory readout land within noise of each other (linear nominally
+ahead -- it pays no optimization/seed cost), and both significantly beat
+the static profile. Combined with memory_baseline.txt, the mechanism
+finding is clean and honest:
+
+  1. The dynamic term of policy = static-attribute + evolving-state is
+     INSTRUMENT-ROBUST: learned GRU (4 features), hand-designed memory
+     (15 stats), and learned GRU (15 stats) all beat static identity.
+  2. The VALUE of the dynamic state is set by the INFORMATION it carries
+     (raw timing history + released-model errors >> 4 engineered
+     features), not by whether its update rule is learned.
+  3. Ranking learned-vs-hand-designed at equal input is a null; do not
+     claim "learned state beats memory" on this channel. The learned
+     form's unique retained capabilities: end-to-end training from
+     impoverished inputs, and population sampling (E-F1).
+
+Caveats: single hidden size / lr / epoch budget (no tuning sweep -- a tuned
+GRU might close the nominal gap; the conclusion "no significant difference"
+is what the data supports); same filtering-evaluation caveat as the memory
+arm (both consume realized past outcomes at eval).
+
+Artifacts:
+  results/memory_gru_arm.json
+  runs/memory-gru-arm/<cohort>.json
+
+Reproduce:
+  PYTHONPATH=src python scripts/memory_gru_arm.py
+  PYTHONPATH=src python scripts/memory_gru_arm.py --cohort 2017-04
+  (requires runs/memory-vs-learned/<cohort>.json from
+   scripts/memory_vs_learned.py)
